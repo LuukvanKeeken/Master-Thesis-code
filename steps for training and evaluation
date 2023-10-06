@@ -1,0 +1,24 @@
+Step 1: train three DQN models. It is not entirely clear how this is done for rSTDP, but it seems like one model is trained in the following way. In the code (training_q_learning.ipynb) an agent is trained for 500 episodes in the normal environment. It is not necessarily the model/set of weights at the end that is kept, but rather the 'best' set of weights. To find this set of weights, after each episode the average score over the past 100 episodes is calculated. The best model is the one for which the average of the 100 previous scores is largest. This model is saved, until a better model is found.
+There are 10 seeds for training. Probably, the first three were used for the three models in the paper, but not 100% sure. This could be tested by training three models on the first three seeds, and then check whether the evaluation scores on altered environments match up with those in Figure 3 of the paper.
+
+What to do with Hebbian traces in target network/optimize_model()? For now, give the current Hebbian traces in forward pass of target network, but do not actually update the Hebbian traces. Maybe the Hebbian traces given to the target network should just be 0?
+Similar question for getting the expected q-values from the policy network after that.
+See how this is done in the backpropamine code (even though it uses A2C to train and not DQN).
+
+
+
+Step 2: evaluate the three trained models on the normal environment, in order to provide a baseline. There are 100 seeds for evaluating, so each model is evaluated for 100 episodes. The reason for these seeds is to be able to control the starting states. Namely, the starting values for each of the four observations are uniformly sampled from [-0.05, 0.05] (or maybe (-0.05, 0.05)). In this way, the three models will be evaluated on exactly the same episodes. Later, when the environment parameters are adjusted, the same 100 seeds will be used, to ensure that the observed effects are due to the change in environment parameters and not a change in starting states.
+
+
+Step 3: evaluate the three trained models on 10 adjusted versions of the normal environment. The same 100 evaluation seeds are used for each version. Unlike in rSTDP, adaptation should already take place here. The question is whether the agent can adapt quickly enough within a single episode.
+
+It is not clear yet whether the Hebbian trace should be reset after each episode. It depends on how quickly adaptation can take place. After an episode ends the agent would have to start all over again, but I'm not sure if that even matters.
+
+
+Step 4: take the three trained DQN models, and apply rSTDP adaptation (code implies for 250 episodes). I'm not sure whether a similar setup would make sense for backpropamine. If I would do it, then the Hebbian traces can't be reset after each episode.
+
+
+Step 5: evaluate the three adapated models on the 10 adjusted version of the normal environment.
+
+
+Check whether in training the initial observation values are the same when the same seed is used.

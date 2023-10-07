@@ -94,6 +94,9 @@ class Agent:
         # Initialize Hebbian traces
         self.hebbian_traces = self.policy_net.initialZeroHebb(self.batch_size).to(device)
 
+        # Initialize hidden activations
+        self.hidden_activations = self.policy_net.initialZeroState(self.batch_size).to(device)
+
     def select_action(self, state, eps=0.):
         state = torch.from_numpy(state)
         state = state.unsqueeze(0).to(device)
@@ -105,8 +108,9 @@ class Agent:
                     return np.argmax(final_layer_values)
                 else:
                     # return np.argmax(self.policy_net.forward(state.float())[0].cpu().data.numpy())
-                    q_values, self.hebbian_traces = self.policy_net.forward(state.float(), self.hebbian_traces)
+                    q_values, hidden = self.policy_net.forward(state.float(), [self.hidden_activations, self.hebbian_traces])
                     selected_action = np.argmax(q_values[0].cpu().data.numpy())
+                    self.hidden_activations, self.hebbian_traces = hidden
                     return selected_action
         else:
             return random.choice(np.arange(self.architecture[-1]))
@@ -130,8 +134,9 @@ class Agent:
             Q_targets_next = self.target_net.forward(next_states)[0].detach().max(1)[0].unsqueeze(1)
         else:
             # Q_targets_next = self.target_net(next_states).detach().max(1)[0].unsqueeze(1)
-            Q_targets_next, _ = self.target_net(next_states, self.hebbian_traces)
+            Q_targets_next, _ = self.policy_net(next_states, [self.hidden_activations, self.hebbian_traces])
             Q_targets_next = Q_targets_next.detach().max(1)[0].unsqueeze(1)
+            # self.hidden_activations, self.hebbian_traces = hidden
 
         # Compute Q targets for current states
         Q_targets = rewards + (self.gamma * Q_targets_next*(1 - dones))
@@ -141,7 +146,7 @@ class Agent:
             Q_expected = self.policy_net.forward(states)[0].gather(1, actions)
         else:
             # Q_expected = self.policy_net.forward(states).gather(1, actions)
-            Q_expected, _ = self.policy_net.forward(states, self.hebbian_traces)
+            Q_expected, _ = self.policy_net.forward(states, [self.hidden_activations, self.hebbian_traces])
             Q_expected = Q_expected.gather(1, actions)
 
         # Compute loss
@@ -180,6 +185,7 @@ class Agent:
 
         for i_episode in range(1, self.num_episodes + 1):
             self.hebbian_traces = self.policy_net.initialZeroHebb(self.batch_size).to(device)
+            self.hidden_activations = self.policy_net.initialZeroState(self.batch_size).to(device)
             
             state = self.env.reset()
             if self.two_neuron:

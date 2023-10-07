@@ -161,12 +161,7 @@ class RNetwork(nn.Module):
             i2h = self.i2h(inputs)
             
             unsqueezed = hidden[0].unsqueeze(1)
-            # print(f"hebb: {hebb.size()}")
-            # print(f"hidden acs: {hidden[0].size()}")
-            # print(f"unsqueezed: {unsqueezed.size()}")
-            # print(f"w: {self.w.size()}")
-            # print(f"alpha x hebb: {torch.mul(self.alpha, hebb).size()}")
-            bmm_part = unsqueezed.bmm(self.w + torch.mul(self.alpha, hebb))
+            
             hactiv = torch.tanh( self.i2h(inputs) + hidden[0].unsqueeze(1).bmm(self.w + torch.mul(self.alpha, hebb)).squeeze(1)  )  # Update the h-state
             activout = self.h2o(hactiv)  # Pure linear, raw scores - to be softmaxed later, outside the function
         

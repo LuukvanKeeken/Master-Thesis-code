@@ -4,8 +4,8 @@ import torch.nn as nn
 import numpy as np
 from functools import partial
 
-from model import SurrGradSpike
-from rstdp import RSTDP
+from cartpole_stuff.src.model import SurrGradSpike
+from cartpole_stuff.src.rstdp import RSTDP
 
 default_device = ('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -172,7 +172,7 @@ class RSTDPNet(nn.Module):
         self.simulation_time = simulation_time
         self.device = device
         self.dtype = dtype
-
+        
         self.l1 = DSNN(
             state_size=(architecture[1],),
             operation=partial(torch.einsum, 'ab,bc->ac'),
@@ -183,8 +183,10 @@ class RSTDPNet(nn.Module):
             device=self.device,
             dtype=self.dtype
         )
+        
         # Set 'requires_grad' to 'False', since value assignment is not supported otherwise
         self.l1.weights = nn.Parameter(weights[0][0].clone(), requires_grad=False)
+        
         self.l2 = DSNN(
             state_size=(architecture[2],),
             operation=partial(torch.einsum, 'ab,bc->ac'),

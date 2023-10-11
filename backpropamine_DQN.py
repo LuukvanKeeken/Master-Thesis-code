@@ -26,10 +26,10 @@ import numpy as np
 
 
 # Maybe start with hard coded architecture, later make it general
-class FFNetwork(nn.Module):
+class BP_FFNetwork(nn.Module):
 
     def __init__(self, input_dims, pre_plastic_dims, post_plastic_dims, num_actions, seed):
-        super(FFNetwork, self).__init__()
+        super(BP_FFNetwork, self).__init__()
         
         # Is all of this really needed?
         random.seed(seed)
@@ -124,10 +124,10 @@ class FFNetwork(nn.Module):
 
 
 # RNN with trainable modulated plasticity ("backpropamine")
-class RNetwork(nn.Module):
+class BP_RNetwork(nn.Module):
     
     def __init__(self, isize, hsize, num_actions, seed): 
-        super(RNetwork, self).__init__()
+        super(BP_RNetwork, self).__init__()
 
         # Is all of this really needed?
         random.seed(seed)
@@ -158,10 +158,6 @@ class RNetwork(nn.Module):
 
 
             # Each *column* of w, alpha and hebb contains the inputs weights to a single neuron
-            i2h = self.i2h(inputs)
-            
-            unsqueezed = hidden[0].unsqueeze(1)
-            
             hactiv = torch.tanh( self.i2h(inputs) + hidden[0].unsqueeze(1).bmm(self.w + torch.mul(self.alpha, hebb)).squeeze(1)  )  # Update the h-state
             activout = self.h2o(hactiv)  # Pure linear, raw scores - to be softmaxed later, outside the function
         
@@ -214,6 +210,57 @@ class RNetwork(nn.Module):
 
 
 
+# A standard RNN (without backpropamine)
+class Standard_RNetwork(nn.Module):
+    
+    def __init__(self, isize, hsize, num_actions, seed): 
+        super(Standard_RNetwork, self).__init__()
+
+        # Is all of this really needed?
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+
+        self.hsize, self.isize  = hsize, isize 
+
+        self.i2h = torch.nn.Linear(isize, hsize)    # Weights from input to recurrent layer
+        self.w =  torch.nn.Parameter(.001 * torch.rand(hsize, hsize))   # Baseline (non-plastic) component of the plastic recurrent layer
+
+        self.h2o = torch.nn.Linear(hsize, num_actions)    # From recurrent to outputs (action probabilities)
+
+
+        
+    def forward(self, inputs, hidden): # hidden is a tuple containing the h-state (i.e. the recurrent hidden state) and the hebbian trace 
+            HS = self.hsize
+           
+            # hidden[0] is the h-state; hidden[1] is the Hebbian trace
+            hebb = hidden[1]
+
+
+            # Each *column* of w, alpha and hebb contains the inputs weights to a single neuron
+            hactiv = torch.tanh( self.i2h(inputs) + torch.matmul(hidden[0], self.w))  # Update the h-state
+            activout = self.h2o(hactiv)  # Pure linear, raw scores - to be softmaxed later, outside the function
+    
+
+            hidden = (hactiv, hebb)
+            return activout, hidden
+
+
+
+
+    def initialZeroState(self, BATCHSIZE):
+        return Variable(torch.zeros(BATCHSIZE, self.hsize), requires_grad=False )
+
+    # In plastic networks, we must also initialize the Hebbian state:
+    def initialZeroHebb(self, BATCHSIZE):
+        return Variable(torch.zeros(BATCHSIZE, self.hsize, self.hsize) , requires_grad=False)
+    
+    def loadWeights(self, weights):
+        self.i2h.weight = torch.nn.Parameter(weights["i2h.weight"])
+        self.i2h.bias = torch.nn.Parameter(weights["i2h.bias"])
+        self.w = torch.nn.Parameter(weights["w"])
+        self.h2o.weight = torch.nn.Parameter(weights["h2o.weight"])
+        self.h2o.bias = torch.nn.Parameter(weights["h2o.bias"])
 
 
 
@@ -222,13 +269,3 @@ class RNetwork(nn.Module):
 
 
 
-
-
-# net = FFNetwork(4, 64, 64, 2)
-
-# input = torch.tensor([[1.2, 2.3, 5.8, 8.6], [50.2, -200.12, 300, 12]])
-# hebb = net.initialZeroHebb(2)
-
-# output, hebb = net(input, hebb)
-# print(output)
-# # print(hebb)

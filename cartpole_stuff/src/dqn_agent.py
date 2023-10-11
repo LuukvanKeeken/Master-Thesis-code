@@ -1,3 +1,4 @@
+from copy import deepcopy
 import sys
 import gym
 import torch
@@ -6,7 +7,8 @@ import random
 import numpy as np
 import torch.nn.functional as F
 
-from model import DSNN
+from cartpole_stuff.src.model import DSNN
+from cartpole_stuff.src.utils import evaluate_BP_policy
 from collections import namedtuple, deque
 
 
@@ -229,6 +231,62 @@ class Agent:
         print('Best 100 episode average: ', best_average, ' reached at episode ',
               best_average_after, '. Model saved in folder best.')
         return smoothed_scores, scores, best_average, best_average_after
+
+
+    def fine_tune_agent(self, fine_tuning_episodes, eval_skip, fine_tuning_seeds, modified_env, n_evaluations, evaluation_seeds, max_reward):
+        self.env = modified_env
+        best_reward = -np.inf
+        best_episode = -1
+        best_weights = None
+        
+        eps = self.eps_end
+
+        for i_episode in range(1, fine_tuning_episodes + 1):
+            self.hebbian_traces = self.policy_net.initialZeroHebb(self.batch_size).to(device)
+            self.hidden_activations = self.policy_net.initialZeroState(self.batch_size).to(device)
+
+            self.env.seed(int(fine_tuning_seeds[i_episode - 1]))
+            state = self.env.reset()
+            if self.two_neuron:
+                state = self.transform_state(state)
+            score = 0
+            done = False
+            while not done:
+                self.t_step_total += 1
+                
+                action = self.select_action(state, eps)
+                next_state, reward, done, _ = self.env.step(action)
+                if self.two_neuron:
+                    next_state = self.transform_state(next_state)
+                self.step(state, action, reward, next_state, done)
+                state = next_state
+                score += reward
+                eps = self.eps_end
+                if done:
+                    break
+            
+            if (i_episode % eval_skip == 0):
+
+                eval_rewards = evaluate_BP_policy(self.policy_net, self.env, n_evaluations, evaluation_seeds)
+                avg_eval_reward = np.mean(eval_rewards)
+
+                print("Episode: {:4d} -- Reward: {:7.2f} -- Best reward: {:7.2f} in episode {:4d}"\
+                    .format(i_episode, avg_eval_reward, best_reward, best_episode), end='\r')    
+
+                if avg_eval_reward > best_reward:
+                    best_reward = avg_eval_reward
+                    best_episode = i_episode
+                    best_weights = deepcopy(self.policy_net.state_dict())
+                    
+                if best_reward >= max_reward:
+                    break
+
+        print('\nBest individual stored after episode {:d} with reward {:6.2f}'.format(best_episode, best_reward))
+        print()
+        return best_weights, best_reward, best_episode
+
+
+
 
 
 def evaluate_agent(policy_net, env, num_episodes, max_steps, gym_seeds, epsilon=0):

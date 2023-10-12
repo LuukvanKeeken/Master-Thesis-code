@@ -20,10 +20,10 @@ import numpy as np
 
 
 
-class Network(nn.Module):
+class BP_RNetwork(nn.Module):
     
     def __init__(self, isize, hsize, num_actions, seed): 
-        super(Network, self).__init__()
+        super(BP_RNetwork, self).__init__()
 
         # Is all of this really needed?
         random.seed(seed)

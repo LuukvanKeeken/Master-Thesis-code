@@ -7,8 +7,8 @@ import random
 import numpy as np
 import torch.nn.functional as F
 
-from cartpole_stuff.src.model import DSNN
-from cartpole_stuff.src.utils import evaluate_BP_policy
+from rstdp_cartpole_stuff.src.model import DSNN
+from rstdp_cartpole_stuff.src.utils import evaluate_BP_policy
 from collections import namedtuple, deque
 
 
@@ -198,6 +198,7 @@ class Agent:
                 self.t_step_total += 1
                 
                 action = self.select_action(state, eps)
+                
                 next_state, reward, done, _ = self.env.step(action)
                 if self.two_neuron:
                     next_state = self.transform_state(next_state)

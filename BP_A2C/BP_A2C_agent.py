@@ -13,11 +13,11 @@ device = torch.device("cuda" if use_cuda else "cpu")
 class A2C_Agent:
 
     def __init__(self, env, seed, agent_net, entropy_coef, value_pred_coef, gammaR, max_grad_norm, max_steps, batch_size,
-                 num_episodes, optimizer, print_every, save_every):
+                 num_episodes, optimizer, print_every, save_every, i_run, result_dir):
         
-        if self.batch_size > 1:
+        if batch_size > 1:
             print("Batch size larger than 1 not implemented yet. Program will continue with batch size set to 1.")
-            self.batch_size = 1
+            
 
         self.env = gym.make(env)
         self.env.seed(seed)
@@ -29,6 +29,7 @@ class A2C_Agent:
         self.num_inputs = self.env.observation_space.shape[0]
         self.num_outputs = self.env.action_space.n
 
+        self.batch_size = 1 
         self.agent_net = agent_net
         self.entropy_coef = entropy_coef # coefficient for the entropy reward (really Simpson index concentration measure)
         self.value_pred_coef = value_pred_coef # coefficient for value prediction loss
@@ -40,12 +41,15 @@ class A2C_Agent:
         self.optimizer = optimizer
         self.print_every = print_every # number of episodes between printing the current average score
         self.save_every = save_every # number of episodes between saving the most recent model
+        self.i_run = i_run
+        self.result_dir = result_dir
+
 
         # Initialize Hebbian traces
-        self.hebbian_traces = self.policy_net.initialZeroHebb(self.batch_size).to(device)
+        self.hebbian_traces = self.agent_net.initialZeroHebb(self.batch_size).to(device)
 
         # Initialize hidden activations
-        self.hidden_activations = self.policy_net.initialZeroState(self.batch_size).to(device)
+        self.hidden_activations = self.agent_net.initialZeroState(self.batch_size).to(device)
 
 
     def train_agent(self):
@@ -67,6 +71,9 @@ class A2C_Agent:
         for episode in range(1, self.num_episodes + 1):
             self.hidden_activations = self.agent_net.initialZeroState(self.batch_size)
             self.hebbian_traces = self.agent_net.initialZeroHebb(self.batch_size)
+            
+            score = 0
+            
             log_probs = []
             values = []
             rewards = []
@@ -76,7 +83,7 @@ class A2C_Agent:
                 # Feed the state into the network
                 state = torch.from_numpy(state)
                 state = state.unsqueeze(0)#.to(device) #This as well?
-                policy_output, value, (hidden_activations, hebbian_traces) = self.agent_net.forward(state.float(), [hidden_activations, hebbian_traces])
+                policy_output, value, (self.hidden_activations, self.hebbian_traces) = self.agent_net.forward(state.float(), [self.hidden_activations, self.hebbian_traces])
                 
                 # Get distribution over the action space
                 policy_dist = torch.softmax(policy_output, dim = 1)
@@ -90,6 +97,8 @@ class A2C_Agent:
                 
                 new_state, reward, done, _ = self.env.step(action)
 
+                score += reward
+
                 rewards.append(reward)
                 values.append(value)
                 log_probs.append(log_prob)
@@ -101,12 +110,29 @@ class A2C_Agent:
                     new_state = new_state.unsqueeze(0)#.to(device) #This as well?
                     _, Qval, (hidden_activations, hebbian_traces) = self.agent_net.forward(new_state.float(), [hidden_activations, hebbian_traces])
                     Qval = Qval.detach().numpy()[0,0]
-                    all_rewards.append(np.sum(rewards))
-                    all_lengths.append(steps)
-                    average_lengths.append(np.mean(all_lengths[-10:]))
-                    if episode % 10 == 0:                    
-                        sys.stdout.write("episode: {}, reward: {}, total length: {}, average length: {} \n".format(episode, np.sum(rewards), steps, average_lengths[-1]))
-                    break
+
+                    scores_window.append(score)
+                    scores.append(score)
+                    smoothed_scores.append(np.mean(scores_window))
+
+                    if smoothed_scores[-1] > best_average:
+                        best_average = smoothed_scores[-1]
+                        best_average_after = episode
+                        torch.save(self.agent_net.state_dict(),
+                                   self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+
+                    print("Episode {}\tAverage Score: {:.2f}".format(episode, np.mean(scores_window)), end='\r')
+
+                    if episode % 100 == 0:
+                        print("\rEpisode {}\tAverage Score: {:.2f}".
+                            format(episode, np.mean(scores_window)))
+
+                    # all_rewards.append(np.sum(rewards))
+                    # all_lengths.append(steps)
+                    # average_lengths.append(np.mean(all_lengths[-10:]))
+                    # if episode % 10 == 0:                    
+                    #     sys.stdout.write("episode: {}, reward: {}, total length: {}, average length: {} \n".format(episode, np.sum(rewards), steps, average_lengths[-1]))
+                    # break
             
             # compute Q values
             Qvals = np.zeros_like(values)
@@ -127,6 +153,11 @@ class A2C_Agent:
             self.optimizer.zero_grad()
             ac_loss.backward()
             self.optimizer.step()
+
+        print('Best 100 episode average: ', best_average, ' reached at episode ',
+              best_average_after, '. Model saved in folder best.')
+        
+        return smoothed_scores, scores, best_average, best_average_after
 
 
 

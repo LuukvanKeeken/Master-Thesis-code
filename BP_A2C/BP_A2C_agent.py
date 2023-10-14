@@ -12,14 +12,15 @@ device = torch.device("cuda" if use_cuda else "cpu")
 
 class A2C_Agent:
 
-    def __init__(self, env, seed, agent_net, entropy_coef, value_pred_coef, gammaR, max_grad_norm, max_steps, batch_size,
-                 num_episodes, optimizer, print_every, save_every, i_run, result_dir):
+    def __init__(self, env_name, seed, agent_net, entropy_coef, value_pred_coef, gammaR, max_grad_norm, max_steps, batch_size,
+                 num_training_episodes, optimizer, print_every, save_every, i_run, result_dir, best_model_selection_method,
+                 num_evaluation_episodes, evaluation_seeds, max_reward):
         
         if batch_size > 1:
             print("Batch size larger than 1 not implemented yet. Program will continue with batch size set to 1.")
             
 
-        self.env = gym.make(env)
+        self.env = gym.make(env_name)
         self.env.seed(seed)
 
         np.random.seed(seed)
@@ -29,6 +30,7 @@ class A2C_Agent:
         self.num_inputs = self.env.observation_space.shape[0]
         self.num_outputs = self.env.action_space.n
 
+        self.env_name = env_name
         self.batch_size = 1 
         self.agent_net = agent_net
         self.entropy_coef = entropy_coef # coefficient for the entropy reward (really Simpson index concentration measure)
@@ -36,13 +38,16 @@ class A2C_Agent:
         self.gammaR = gammaR # discounting factor for rewards
         self.max_grad_norm = max_grad_norm # maximum gradient norm, used in gradient clipping
         self.max_steps = max_steps # maximum length of an episode
-        self.batch_size = batch_size
-        self.num_episodes = num_episodes
+        self.num_training_episodes = num_training_episodes
         self.optimizer = optimizer
         self.print_every = print_every # number of episodes between printing the current average score
         self.save_every = save_every # number of episodes between saving the most recent model
         self.i_run = i_run
         self.result_dir = result_dir
+        self.selection_method = best_model_selection_method
+        self.num_evaluation_episodes = num_evaluation_episodes
+        self.evaluation_seeds = evaluation_seeds
+        self.max_reward = max_reward
 
 
         # Initialize Hebbian traces
@@ -68,7 +73,7 @@ class A2C_Agent:
 
         
 
-        for episode in range(1, self.num_episodes + 1):
+        for episode in range(1, self.num_training_episodes + 1):
             self.hidden_activations = self.agent_net.initialZeroState(self.batch_size)
             self.hebbian_traces = self.agent_net.initialZeroHebb(self.batch_size)
             
@@ -108,24 +113,39 @@ class A2C_Agent:
                 if done or steps == self.max_steps-1:
                     new_state = torch.from_numpy(new_state)
                     new_state = new_state.unsqueeze(0)#.to(device) #This as well?
-                    _, Qval, (hidden_activations, hebbian_traces) = self.agent_net.forward(new_state.float(), [hidden_activations, hebbian_traces])
+                    _, Qval, (self.hidden_activations, self.hebbian_traces) = self.agent_net.forward(new_state.float(), [self.hidden_activations, self.hebbian_traces])
                     Qval = Qval.detach().numpy()[0,0]
 
-                    scores_window.append(score)
-                    scores.append(score)
-                    smoothed_scores.append(np.mean(scores_window))
+                    if ((self.selection_method == "evaluation") and (episode % 10 == 0)):
+                        evaluation_performance = np.mean(evaluate_BP_agent(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds))
+                        print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
 
-                    if smoothed_scores[-1] > best_average:
-                        best_average = smoothed_scores[-1]
-                        best_average_after = episode
-                        torch.save(self.agent_net.state_dict(),
-                                   self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                        if evaluation_performance > best_average:
+                            best_average = evaluation_performance
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                       self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                            
 
-                    print("Episode {}\tAverage Score: {:.2f}".format(episode, np.mean(scores_window)), end='\r')
+    
+                    elif (self.selection_method == "100 episode average"):
+                        scores_window.append(score)
+                        scores.append(score)
+                        smoothed_scores.append(np.mean(scores_window))
 
-                    if episode % 100 == 0:
-                        print("\rEpisode {}\tAverage Score: {:.2f}".
-                            format(episode, np.mean(scores_window)))
+                        if smoothed_scores[-1] > best_average:
+                            best_average = smoothed_scores[-1]
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                    self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+
+                        print("Episode {}\tAverage Score: {:.2f}".format(episode, np.mean(scores_window)), end='\r')
+
+                        if episode % 100 == 0:
+                            print("\rEpisode {}\tAverage Score: {:.2f}".
+                                format(episode, np.mean(scores_window)))
+                        
+                    break
 
                     # all_rewards.append(np.sum(rewards))
                     # all_lengths.append(steps)
@@ -154,10 +174,48 @@ class A2C_Agent:
             ac_loss.backward()
             self.optimizer.step()
 
-        print('Best 100 episode average: ', best_average, ' reached at episode ',
+        print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
               best_average_after, '. Model saved in folder best.')
         
         return smoothed_scores, scores, best_average, best_average_after
+
+
+def evaluate_BP_agent(agent_net, env_name, num_episodes, evaluation_seeds):
+
+    eval_rewards = []
+    env = gym.make(env_name)
+        
+    for i_episode in range(num_episodes):
+        hebbian_traces = agent_net.initialZeroHebb(1)
+        hidden_activations = agent_net.initialZeroState(1)
+        
+        env.seed(int(evaluation_seeds[i_episode]))
+        
+        state = env.reset()
+        total_reward = 0
+        done = False
+
+        while not done:
+            state = torch.from_numpy(state)
+            state = state.unsqueeze(0)#.to(device) #This as well?
+            policy_output, value, (hidden_activations, hebbian_traces) = agent_net.forward(state.float(), [hidden_activations, hebbian_traces])
+            
+            policy_dist = torch.softmax(policy_output, dim = 1)
+            
+            action = torch.argmax(policy_dist)
+            
+
+            state, r, done, _ = env.step(action.item())
+
+            total_reward += r
+        eval_rewards.append(total_reward)
+
+    return eval_rewards
+
+
+                    
+
+
 
 
 

@@ -3,3 +3,5 @@
 *.npy
 *.venv
 *.pyc
+dqn_result*
+a2c_result*

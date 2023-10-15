@@ -62,7 +62,7 @@ class BP_RNetwork(nn.Module):
             
             # We also need to compute the eta (the plasticity rate), wich is determined by neuromodulation
             # Note that this is "simple" neuromodulation.
-            myeta = F.tanh(self.h2mod(hactiv)).unsqueeze(2)  # Shape: BatchSize x 1 x 1
+            myeta = torch.tanh(self.h2mod(hactiv)).unsqueeze(2)  # Shape: BatchSize x 1 x 1
             
             # The neuromodulated eta is passed through a vector of fanout weights, one per neuron.
             # Each *column* in w, hebb and alpha constitutes the inputs to a single cell.
@@ -89,3 +89,17 @@ class BP_RNetwork(nn.Module):
     # In plastic networks, we must also initialize the Hebbian state:
     def initialZeroHebb(self, BATCHSIZE):
         return Variable(torch.zeros(BATCHSIZE, self.hsize, self.hsize) , requires_grad=False)
+    
+    def loadWeights(self, weights):
+        self.i2h.weight = torch.nn.Parameter(weights["i2h.weight"])
+        self.i2h.bias = torch.nn.Parameter(weights["i2h.bias"])
+        self.w = torch.nn.Parameter(weights["w"])
+        self.alpha = torch.nn.Parameter(weights["alpha"])
+        self.h2mod.weight = torch.nn.Parameter(weights["h2mod.weight"])
+        self.h2mod.bias = torch.nn.Parameter(weights["h2mod.bias"])
+        self.modfanout.weight = torch.nn.Parameter(weights["modfanout.weight"])
+        self.modfanout.bias = torch.nn.Parameter(weights["modfanout.bias"])
+        self.h2o.weight = torch.nn.Parameter(weights["h2o.weight"])
+        self.h2o.bias = torch.nn.Parameter(weights["h2o.bias"])
+        self.h2v.weight = torch.nn.Parameter(weights["h2v.weight"])
+        self.h2v.bias = torch.nn.Parameter(weights["h2v.bias"])

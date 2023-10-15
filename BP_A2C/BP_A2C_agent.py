@@ -117,7 +117,7 @@ class A2C_Agent:
                     Qval = Qval.detach().numpy()[0,0]
 
                     if ((self.selection_method == "evaluation") and (episode % 10 == 0)):
-                        evaluation_performance = np.mean(evaluate_BP_agent(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds))
+                        evaluation_performance = np.mean(evaluate_BP_agent(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds, 1.0))
                         print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
 
                         if evaluation_performance > best_average:
@@ -180,10 +180,11 @@ class A2C_Agent:
         return smoothed_scores, scores, best_average, best_average_after
 
 
-def evaluate_BP_agent(agent_net, env_name, num_episodes, evaluation_seeds):
+def evaluate_BP_agent(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier):
 
     eval_rewards = []
     env = gym.make(env_name)
+    env.unwrapped.length *= pole_length_modifier
         
     for i_episode in range(num_episodes):
         hebbian_traces = agent_net.initialZeroHebb(1)

@@ -105,3 +105,62 @@ class BP_RNetwork(nn.Module):
         self.h2o.bias = torch.nn.Parameter(weights["h2o.bias"])
         self.h2v.weight = torch.nn.Parameter(weights["h2v.weight"])
         self.h2v.bias = torch.nn.Parameter(weights["h2v.bias"])
+
+
+
+
+class Standard_RNetwork(nn.Module):
+    
+    def __init__(self, isize, hsize, num_actions, seed): 
+        super(Standard_RNetwork, self).__init__()
+
+        # Is all of this really needed?
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+
+        self.hsize, self.isize  = hsize, isize 
+
+        self.i2h = torch.nn.Linear(isize, hsize)    # Weights from input to recurrent layer
+        self.w =  torch.nn.Parameter(.001 * torch.rand(hsize, hsize))   # Baseline (non-plastic) component of the plastic recurrent layer
+        
+        self.h2o = torch.nn.Linear(hsize, num_actions)    # From recurrent to outputs (action probabilities)
+        self.h2v = torch.nn.Linear(hsize, 1)            # From recurrent to value-prediction (used for A2C)
+
+
+        
+    def forward(self, inputs, hidden): # hidden is a tuple containing the h-state (i.e. the recurrent hidden state) and the hebbian trace 
+            HS = self.hsize
+            
+            # hidden[0] is the h-state; hidden[1] is the Hebbian trace
+            hebb = hidden[1]
+
+
+            # Each *column* of w, alpha and hebb contains the inputs weights to a single neuron
+            hactiv = torch.tanh( self.i2h(inputs) + torch.matmul(hidden[0], self.w))  # Update the h-state
+            activout = self.h2o(hactiv)  # Pure linear, raw scores - to be softmaxed later, outside the function
+            valueout = self.h2v(hactiv)
+
+        
+            hidden = (hactiv, hebb)
+            return activout, valueout, hidden
+
+
+
+
+    def initialZeroState(self, BATCHSIZE):
+        return Variable(torch.zeros(BATCHSIZE, self.hsize), requires_grad=False )
+
+    # In plastic networks, we must also initialize the Hebbian state:
+    def initialZeroHebb(self, BATCHSIZE):
+        return Variable(torch.zeros(BATCHSIZE, self.hsize, self.hsize) , requires_grad=False)
+    
+    def loadWeights(self, weights):
+        weights = deepcopy(weights)
+        self.i2h.weight = torch.nn.Parameter(weights["i2h.weight"])
+        self.i2h.bias = torch.nn.Parameter(weights["i2h.bias"])
+        self.w = torch.nn.Parameter(weights["w"])
+        self.h2o.weight = torch.nn.Parameter(weights["h2o.weight"])
+        self.h2o.bias = torch.nn.Parameter(weights["h2o.bias"])
+        self.h2v.weight = torch.nn.Parameter(weights["h2v.weight"])
+        self.h2v.bias = torch.nn.Parameter(weights["h2v.bias"])

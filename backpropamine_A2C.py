@@ -1,4 +1,5 @@
 import argparse
+from copy import deepcopy
 import pdb
 #from line_profiler import LineProfiler
 import torch
@@ -91,6 +92,7 @@ class BP_RNetwork(nn.Module):
         return Variable(torch.zeros(BATCHSIZE, self.hsize, self.hsize) , requires_grad=False)
     
     def loadWeights(self, weights):
+        weights = deepcopy(weights)
         self.i2h.weight = torch.nn.Parameter(weights["i2h.weight"])
         self.i2h.bias = torch.nn.Parameter(weights["i2h.bias"])
         self.w = torch.nn.Parameter(weights["w"])

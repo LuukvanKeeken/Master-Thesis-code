@@ -1,3 +1,4 @@
+from copy import deepcopy
 import torch
 import numpy as np
 import gym
@@ -178,6 +179,117 @@ class A2C_Agent:
               best_average_after, '. Model saved in folder best.')
         
         return smoothed_scores, scores, best_average, best_average_after
+
+
+
+    def fine_tune_agent(self, fine_tuning_episodes, eval_skip, fine_tuning_seeds, pole_length_modifier, n_evaluations, evaluation_seeds, max_reward):
+        best_reward = -np.inf
+        best_episode = 0
+        best_weights = None
+        entropy_term = 0
+
+        # Check if pre-trained model already reaches perfect evaluation performance
+        eval_rewards = evaluate_BP_agent(self.agent_net, self.env_name, n_evaluations, evaluation_seeds, pole_length_modifier)
+        avg_eval_reward = np.mean(eval_rewards)
+        if avg_eval_reward >= max_reward:
+            print("Maximum evaluation performance already reached before fine-tuning")
+            best_weights = deepcopy(self.agent_net.state_dict())
+            best_reward = avg_eval_reward
+            print('\nBest individual stored after episode {:d} with reward {:6.2f}'.format(best_episode, best_reward))
+            print()
+
+            return best_weights, best_reward, best_episode
+
+
+        # Evaluate after each episode of fine-tuning. Stop when perfect
+        # evaluation performance is reached, or when there are no fine-
+        # tuning episodes left.
+        for i_episode in range(1, fine_tuning_episodes + 1):
+            self.hebbian_traces = self.agent_net.initialZeroHebb(self.batch_size).to(device)
+            self.hidden_activations = self.agent_net.initialZeroState(self.batch_size).to(device)
+
+            self.env.seed(int(fine_tuning_seeds[i_episode - 1]))
+
+            score = 0
+
+            log_probs = []
+            values = []
+            rewards = []
+
+
+            state = self.env.reset()
+            for steps in range(self.max_steps):
+                # Feed the state into the network
+                state = torch.from_numpy(state)
+                state = state.unsqueeze(0)#.to(device) #This as well?
+                policy_output, value, (self.hidden_activations, self.hebbian_traces) = self.agent_net.forward(state.float(), [self.hidden_activations, self.hebbian_traces])
+                
+                # Get distribution over the action space
+                policy_dist = torch.softmax(policy_output, dim = 1)
+                value = value.detach().numpy()[0,0]
+                dist = policy_dist.detach().numpy() 
+
+                # Sample from distribution to select action
+                action = np.random.choice(self.num_outputs, p=np.squeeze(dist))
+                log_prob = torch.log(policy_dist.squeeze(0)[action])
+                entropy = -np.sum(np.mean(dist) * np.log(dist))
+                
+                new_state, reward, done, _ = self.env.step(action)
+
+                score += reward
+
+                rewards.append(reward)
+                values.append(value)
+                log_probs.append(log_prob)
+                entropy_term += entropy
+                state = new_state
+                
+                if done or steps == self.max_steps-1:
+                    new_state = torch.from_numpy(new_state)
+                    new_state = new_state.unsqueeze(0)#.to(device) #This as well?
+                    _, Qval, (self.hidden_activations, self.hebbian_traces) = self.agent_net.forward(new_state.float(), [self.hidden_activations, self.hebbian_traces])
+                    Qval = Qval.detach().numpy()[0,0]
+
+            # compute Q values
+            Qvals = np.zeros_like(values)
+            for t in reversed(range(len(rewards))):
+                Qval = rewards[t] + self.gammaR * Qval
+                Qvals[t] = Qval
+    
+            #update actor critic
+            values = torch.FloatTensor(values)
+            Qvals = torch.FloatTensor(Qvals)
+            log_probs = torch.stack(log_probs)
+            
+            advantage = Qvals - values
+            actor_loss = (-log_probs * advantage).mean()
+            critic_loss = 0.5 * advantage.pow(2).mean()
+            ac_loss = actor_loss + critic_loss + 0.001 * entropy_term
+
+            self.optimizer.zero_grad()
+            ac_loss.backward()
+            self.optimizer.step()
+
+
+            if (i_episode % eval_skip == 0):
+                eval_rewards = evaluate_BP_agent(self.agent_net, self.env_name, n_evaluations, evaluation_seeds, pole_length_modifier)
+                avg_eval_reward = np.mean(eval_rewards)
+
+                print("Episode: {:4d} -- Reward: {:7.2f} -- Best reward: {:7.2f} in episode {:4d}"\
+                    .format(i_episode, avg_eval_reward, best_reward, best_episode), end='\r')    
+
+                if avg_eval_reward > best_reward:
+                    best_reward = avg_eval_reward
+                    best_episode = i_episode
+                    best_weights = deepcopy(self.agent_net.state_dict())
+                    
+                if best_reward >= max_reward:
+                    break
+  
+
+        print('\nBest individual stored after episode {:d} with reward {:6.2f}'.format(best_episode, best_reward))
+        print()
+        return best_weights, best_reward, best_episode
 
 
 def evaluate_BP_agent(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier):

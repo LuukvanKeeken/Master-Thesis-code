@@ -22,6 +22,7 @@ class A2C_Agent:
             
 
         self.env = gym.make(env_name)
+        
         self.env.seed(seed)
 
         np.random.seed(seed)
@@ -118,7 +119,7 @@ class A2C_Agent:
                     Qval = Qval.detach().numpy()[0,0]
 
                     if ((self.selection_method == "evaluation") and (episode % 10 == 0)):
-                        evaluation_performance = np.mean(evaluate_BP_agent(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds, 1.0))
+                        evaluation_performance = np.mean(evaluate_BP_agent_pole_length(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds, 1.0))
                         print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
 
                         if evaluation_performance > best_average:
@@ -189,7 +190,7 @@ class A2C_Agent:
         entropy_term = 0
 
         # Check if pre-trained model already reaches perfect evaluation performance
-        eval_rewards = evaluate_BP_agent(self.agent_net, self.env_name, n_evaluations, evaluation_seeds, pole_length_modifier)
+        eval_rewards = evaluate_BP_agent_pole_length(self.agent_net, self.env_name, n_evaluations, evaluation_seeds, pole_length_modifier)
         avg_eval_reward = np.mean(eval_rewards)
         if avg_eval_reward >= max_reward:
             print("Maximum evaluation performance already reached before fine-tuning")
@@ -272,7 +273,7 @@ class A2C_Agent:
 
 
             if (i_episode % eval_skip == 0):
-                eval_rewards = evaluate_BP_agent(self.agent_net, self.env_name, n_evaluations, evaluation_seeds, pole_length_modifier)
+                eval_rewards = evaluate_BP_agent_pole_length(self.agent_net, self.env_name, n_evaluations, evaluation_seeds, pole_length_modifier)
                 avg_eval_reward = np.mean(eval_rewards)
 
                 print("Episode: {:4d} -- Reward: {:7.2f} -- Best reward: {:7.2f} in episode {:4d}"\
@@ -292,7 +293,7 @@ class A2C_Agent:
         return best_weights, best_reward, best_episode
 
 
-def evaluate_BP_agent(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier):
+def evaluate_BP_agent_pole_length(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier):
 
     eval_rewards = []
     env = gym.make(env_name)
@@ -328,11 +329,73 @@ def evaluate_BP_agent(agent_net, env_name, num_episodes, evaluation_seeds, pole_
 
                     
 
+def evaluate_BP_agent_force_mag(agent_net, env_name, num_episodes, evaluation_seeds, force_mag_modifier):
+
+    eval_rewards = []
+    env = gym.make(env_name)
+    env.unwrapped.force_mag *= force_mag_modifier
+        
+    for i_episode in range(num_episodes):
+        hebbian_traces = agent_net.initialZeroHebb(1)
+        hidden_activations = agent_net.initialZeroState(1)
+        
+        env.seed(int(evaluation_seeds[i_episode]))
+        
+        state = env.reset()
+        total_reward = 0
+        done = False
+
+        while not done:
+            state = torch.from_numpy(state)
+            state = state.unsqueeze(0)#.to(device) #This as well?
+            policy_output, value, (hidden_activations, hebbian_traces) = agent_net.forward(state.float(), [hidden_activations, hebbian_traces])
+            
+            policy_dist = torch.softmax(policy_output, dim = 1)
+            
+            action = torch.argmax(policy_dist)
+            
+
+            state, r, done, _ = env.step(action.item())
+
+            total_reward += r
+        eval_rewards.append(total_reward)
+
+    return eval_rewards
 
 
 
+def evaluate_BP_agent_pole_mass(agent_net, env_name, num_episodes, evaluation_seeds, pole_mass_modifier):
 
+    eval_rewards = []
+    env = gym.make(env_name)
+    env.unwrapped.masspole *= pole_mass_modifier
+        
+    for i_episode in range(num_episodes):
+        hebbian_traces = agent_net.initialZeroHebb(1)
+        hidden_activations = agent_net.initialZeroState(1)
+        
+        env.seed(int(evaluation_seeds[i_episode]))
+        
+        state = env.reset()
+        total_reward = 0
+        done = False
 
+        while not done:
+            state = torch.from_numpy(state)
+            state = state.unsqueeze(0)#.to(device) #This as well?
+            policy_output, value, (hidden_activations, hebbian_traces) = agent_net.forward(state.float(), [hidden_activations, hebbian_traces])
+            
+            policy_dist = torch.softmax(policy_output, dim = 1)
+            
+            action = torch.argmax(policy_dist)
+            
+
+            state, r, done, _ = env.step(action.item())
+
+            total_reward += r
+        eval_rewards.append(total_reward)
+
+    return eval_rewards
 
 
     # Based on version from BP paper:

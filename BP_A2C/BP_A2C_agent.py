@@ -22,7 +22,7 @@ class A2C_Agent:
             
 
         self.env = gym.make(env_name)
-        
+
         self.env.seed(seed)
 
         np.random.seed(seed)
@@ -50,6 +50,7 @@ class A2C_Agent:
         self.num_evaluation_episodes = num_evaluation_episodes
         self.evaluation_seeds = evaluation_seeds
         self.max_reward = max_reward
+        self.training_seed = seed
 
 
         # Initialize Hebbian traces
@@ -67,13 +68,8 @@ class A2C_Agent:
         smoothed_scores = []
         scores_window = deque(maxlen = 100)
 
-
-        all_lengths = []
-        average_lengths = []
-        all_rewards = []
         entropy_term = 0
 
-        
 
         for episode in range(1, self.num_training_episodes + 1):
             self.hidden_activations = self.agent_net.initialZeroState(self.batch_size)
@@ -180,6 +176,129 @@ class A2C_Agent:
               best_average_after, '. Model saved in folder best.')
         
         return smoothed_scores, scores, best_average, best_average_after
+
+
+    def train_agent_on_range(self, minimum, maximum):
+        best_average = -np.inf
+        best_average_after = np.inf
+        scores = []
+        smoothed_scores = []
+        scores_window = deque(maxlen = 100)
+
+        entropy_term = 0
+
+        
+        for episode in range(1, self.num_training_episodes + 1):
+            self.hidden_activations = self.agent_net.initialZeroState(self.batch_size)
+            self.hebbian_traces = self.agent_net.initialZeroHebb(self.batch_size)
+            
+            score = 0
+            
+            log_probs = []
+            values = []
+            rewards = []
+
+            modifier = np.random.uniform(minimum, maximum)
+            self.env = gym.make(self.env_name)
+            self.env.seed(self.training_seed + episode)
+            self.env.unwrapped.length *= modifier
+
+            state = self.env.reset()
+            for steps in range(self.max_steps):
+                # Feed the state into the network
+                state = torch.from_numpy(state)
+                state = state.unsqueeze(0)#.to(device) #This as well?
+                policy_output, value, (self.hidden_activations, self.hebbian_traces) = self.agent_net.forward(state.float(), [self.hidden_activations, self.hebbian_traces])
+                
+                # Get distribution over the action space
+                policy_dist = torch.softmax(policy_output, dim = 1)
+                value = value.detach().numpy()[0,0]
+                dist = policy_dist.detach().numpy() 
+
+                # Sample from distribution to select action
+                action = np.random.choice(self.num_outputs, p=np.squeeze(dist))
+                log_prob = torch.log(policy_dist.squeeze(0)[action])
+                entropy = -np.sum(np.mean(dist) * np.log(dist))
+                
+                new_state, reward, done, _ = self.env.step(action)
+
+                score += reward
+
+                rewards.append(reward)
+                values.append(value)
+                log_probs.append(log_prob)
+                entropy_term += entropy
+                state = new_state
+                
+                if done or steps == self.max_steps-1:
+                    new_state = torch.from_numpy(new_state)
+                    new_state = new_state.unsqueeze(0)#.to(device) #This as well?
+                    _, Qval, (self.hidden_activations, self.hebbian_traces) = self.agent_net.forward(new_state.float(), [self.hidden_activations, self.hebbian_traces])
+                    Qval = Qval.detach().numpy()[0,0]
+
+                    if ((self.selection_method == "evaluation") and (episode % 10 == 0)):
+                        evaluation_performance = np.mean(evaluate_BP_agent_pole_length(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds, 1.0))
+                        print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                        if evaluation_performance > best_average:
+                            best_average = evaluation_performance
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                       self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                            
+
+    
+                    elif (self.selection_method == "100 episode average"):
+                        scores_window.append(score)
+                        scores.append(score)
+                        smoothed_scores.append(np.mean(scores_window))
+
+                        if smoothed_scores[-1] > best_average:
+                            best_average = smoothed_scores[-1]
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                    self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+
+                        print("Episode {}\tAverage Score: {:.2f}".format(episode, np.mean(scores_window)), end='\r')
+
+                        if episode % 100 == 0:
+                            print("\rEpisode {}\tAverage Score: {:.2f}".
+                                format(episode, np.mean(scores_window)))
+                        
+                    break
+
+                    # all_rewards.append(np.sum(rewards))
+                    # all_lengths.append(steps)
+                    # average_lengths.append(np.mean(all_lengths[-10:]))
+                    # if episode % 10 == 0:                    
+                    #     sys.stdout.write("episode: {}, reward: {}, total length: {}, average length: {} \n".format(episode, np.sum(rewards), steps, average_lengths[-1]))
+                    # break
+            
+            # compute Q values
+            Qvals = np.zeros_like(values)
+            for t in reversed(range(len(rewards))):
+                Qval = rewards[t] + self.gammaR * Qval
+                Qvals[t] = Qval
+    
+            #update actor critic
+            values = torch.FloatTensor(values)
+            Qvals = torch.FloatTensor(Qvals)
+            log_probs = torch.stack(log_probs)
+            
+            advantage = Qvals - values
+            actor_loss = (-log_probs * advantage).mean()
+            critic_loss = 0.5 * advantage.pow(2).mean()
+            ac_loss = actor_loss + critic_loss + 0.001 * entropy_term
+
+            self.optimizer.zero_grad()
+            ac_loss.backward()
+            self.optimizer.step()
+
+        print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+              best_average_after, '. Model saved in folder best.')
+        
+        return smoothed_scores, scores, best_average, best_average_after
+
 
 
 

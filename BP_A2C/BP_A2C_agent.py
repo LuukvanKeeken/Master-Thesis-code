@@ -246,6 +246,11 @@ class A2C_Agent:
                             torch.save(self.agent_net.state_dict(),
                                        self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
                             
+                        if best_average == self.max_reward:
+                            print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                            best_average_after, '. Model saved in folder best.')
+                            return smoothed_scores, scores, best_average, best_average_after
+                            
 
     
                     elif (self.selection_method == "100 episode average"):

@@ -8,7 +8,7 @@ from collections import deque
 
 
 use_cuda = torch.cuda.is_available()
-device = torch.device("cuda" if use_cuda else "cpu")
+device = torch.device("cuda:0" if use_cuda else "cpu")
 
 
 class A2C_Agent:
@@ -72,7 +72,7 @@ class A2C_Agent:
 
 
         for episode in range(1, self.num_training_episodes + 1):
-            self.hidden_activations = self.agent_net.initialZeroState(self.batch_size)
+            self.hidden_activations = self.agent_net.initialZeroState(self.batch_size).to()
             self.hebbian_traces = self.agent_net.initialZeroHebb(self.batch_size)
             
             score = 0
@@ -123,6 +123,11 @@ class A2C_Agent:
                             best_average_after = episode
                             torch.save(self.agent_net.state_dict(),
                                        self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                            
+                        if best_average == self.max_reward:
+                            print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                            best_average_after, '. Model saved in folder best.')
+                            return smoothed_scores, scores, best_average, best_average_after
                             
 
     

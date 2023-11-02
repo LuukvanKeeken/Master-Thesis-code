@@ -72,8 +72,8 @@ class A2C_Agent:
 
 
         for episode in range(1, self.num_training_episodes + 1):
-            self.hidden_activations = self.agent_net.initialZeroState(self.batch_size).to()
-            self.hebbian_traces = self.agent_net.initialZeroHebb(self.batch_size)
+            self.hidden_activations = self.agent_net.initialZeroState(self.batch_size).to(device)
+            self.hebbian_traces = self.agent_net.initialZeroHebb(self.batch_size).to(device)
             
             score = 0
             
@@ -86,7 +86,7 @@ class A2C_Agent:
                 # Feed the state into the network
                 state = torch.from_numpy(state)
                 state = state.unsqueeze(0)#.to(device) #This as well?
-                policy_output, value, (self.hidden_activations, self.hebbian_traces) = self.agent_net.forward(state.float(), [self.hidden_activations, self.hebbian_traces])
+                policy_output, value, (self.hidden_activations, self.hebbian_traces) = self.agent_net.forward(state.float().to(device), [self.hidden_activations, self.hebbian_traces])
                 
                 # Get distribution over the action space
                 policy_dist = torch.softmax(policy_output, dim = 1)
@@ -194,8 +194,8 @@ class A2C_Agent:
 
         
         for episode in range(1, self.num_training_episodes + 1):
-            self.hidden_activations = self.agent_net.initialZeroState(self.batch_size)
-            self.hebbian_traces = self.agent_net.initialZeroHebb(self.batch_size)
+            self.hidden_activations = self.agent_net.initialZeroState(self.batch_size).to(device)
+            self.hebbian_traces = self.agent_net.initialZeroHebb(self.batch_size).to(device)
             
             score = 0
             
@@ -213,7 +213,7 @@ class A2C_Agent:
                 # Feed the state into the network
                 state = torch.from_numpy(state)
                 state = state.unsqueeze(0)#.to(device) #This as well?
-                policy_output, value, (self.hidden_activations, self.hebbian_traces) = self.agent_net.forward(state.float(), [self.hidden_activations, self.hebbian_traces])
+                policy_output, value, (self.hidden_activations, self.hebbian_traces) = self.agent_net.forward(state.float().to(device), [self.hidden_activations, self.hebbian_traces])
                 
                 # Get distribution over the action space
                 policy_dist = torch.softmax(policy_output, dim = 1)

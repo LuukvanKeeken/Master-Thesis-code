@@ -54,6 +54,9 @@ class BP_RNetwork(nn.Module):
 
 
             # Each *column* of w, alpha and hebb contains the inputs weights to a single neuron
+            print(inputs.get_device())
+            print(hebb.get_device())
+            print(hidden[0].get_device())
             hactiv = torch.tanh( self.i2h(inputs) + hidden[0].unsqueeze(1).bmm(self.w + torch.mul(self.alpha, hebb)).squeeze(1)  )  # Update the h-state
             activout = self.h2o(hactiv)  # Pure linear, raw scores - to be softmaxed later, outside the function
             valueout = self.h2v(hactiv)

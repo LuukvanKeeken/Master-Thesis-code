@@ -136,4 +136,4 @@ ax.set_xticks(BP_evaluation_percentages[start:end])
 ax.legend()
 
 
-plt.show()
+plt.savefig("./figs/BPRANGEplot.png")

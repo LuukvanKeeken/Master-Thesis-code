@@ -76,8 +76,8 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
             # Get distribution over the action space
             policy_dist = torch.softmax(policy_output, dim = 1)
-            value = value.detach().numpy()[0, 0]
-            dist = policy_dist.detach().numpy()
+            value = value.detach().cpu().numpy()[0, 0]
+            dist = policy_dist.detach().cpu().numpy()
 
             # Sample an action from the distribution
             action = np.random.choice(num_outputs, p=np.squeeze(dist))
@@ -98,7 +98,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                 new_state = torch.from_numpy(new_state)
                 new_state = new_state.unsqueeze(0).to(device)
                 _, Qval, hidden_state = agent_net(new_state.float(), hidden_state)
-                Qval = Qval.detach().numpy()[0, 0]
+                Qval = Qval.detach().cpu().numpy()[0, 0]
 
                 if ((selection_method == "evaluation") and (episode % evaluate_every == 0)):
                     evaluation_performance = np.mean(evaluate_BP_agent_pole_length(agent_net, env_name, num_evaluation_episodes, evaluation_seeds, 1.0))

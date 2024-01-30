@@ -18,60 +18,60 @@ if statistic == "mean":
 elif statistic == "median":
     ax.plot(BP_evaluation_percentages[start:end], BP_evaluation_statistic[start:end], label = "BP")
 
-BPRANGE_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.91.1_10models/{modified_parameter}/{statistic}s.npy")
-BPRANGE_evaluation_std = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.91.1_10models/{modified_parameter}/stddevs.npy")
-BPRANGE_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.91.1_10models/{modified_parameter}/percentages.npy")
-BPRANGE_evaluation_percentages = (BPRANGE_evaluation_percentages*100)-100
-if statistic == "mean":
-    ax.errorbar(BPRANGE_evaluation_percentages[start:end], BPRANGE_evaluation_statistic[start:end], BPRANGE_evaluation_std[start:end], capsize=5, label = "BP_0.9_1.1")
-elif statistic == "median":
-    ax.plot(BPRANGE_evaluation_percentages[start:end], BPRANGE_evaluation_statistic[start:end], label = "BP_0.9_1.1")
-
-BPRANGE2_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.82.0_10models/{modified_parameter}/{statistic}s.npy")
-BPRANGE2_evaluation_std = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.82.0_10models/{modified_parameter}/stddevs.npy")
-BPRANGE2_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.82.0_10models/{modified_parameter}/percentages.npy")
-BPRANGE2_evaluation_percentages = (BPRANGE2_evaluation_percentages*100)-100
-if statistic == "mean":
-    ax.errorbar(BPRANGE2_evaluation_percentages[start:end], BPRANGE2_evaluation_statistic[start:end], BPRANGE2_evaluation_std[start:end], capsize=5, label = "BP_0.8_2.0")
-elif statistic == "median":
-    ax.plot(BPRANGE2_evaluation_percentages[start:end], BPRANGE2_evaluation_statistic[start:end], label = "BP_0.8_2.0")
-
-BPRANGE3_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.73.0_10models/{modified_parameter}/{statistic}s.npy")
-BPRANGE3_evaluation_std = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.73.0_10models/{modified_parameter}/stddevs.npy")
-BPRANGE3_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.73.0_10models/{modified_parameter}/percentages.npy")
-BPRANGE3_evaluation_percentages = (BPRANGE3_evaluation_percentages*100)-100
-if statistic == "mean":
-    ax.errorbar(BPRANGE3_evaluation_percentages[start:end], BPRANGE3_evaluation_statistic[start:end], BPRANGE3_evaluation_std[start:end], capsize=5, label = "BP_0.7_3.0")
-elif statistic == "median":
-    ax.plot(BPRANGE3_evaluation_percentages[start:end], BPRANGE3_evaluation_statistic[start:end], label = "BP_0.7_3.0")
-
-BPRANGE4_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.79.0_10models/{modified_parameter}/{statistic}s.npy")
-BPRANGE4_evaluation_std = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.79.0_10models/{modified_parameter}/stddevs.npy")
-BPRANGE4_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.79.0_10models/{modified_parameter}/percentages.npy")
-BPRANGE4_evaluation_percentages = (BPRANGE4_evaluation_percentages*100)-100
-if statistic == "mean":
-    ax.errorbar(BPRANGE4_evaluation_percentages[start:end], BPRANGE4_evaluation_statistic[start:end], BPRANGE4_evaluation_std[start:end], capsize=5, label = "BP_0.7_9.0")
-elif statistic == "median":
-    ax.plot(BPRANGE4_evaluation_percentages[start:end], BPRANGE4_evaluation_statistic[start:end], label = "BP_0.7_9.0")
-
-
-# Standard_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_RNN_10models/{modified_parameter}/{statistic}s.npy")
-# Standard_evaluation_std = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_RNN_10models/{modified_parameter}/stddevs.npy")
-# Standard_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_RNN_10models/{modified_parameter}/percentages.npy")
-# Standard_evaluation_percentages = (Standard_evaluation_percentages*100)-100
+# BPRANGE_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.91.1_10models/{modified_parameter}/{statistic}s.npy")
+# BPRANGE_evaluation_std = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.91.1_10models/{modified_parameter}/stddevs.npy")
+# BPRANGE_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.91.1_10models/{modified_parameter}/percentages.npy")
+# BPRANGE_evaluation_percentages = (BPRANGE_evaluation_percentages*100)-100
 # if statistic == "mean":
-#     ax.errorbar(Standard_evaluation_percentages[start:end], Standard_evaluation_statistic[start:end], Standard_evaluation_std[start:end], capsize=5, label = "Standard")
+#     ax.errorbar(BPRANGE_evaluation_percentages[start:end], BPRANGE_evaluation_statistic[start:end], BPRANGE_evaluation_std[start:end], capsize=5, label = "BP_0.9_1.1")
 # elif statistic == "median":
-#     ax.plot(Standard_evaluation_percentages[start:end], Standard_evaluation_statistic[start:end], label = "Standard")
+#     ax.plot(BPRANGE_evaluation_percentages[start:end], BPRANGE_evaluation_statistic[start:end], label = "BP_0.9_1.1")
 
-# MLP_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_10models/{modified_parameter}/{statistic}s.npy")
-# MLP_evaluation_std = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_10models/{modified_parameter}/stddevs.npy")
-# MLP_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_10models/{modified_parameter}/percentages.npy")
-# MLP_evaluation_percentages = (MLP_evaluation_percentages*100)-100
+# BPRANGE2_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.82.0_10models/{modified_parameter}/{statistic}s.npy")
+# BPRANGE2_evaluation_std = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.82.0_10models/{modified_parameter}/stddevs.npy")
+# BPRANGE2_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.82.0_10models/{modified_parameter}/percentages.npy")
+# BPRANGE2_evaluation_percentages = (BPRANGE2_evaluation_percentages*100)-100
 # if statistic == "mean":
-#     ax.errorbar(MLP_evaluation_percentages[start:end], MLP_evaluation_statistic[start:end], MLP_evaluation_std[start:end], capsize=5, label = "MLP")
+#     ax.errorbar(BPRANGE2_evaluation_percentages[start:end], BPRANGE2_evaluation_statistic[start:end], BPRANGE2_evaluation_std[start:end], capsize=5, label = "BP_0.8_2.0")
 # elif statistic == "median":
-#     ax.plot(MLP_evaluation_percentages[start:end], MLP_evaluation_statistic[start:end], label = "MLP")
+#     ax.plot(BPRANGE2_evaluation_percentages[start:end], BPRANGE2_evaluation_statistic[start:end], label = "BP_0.8_2.0")
+
+# BPRANGE3_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.73.0_10models/{modified_parameter}/{statistic}s.npy")
+# BPRANGE3_evaluation_std = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.73.0_10models/{modified_parameter}/stddevs.npy")
+# BPRANGE3_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.73.0_10models/{modified_parameter}/percentages.npy")
+# BPRANGE3_evaluation_percentages = (BPRANGE3_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(BPRANGE3_evaluation_percentages[start:end], BPRANGE3_evaluation_statistic[start:end], BPRANGE3_evaluation_std[start:end], capsize=5, label = "BP_0.7_3.0")
+# elif statistic == "median":
+#     ax.plot(BPRANGE3_evaluation_percentages[start:end], BPRANGE3_evaluation_statistic[start:end], label = "BP_0.7_3.0")
+
+# BPRANGE4_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.79.0_10models/{modified_parameter}/{statistic}s.npy")
+# BPRANGE4_evaluation_std = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.79.0_10models/{modified_parameter}/stddevs.npy")
+# BPRANGE4_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_range0.79.0_10models/{modified_parameter}/percentages.npy")
+# BPRANGE4_evaluation_percentages = (BPRANGE4_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(BPRANGE4_evaluation_percentages[start:end], BPRANGE4_evaluation_statistic[start:end], BPRANGE4_evaluation_std[start:end], capsize=5, label = "BP_0.7_9.0")
+# elif statistic == "median":
+#     ax.plot(BPRANGE4_evaluation_percentages[start:end], BPRANGE4_evaluation_statistic[start:end], label = "BP_0.7_9.0")
+
+
+Standard_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_RNN_10models/{modified_parameter}/{statistic}s.npy")
+Standard_evaluation_std = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_RNN_10models/{modified_parameter}/stddevs.npy")
+Standard_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_RNN_10models/{modified_parameter}/percentages.npy")
+Standard_evaluation_percentages = (Standard_evaluation_percentages*100)-100
+if statistic == "mean":
+    ax.errorbar(Standard_evaluation_percentages[start:end], Standard_evaluation_statistic[start:end], Standard_evaluation_std[start:end], capsize=5, label = "Standard")
+elif statistic == "median":
+    ax.plot(Standard_evaluation_percentages[start:end], Standard_evaluation_statistic[start:end], label = "Standard")
+
+MLP_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_10models/{modified_parameter}/{statistic}s.npy")
+MLP_evaluation_std = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_10models/{modified_parameter}/stddevs.npy")
+MLP_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_10models/{modified_parameter}/percentages.npy")
+MLP_evaluation_percentages = (MLP_evaluation_percentages*100)-100
+if statistic == "mean":
+    ax.errorbar(MLP_evaluation_percentages[start:end], MLP_evaluation_statistic[start:end], MLP_evaluation_std[start:end], capsize=5, label = "MLP")
+elif statistic == "median":
+    ax.plot(MLP_evaluation_percentages[start:end], MLP_evaluation_statistic[start:end], label = "MLP")
 
 # MLPLIB_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLPLIBRARY_10models/{modified_parameter}/{statistic}s.npy")
 # MLPLIB_evaluation_std = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLPLIBRARY_10models/{modified_parameter}/stddevs.npy")
@@ -118,14 +118,24 @@ elif statistic == "median":
 # elif statistic == "median":
 #     ax.plot(MLPRANGE4_evaluation_percentages[start:end], MLPRANGE4_evaluation_statistic[start:end], label = "MLP_0.6_4.0")
 
-MLPRANGE5_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_range0.79.0_10models/{modified_parameter}/{statistic}s.npy")
-MLPRANGE5_evaluation_std = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_range0.79.0_10models/{modified_parameter}/stddevs.npy")
-MLPRANGE5_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_range0.79.0_10models/{modified_parameter}/percentages.npy")
-MLPRANGE5_evaluation_percentages = (MLPRANGE5_evaluation_percentages*100)-100
+# MLPRANGE5_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_range0.79.0_10models/{modified_parameter}/{statistic}s.npy")
+# MLPRANGE5_evaluation_std = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_range0.79.0_10models/{modified_parameter}/stddevs.npy")
+# MLPRANGE5_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/Standard_A2C_MLP_range0.79.0_10models/{modified_parameter}/percentages.npy")
+# MLPRANGE5_evaluation_percentages = (MLPRANGE5_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(MLPRANGE5_evaluation_percentages[start:end], MLPRANGE5_evaluation_statistic[start:end], MLPRANGE5_evaluation_std[start:end], capsize=5, label = "MLP_0.7_9.0")
+# elif statistic == "median":
+#     ax.plot(MLPRANGE5_evaluation_percentages[start:end], MLPRANGE5_evaluation_statistic[start:end], label = "MLP_0.7_9.0")
+
+MLPLIBDQN_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/Standard_DQN_MLPLIBRARY_10models/{modified_parameter}/second_10/{statistic}s.npy")
+MLPLIBDQN_evaluation_std = np.load(f"../BP_A2C/evaluation_results/Standard_DQN_MLPLIBRARY_10models/{modified_parameter}/second_10/stddevs.npy")
+# MLPLIBDQN_evaluation_percentages = np.load(f"../BP_A2C/evaluation_results/Standard_DQN_MLPLIBRARY_10models/{modified_parameter}/percentages.npy")
+MLPLIBDQN_evaluation_percentages = BP_evaluation_percentages
+# MLPLIBDQN_evaluation_percentages = (MLPLIBDQN_evaluation_percentages*100)-100
 if statistic == "mean":
-    ax.errorbar(MLPRANGE5_evaluation_percentages[start:end], MLPRANGE5_evaluation_statistic[start:end], MLPRANGE5_evaluation_std[start:end], capsize=5, label = "MLP_0.7_9.0")
+    ax.errorbar(MLPLIBDQN_evaluation_percentages[start:end], MLPLIBDQN_evaluation_statistic[start:end], MLPLIBDQN_evaluation_std[start:end], capsize=5, label = "MLPLIBDQN")
 elif statistic == "median":
-    ax.plot(MLPRANGE5_evaluation_percentages[start:end], MLPRANGE5_evaluation_statistic[start:end], label = "MLP_0.7_9.0")
+    ax.plot(MLPLIBDQN_evaluation_percentages[start:end], MLPLIBDQN_evaluation_statistic[start:end], label = "MLPLIBDQN")
 
 ax.grid(True)
 ax.set_ylim(0, 250)

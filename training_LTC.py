@@ -108,7 +108,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         best_average = evaluation_performance
                         best_average_after = episode
                         torch.save(agent_net.state_dict(),
-                                       result_dir + '/checkpoint_CfC_A2C_{}.pt'.format(i_run))
+                                       result_dir + '/checkpoint_LTC_A2C_{}.pt'.format(i_run))
 
                     if best_average == max_reward:
                         print(f'Best {selection_method}: ', best_average, ' reached at episode ',
@@ -198,7 +198,7 @@ for i in range(10):
     torch.manual_seed(seed)
     random.seed(seed)
 
-    agent_net = CfC_Network(4, 64, 2, seed).to(device)
+    agent_net = LTC_Network(4, 64, 2, seed).to(device)
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
     smoothed_scores, scores, best_average, best_average_after = train_agent(env, 10000, 200, agent_net, 2, evaluation_seeds, i, selection_method = selection_method, gamma = gamma)

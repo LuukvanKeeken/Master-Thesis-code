@@ -147,6 +147,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
         log_probs = torch.stack(log_probs)
 
         advantage = Qvals - values
+        advantage = advantage.cpu()
         actor_loss = (-log_probs * advantage).mean()
         critic_loss = 0.5 * advantage.pow(2).mean()
         # 0.001 IS A MAGIC NUMBER!!

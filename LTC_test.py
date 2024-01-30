@@ -137,6 +137,7 @@ valloader = torch.utils.data.DataLoader(val_ds, batch_size=32, num_workers=4)
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(device)
 model = ConvCfC(n_actions=env.action_space.n).to(device)
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.0001)

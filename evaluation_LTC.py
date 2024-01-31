@@ -110,6 +110,7 @@ max_reward = 200
 max_steps = 200
 n_evaluations = 100
 neuron_type = "CfC"
+num_neurons = 32
 
 evaluation_seeds = np.load('rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
@@ -137,9 +138,9 @@ with open(f"LTC_A2C/evaluation_results/{results_dir}/original_env_evals.txt", "w
     for i, w in enumerate(weights):
         print('Run {:02d} ...'.format(i), end='')
         if neuron_type == "CfC":
-            agent_net = CfC_Network(4, 64, 2, 5).to(device)
+            agent_net = CfC_Network(4, num_neurons, 2, 5).to(device)
         elif neuron_type == "LTC":
-            agent_net = LTC_Network(4, 64, 2, 5).to(device)
+            agent_net = LTC_Network(4, num_neurons, 2, 5).to(device)
         
         agent_net.load_state_dict(w)
 
@@ -164,9 +165,9 @@ for percentage in percentages:
     for i, w in enumerate(weights):
         print('Run {:02d} ...'.format(i), end='')
         if neuron_type == "CfC":
-            agent_net = CfC_Network(4, 64, 2, 5).to(device)
+            agent_net = CfC_Network(4, num_neurons, 2, 5).to(device)
         elif neuron_type == "LTC":
-            agent_net = LTC_Network(4, 64, 2, 5).to(device)
+            agent_net = LTC_Network(4, num_neurons, 2, 5).to(device)
         agent_net.load_state_dict(w)
 
         rewards = evaluate_LTC_agent_pole_length(agent_net, env_name, n_evaluations, evaluation_seeds, percentage)
@@ -204,9 +205,9 @@ for percentage in percentages:
     for i, w in enumerate(weights):
         print('Run {:02d} ...'.format(i), end='')
         if neuron_type == "CfC":
-            agent_net = CfC_Network(4, 64, 2, 5).to(device)
+            agent_net = CfC_Network(4, num_neurons, 2, 5).to(device)
         elif neuron_type == "LTC":
-            agent_net = LTC_Network(4, 64, 2, 5).to(device)
+            agent_net = LTC_Network(4, num_neurons, 2, 5).to(device)
         agent_net.load_state_dict(w)
 
         rewards = evaluate_LTC_agent_pole_mass(agent_net, env_name, n_evaluations, evaluation_seeds, percentage)
@@ -245,9 +246,9 @@ for percentage in percentages:
     for i, w in enumerate(weights):
         print('Run {:02d} ...'.format(i), end='')
         if neuron_type == "CfC":
-            agent_net = CfC_Network(4, 64, 2, 5).to(device)
+            agent_net = CfC_Network(4, num_neurons, 2, 5).to(device)
         elif neuron_type == "LTC":
-            agent_net = LTC_Network(4, 64, 2, 5).to(device)
+            agent_net = LTC_Network(4, num_neurons, 2, 5).to(device)
         agent_net.load_state_dict(w)
 
         rewards = evaluate_LTC_agent_force_mag(agent_net, env_name, n_evaluations, evaluation_seeds, percentage)

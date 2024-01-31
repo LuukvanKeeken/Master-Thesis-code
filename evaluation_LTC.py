@@ -109,11 +109,11 @@ env_name = "CartPole-v0"
 max_reward = 200
 max_steps = 200
 n_evaluations = 100
-neuron_type = "LTC"
+neuron_type = "CfC"
 
 evaluation_seeds = np.load('rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-results_dir = f"LTC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard"
+results_dir = f"CfC_a2c_result_8_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32"
 os.mkdir(f"LTC_A2C/evaluation_results/{results_dir}")
 
 

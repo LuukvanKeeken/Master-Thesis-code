@@ -169,6 +169,7 @@ learning_rate = 0.0001
 selection_method = "evaluation"
 gamma = 0.99
 training_method = "standard"
+num_neurons = 32
 
 
 dirs = os.listdir('./LTC_A2C/training_results/')
@@ -178,7 +179,7 @@ else:
     results = [d for d in dirs if 'a2c_result' in d]
     result_id = len(results) + 1
 d = date.today()
-result_dir = 'LTC_A2C/training_results/LTC_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}'
+result_dir = 'LTC_A2C/training_results/LTC_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}'
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
 
@@ -198,7 +199,7 @@ for i in range(10):
     torch.manual_seed(seed)
     random.seed(seed)
 
-    agent_net = LTC_Network(4, 64, 2, seed).to(device)
+    agent_net = LTC_Network(4, num_neurons, 2, seed).to(device)
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
     smoothed_scores, scores, best_average, best_average_after = train_agent(env, 10000, 200, agent_net, 2, evaluation_seeds, i, selection_method = selection_method, gamma = gamma)

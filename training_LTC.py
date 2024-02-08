@@ -1,15 +1,13 @@
 from datetime import date
 import os
 import random
-from ncps.torch import LTC, CfC
-from ncps.wirings import AutoNCP, FullyConnected, Wiring
 import gym
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from collections import deque
 import torch
-from LTC_A2C import LTC_Network, CfC_Network
+from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -108,7 +106,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         best_average = evaluation_performance
                         best_average_after = episode
                         torch.save(agent_net.state_dict(),
-                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{}.pt'.format(i_run))
+                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
 
                     if best_average == max_reward:
                         print(f'Best {selection_method}: ', best_average, ' reached at episode ',
@@ -169,18 +167,23 @@ learning_rate = 0.0001
 selection_method = "evaluation"
 gamma = 0.99
 training_method = "standard"
-num_neurons = 48
+num_neurons = 32
 neuron_type = "CfC"
+mode = "pure"
+tau_sys_extraction = True
+fully_connected = True
+num_models = 1
 
-
-dirs = os.listdir('./LTC_A2C/training_results/')
+dirs = os.listdir('Master_Thesis_Code/LTC_A2C/training_results/')
 if not any('a2c_result' in d for d in dirs):
     result_id = 1
 else:
     results = [d for d in dirs if 'a2c_result' in d]
     result_id = len(results) + 1
 d = date.today()
-result_dir = f'LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}'
+result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}_fullyconnected_{fully_connected}'
+if neuron_type == "CfC":
+    result_dir += "_mode_" + mode
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
 
@@ -188,12 +191,12 @@ print('Created Directory {} to store the results in'.format(result_dir))
 
 
 env = gym.make('CartPole-v0')
-evaluation_seeds = np.load('rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
-training_seeds = np.load('rstdp_cartpole_stuff/seeds/training_seeds.npy')
+evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
+training_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/training_seeds.npy')
 
 
 best_average_after_all = []
-for i in range(10):
+for i in range(num_models):
     print(f"Run # {i}")
     seed = int(training_seeds[i])
 
@@ -201,9 +204,9 @@ for i in range(10):
     random.seed(seed)
     
     if neuron_type == "LTC":
-        agent_net = LTC_Network(4, num_neurons, 2, seed).to(device)
+        agent_net = LTC_Network(4, num_neurons, 2, seed, fully_connected).to(device)
     elif neuron_type == "CfC":
-        agent_net = CfC_Network(4, num_neurons, 2, seed).to(device)
+        agent_net = CfC_Network(4, num_neurons, 2, seed, fully_connected, mode = mode).to(device)
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 

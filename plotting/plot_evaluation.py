@@ -6,18 +6,35 @@ fig, ax = plt.subplots()
 
 start = 0
 end = 200
-modified_parameter = "pole_mass"
-statistic = "mean"
+modified_parameter = "force_mag"
+statistic = "median"
 
-CfC_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard/{modified_parameter}/{statistic}s.npy")
-CfC_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard/{modified_parameter}/stddevs.npy")
-CfC_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard/{modified_parameter}/percentages.npy")
+CfC_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_64/{modified_parameter}/{statistic}s.npy")
+CfC_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_64/{modified_parameter}/stddevs.npy")
+CfC_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_64/{modified_parameter}/percentages.npy")
 CfC_evaluation_percentages = (CfC_evaluation_percentages*100)-100
 if statistic == "mean":
     ax.errorbar(CfC_evaluation_percentages[start:end], CfC_evaluation_statistic[start:end], CfC_evaluation_std[start:end], capsize=5, label = "CfC")
 elif statistic == "median":
-    ax.plot(CfC_evaluation_percentages[start:end], CfC_evaluation_statistic[start:end], label = "CfC")
+    ax.plot(CfC_evaluation_percentages[start:end], CfC_evaluation_statistic[start:end], label = "CfC_64")
 
+CfC_48_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_10_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_48/{modified_parameter}/{statistic}s.npy")
+CfC_48_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_10_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_48/{modified_parameter}/stddevs.npy")
+CfC_48_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_10_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_48/{modified_parameter}/percentages.npy")
+CfC_48_evaluation_percentages = (CfC_48_evaluation_percentages*100)-100
+if statistic == "mean":
+    ax.errorbar(CfC_48_evaluation_percentages[start:end], CfC_48_evaluation_statistic[start:end], CfC_48_evaluation_std[start:end], capsize=5, label = "CfC_48")
+elif statistic == "median":
+    ax.plot(CfC_48_evaluation_percentages[start:end], CfC_48_evaluation_statistic[start:end], label = "CfC_48")
+
+CfC_32_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_8_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32/{modified_parameter}/{statistic}s.npy")
+CfC_32_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_8_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32/{modified_parameter}/stddevs.npy")
+CfC_32_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_8_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32/{modified_parameter}/percentages.npy")
+CfC_32_evaluation_percentages = (CfC_32_evaluation_percentages*100)-100
+if statistic == "mean":
+    ax.errorbar(CfC_32_evaluation_percentages[start:end], CfC_32_evaluation_statistic[start:end], CfC_32_evaluation_std[start:end], capsize=5, label = "CfC_32")
+elif statistic == "median":
+    ax.plot(CfC_32_evaluation_percentages[start:end], CfC_32_evaluation_statistic[start:end], label = "CfC_32")
 
 # BP_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_10models/{modified_parameter}/{statistic}s.npy")
 # BP_evaluation_std = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_10models/{modified_parameter}/stddevs.npy")

@@ -163,7 +163,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
 
 
-
+device = "cpu"
 learning_rate = 0.001
 selection_method = "evaluation"
 gamma = 0.99

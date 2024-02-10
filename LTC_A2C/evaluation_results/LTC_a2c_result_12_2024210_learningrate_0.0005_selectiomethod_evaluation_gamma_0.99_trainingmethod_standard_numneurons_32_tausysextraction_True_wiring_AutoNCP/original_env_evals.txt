@@ -1,0 +1,2 @@
+Run 0: avg reward: 199.74
+Mean avg reward: 199.74, +/- 0.0

@@ -1,6 +1,7 @@
 import os
 import numpy as np
-from LTC_A2C import LTC_Network, CfC_Network
+from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
+from ncps_time_constant_extraction.ncps.wirings import AutoNCP
 import torch
 import gym
 
@@ -109,38 +110,43 @@ env_name = "CartPole-v0"
 max_reward = 200
 max_steps = 200
 n_evaluations = 100
-neuron_type = "CfC"
-num_neurons = 48
+neuron_type = "LTC"
+num_neurons = 32
+sparsity_level = 0.5
+seed = 5
+mode = "pure"
+wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
 
-evaluation_seeds = np.load('rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
+evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-results_dir = f"CfC_a2c_result_10_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_48"
-os.mkdir(f"LTC_A2C/evaluation_results/{results_dir}")
+results_dir = f"LTC_a2c_result_12_2024210_learningrate_0.001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_wiring_AutoNCP"
+os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}")
 
 
-weights_0 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
-weights_1 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
-weights_2 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
-weights_3 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
-weights_4 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
-weights_5 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
-weights_6 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
-weights_7 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
-weights_8 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
-weights_9 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
-weights = [weights_0, weights_1, weights_2, weights_3, weights_4, weights_5, weights_6, weights_7, weights_8, weights_9]
+weights_0 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
+# weights_1 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
+# weights_2 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
+# weights_3 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
+# weights_4 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
+# weights_5 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
+# weights_6 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
+# weights_7 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
+# weights_8 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
+# weights_9 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
+# weights = [weights_0, weights_1, weights_2, weights_3, weights_4, weights_5, weights_6, weights_7, weights_8, weights_9]
+weights = [weights_0]
 
 
 # ORIGINAL ENVIRONMENT EVALUATION ---------------------------
-with open(f"LTC_A2C/evaluation_results/{results_dir}/original_env_evals.txt", "w") as f:
+with open(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/original_env_evals.txt", "w") as f:
     eraser = '\b \b'
     original_eval_rewards = []
     for i, w in enumerate(weights):
         print('Run {:02d} ...'.format(i), end='')
-        if neuron_type == "CfC":
-            agent_net = CfC_Network(4, num_neurons, 2, 5).to(device)
-        elif neuron_type == "LTC":
-            agent_net = LTC_Network(4, num_neurons, 2, 5).to(device)
+        if neuron_type == "LTC":
+            agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
+        elif neuron_type == "CfC":
+            agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
         
         agent_net.load_state_dict(w)
 
@@ -157,6 +163,7 @@ with open(f"LTC_A2C/evaluation_results/{results_dir}/original_env_evals.txt", "w
 # POLE LENGTH EVALUATION ---------------------------
 percentages = np.linspace(0.1, 2.0, 20)
 percentages = np.concatenate((percentages, np.linspace(2.5, 20, 36)))
+percentages = [0.1, 0.5, 1.0, 1.5, 2.0, 4.0, 6.0, 10.0, 15.0, 20.0]
 all_modified_env_eval_rewards = []
 for percentage in percentages:
     print(percentage)
@@ -164,10 +171,10 @@ for percentage in percentages:
 
     for i, w in enumerate(weights):
         print('Run {:02d} ...'.format(i), end='')
-        if neuron_type == "CfC":
-            agent_net = CfC_Network(4, num_neurons, 2, 5).to(device)
-        elif neuron_type == "LTC":
-            agent_net = LTC_Network(4, num_neurons, 2, 5).to(device)
+        if neuron_type == "LTC":
+            agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
+        elif neuron_type == "CfC":
+            agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
         agent_net.load_state_dict(w)
 
         rewards = evaluate_LTC_agent_pole_length(agent_net, env_name, n_evaluations, evaluation_seeds, percentage)
@@ -187,11 +194,11 @@ for results in all_modified_env_eval_rewards:
     median_avgs.append(np.median(means_per_model))
 
 
-os.mkdir(f"LTC_A2C/evaluation_results/{results_dir}/pole_length")
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/pole_length/means.npy", mean_avgs)
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/pole_length/stddevs.npy", std_dev_avgs)
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/pole_length/medians.npy", median_avgs)
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/pole_length/percentages.npy", percentages)
+os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_length")
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_length/means.npy", mean_avgs)
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_length/stddevs.npy", std_dev_avgs)
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_length/medians.npy", median_avgs)
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_length/percentages.npy", percentages)
 
 
 
@@ -204,10 +211,10 @@ for percentage in percentages:
 
     for i, w in enumerate(weights):
         print('Run {:02d} ...'.format(i), end='')
-        if neuron_type == "CfC":
-            agent_net = CfC_Network(4, num_neurons, 2, 5).to(device)
-        elif neuron_type == "LTC":
-            agent_net = LTC_Network(4, num_neurons, 2, 5).to(device)
+        if neuron_type == "LTC":
+            agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
+        elif neuron_type == "CfC":
+            agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
         agent_net.load_state_dict(w)
 
         rewards = evaluate_LTC_agent_pole_mass(agent_net, env_name, n_evaluations, evaluation_seeds, percentage)
@@ -227,11 +234,11 @@ for results in all_modified_env_eval_rewards:
     median_avgs.append(np.median(means_per_model))
 
 
-os.mkdir(f"LTC_A2C/evaluation_results/{results_dir}/pole_mass")
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/pole_mass/means.npy", mean_avgs)
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/pole_mass/stddevs.npy", std_dev_avgs)
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/pole_mass/medians.npy", median_avgs)
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/pole_mass/percentages.npy", percentages)
+os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_mass")
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_mass/means.npy", mean_avgs)
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_mass/stddevs.npy", std_dev_avgs)
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_mass/medians.npy", median_avgs)
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_mass/percentages.npy", percentages)
 
 
 
@@ -245,10 +252,10 @@ for percentage in percentages:
 
     for i, w in enumerate(weights):
         print('Run {:02d} ...'.format(i), end='')
-        if neuron_type == "CfC":
-            agent_net = CfC_Network(4, num_neurons, 2, 5).to(device)
-        elif neuron_type == "LTC":
-            agent_net = LTC_Network(4, num_neurons, 2, 5).to(device)
+        if neuron_type == "LTC":
+            agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
+        elif neuron_type == "CfC":
+            agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
         agent_net.load_state_dict(w)
 
         rewards = evaluate_LTC_agent_force_mag(agent_net, env_name, n_evaluations, evaluation_seeds, percentage)
@@ -268,11 +275,11 @@ for results in all_modified_env_eval_rewards:
     median_avgs.append(np.median(means_per_model))
 
 
-os.mkdir(f"LTC_A2C/evaluation_results/{results_dir}/force_mag")
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/force_mag/means.npy", mean_avgs)
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/force_mag/stddevs.npy", std_dev_avgs)
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/force_mag/medians.npy", median_avgs)
-np.save(f"LTC_A2C/evaluation_results/{results_dir}/force_mag/percentages.npy", percentages)
+os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/force_mag")
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/force_mag/means.npy", mean_avgs)
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/force_mag/stddevs.npy", std_dev_avgs)
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/force_mag/medians.npy", median_avgs)
+np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/force_mag/percentages.npy", percentages)
 
 
 

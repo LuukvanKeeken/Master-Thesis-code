@@ -8,6 +8,7 @@ import numpy as np
 from collections import deque
 import torch
 from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
+from ncps_time_constant_extraction.ncps.wirings import AutoNCP
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -163,16 +164,19 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
 
 
-learning_rate = 0.0001
+learning_rate = 0.001
 selection_method = "evaluation"
 gamma = 0.99
 training_method = "standard"
 num_neurons = 32
-neuron_type = "CfC"
+neuron_type = "LTC"
 mode = "pure"
 tau_sys_extraction = True
-fully_connected = True
-num_models = 1
+num_models = 10
+sparsity_level = 0.5
+seed = 5
+wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
+# wiring = None
 
 dirs = os.listdir('Master_Thesis_Code/LTC_A2C/training_results/')
 if not any('a2c_result' in d for d in dirs):
@@ -181,9 +185,11 @@ else:
     results = [d for d in dirs if 'a2c_result' in d]
     result_id = len(results) + 1
 d = date.today()
-result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}_fullyconnected_{fully_connected}'
+result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
 if neuron_type == "CfC":
     result_dir += "_mode_" + mode
+if wiring:
+    result_dir += "_wiring_" + "AutoNCP"
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
 
@@ -204,9 +210,9 @@ for i in range(num_models):
     random.seed(seed)
     
     if neuron_type == "LTC":
-        agent_net = LTC_Network(4, num_neurons, 2, seed, fully_connected).to(device)
+        agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
     elif neuron_type == "CfC":
-        agent_net = CfC_Network(4, num_neurons, 2, seed, fully_connected, mode = mode).to(device)
+        agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 

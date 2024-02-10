@@ -10,11 +10,12 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 def evaluate_LTC_agent_and_extract_tau_sys_pole_length(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier):
 
     eval_rewards = []
-    all_tau_sys = []
+    all_tau_sys_all_episodes = []
     env = gym.make(env_name)
     env.unwrapped.length *= pole_length_modifier
         
     for i_episode in range(num_episodes):
+        all_tau_sys = []
         hidden_state = None
         
         env.seed(int(evaluation_seeds[i_episode]))
@@ -39,8 +40,9 @@ def evaluate_LTC_agent_and_extract_tau_sys_pole_length(agent_net, env_name, num_
 
             total_reward += r
         eval_rewards.append(total_reward)
+        all_tau_sys_all_episodes.append(all_tau_sys)
 
-    return eval_rewards, all_tau_sys
+    return eval_rewards, all_tau_sys_all_episodes
 
 
 neuron_type = "CfC"
@@ -58,7 +60,7 @@ os.mkdir(f"Master_Thesis_Code/LTC_A2C/time_constants/{results_dir}")
 weights = torch.load(f"Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_0.pt", map_location=torch.device("cpu"))
 
 if neuron_type == "CfC":
-    agent_net = CfC_Network(4, num_neurons, 2, 5, extract_tau_sys=True, mode = "pure").to(device)
+    agent_net = CfC_Network(4, num_neurons, 2, 5, extract_tau_sys=True, mode = mode).to(device)
 elif neuron_type == "LTC":
     agent_net = LTC_Network(4, num_neurons, 2, 5, extract_tau_sys=True).to(device)
 
@@ -79,6 +81,5 @@ all_results = {"pole_length_mods": eval_pole_length_modifiers, "all_tau_sys": al
 with open(f'Master_Thesis_Code/LTC_A2C/time_constants/{results_dir}/all_tau_sys.pkl', 'wb') as f:
     pickle.dump(all_results, f)
 
-with open(f'Master_Thesis_Code/LTC_A2C/time_constants/{results_dir}/all_tau_sys.pkl', 'rb') as f:
-    test = pickle.load(f)
+
 

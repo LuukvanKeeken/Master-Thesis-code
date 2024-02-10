@@ -124,17 +124,17 @@ os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}")
 
 
 weights_0 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
-# weights_1 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
-# weights_2 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
-# weights_3 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
-# weights_4 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
-# weights_5 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
-# weights_6 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
-# weights_7 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
-# weights_8 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
-# weights_9 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
-# weights = [weights_0, weights_1, weights_2, weights_3, weights_4, weights_5, weights_6, weights_7, weights_8, weights_9]
-weights = [weights_0]
+weights_1 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
+weights_2 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
+weights_3 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
+weights_4 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
+weights_5 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
+weights_6 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
+weights_7 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
+weights_8 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
+weights_9 = torch.load(f'LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
+weights = [weights_0, weights_1, weights_2, weights_3, weights_4, weights_5, weights_6, weights_7, weights_8, weights_9]
+# weights = [weights_0]
 
 
 # ORIGINAL ENVIRONMENT EVALUATION ---------------------------
@@ -163,7 +163,7 @@ with open(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/original
 # POLE LENGTH EVALUATION ---------------------------
 percentages = np.linspace(0.1, 2.0, 20)
 percentages = np.concatenate((percentages, np.linspace(2.5, 20, 36)))
-percentages = [0.1, 0.5, 1.0, 1.5, 2.0, 4.0, 6.0, 10.0, 15.0, 20.0]
+# percentages = [0.1, 0.5, 1.0, 1.5, 2.0, 4.0, 6.0, 10.0, 15.0, 20.0]
 all_modified_env_eval_rewards = []
 for percentage in percentages:
     print(percentage)

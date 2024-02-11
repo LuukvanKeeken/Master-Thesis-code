@@ -170,7 +170,7 @@ learning_rates = [0.005, 0.001, 0.0001, 0.00005]
 for num_neurons in nums:
     for sparsity_level in sparsity_levels:
         for learning_rate in learning_rates:
-
+            print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
             device = "cpu"
             # learning_rate = 0.001
             selection_method = "evaluation"

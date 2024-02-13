@@ -1,0 +1,2 @@
+0: 9.5 after 4390
+Average: 4390.0, std dev: 0.0

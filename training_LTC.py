@@ -163,28 +163,29 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
 
 
-nums = [24, 32, 48]
-sparsity_levels = [0.25, 0.5, 0.75]
-learning_rates = [0.005, 0.001, 0.0001, 0.00005]
+nums = [24, 32, 48, 64]
+neuron_types = ["CfC", "LTC"]
+learning_rates = [0.005, 0.001, 0.0005, 0.0001, 0.00005]
 
 for num_neurons in nums:
-    for sparsity_level in sparsity_levels:
+    for neuron_type in neuron_types:
         for learning_rate in learning_rates:
-            print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
+            # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
+            print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, neuron type: {neuron_type}")
             device = "cpu"
             # learning_rate = 0.001
             selection_method = "evaluation"
             gamma = 0.99
             training_method = "standard"
             # num_neurons = 32
-            neuron_type = "LTC"
+            # neuron_type = "CfC"
             mode = "pure"
             tau_sys_extraction = True
             num_models = 5
-            # sparsity_level = 0.5
+            sparsity_level = 0.5
             seed = 5
-            wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
-            # wiring = None
+            # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
+            wiring = None
 
             dirs = os.listdir('Master_Thesis_Code/LTC_A2C/training_results/')
             if not any('a2c_result' in d for d in dirs):
@@ -197,7 +198,7 @@ for num_neurons in nums:
             if neuron_type == "CfC":
                 result_dir += "_mode_" + mode
             if wiring:
-                result_dir += "_wiring_" + "AutoNCP"
+                result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
             os.mkdir(result_dir)
             print('Created Directory {} to store the results in'.format(result_dir))
 
@@ -210,6 +211,7 @@ for num_neurons in nums:
 
 
             best_average_after_all = []
+            best_average_all = []
             for i in range(num_models):
                 print(f"Run # {i}")
                 seed = int(training_seeds[i])
@@ -226,11 +228,12 @@ for num_neurons in nums:
 
                 smoothed_scores, scores, best_average, best_average_after = train_agent(env, 10000, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma)
                 best_average_after_all.append(best_average_after)
+                best_average_all.append(best_average)
 
 
             with open(f"{result_dir}/best_average_after.txt", 'w') as f:
                 for i, best_episode in enumerate(best_average_after_all):
-                    f.write(f"{i}: {best_episode}\n")
+                    f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
 
                 f.write(f"Average: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}")
 

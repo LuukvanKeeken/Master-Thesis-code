@@ -1,0 +1,2 @@
+0: 200.0 after 1430
+Average: 1430.0, std dev: 0.0

@@ -1,0 +1,4 @@
+0: 11.6 after 10000
+1: 9.5 after 10000
+2: 9.2 after 10000
+Average: 10000.0, std dev: 0.0

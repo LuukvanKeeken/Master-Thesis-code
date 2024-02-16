@@ -115,11 +115,12 @@ num_neurons = 32
 sparsity_level = 0.5
 seed = 5
 mode = "pure"
-wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
+# wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
+wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-results_dir = f"LTC_a2c_result_17_2024210_learningrate_0.001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_wiring_AutoNCP"
+results_dir = f"LTC_a2c_result_92_2024214_learningrate_0.001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True"
 os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}")
 
 
@@ -134,6 +135,7 @@ weights_7 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_di
 weights_8 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
 weights_9 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
 weights = [weights_0, weights_1, weights_2, weights_3, weights_4, weights_5, weights_6, weights_7, weights_8, weights_9]
+# weights = [weights_0, weights_1, weights_2, weights_3, weights_4]
 # weights = [weights_0]
 
 

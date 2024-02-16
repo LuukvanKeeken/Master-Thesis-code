@@ -9,32 +9,68 @@ end = 200
 modified_parameter = "force_mag"
 statistic = "median"
 
-CfC_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_64/{modified_parameter}/{statistic}s.npy")
-CfC_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_64/{modified_parameter}/stddevs.npy")
+# CfC_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_64/{modified_parameter}/{statistic}s.npy")
+# CfC_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_64/{modified_parameter}/stddevs.npy")
 CfC_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_7_2024130_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_64/{modified_parameter}/percentages.npy")
 CfC_evaluation_percentages = (CfC_evaluation_percentages*100)-100
-if statistic == "mean":
-    ax.errorbar(CfC_evaluation_percentages[start:end], CfC_evaluation_statistic[start:end], CfC_evaluation_std[start:end], capsize=5, label = "CfC")
-elif statistic == "median":
-    ax.plot(CfC_evaluation_percentages[start:end], CfC_evaluation_statistic[start:end], label = "CfC_64")
+# if statistic == "mean":
+#     ax.errorbar(CfC_evaluation_percentages[start:end], CfC_evaluation_statistic[start:end], CfC_evaluation_std[start:end], capsize=5, label = "CfC")
+# elif statistic == "median":
+#     ax.plot(CfC_evaluation_percentages[start:end], CfC_evaluation_statistic[start:end], label = "CfC_64")
 
-CfC_48_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_10_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_48/{modified_parameter}/{statistic}s.npy")
-CfC_48_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_10_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_48/{modified_parameter}/stddevs.npy")
-CfC_48_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_10_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_48/{modified_parameter}/percentages.npy")
-CfC_48_evaluation_percentages = (CfC_48_evaluation_percentages*100)-100
-if statistic == "mean":
-    ax.errorbar(CfC_48_evaluation_percentages[start:end], CfC_48_evaluation_statistic[start:end], CfC_48_evaluation_std[start:end], capsize=5, label = "CfC_48")
-elif statistic == "median":
-    ax.plot(CfC_48_evaluation_percentages[start:end], CfC_48_evaluation_statistic[start:end], label = "CfC_48")
+# CfC_48_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_10_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_48/{modified_parameter}/{statistic}s.npy")
+# CfC_48_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_10_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_48/{modified_parameter}/stddevs.npy")
+# CfC_48_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_10_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_48/{modified_parameter}/percentages.npy")
+# CfC_48_evaluation_percentages = (CfC_48_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(CfC_48_evaluation_percentages[start:end], CfC_48_evaluation_statistic[start:end], CfC_48_evaluation_std[start:end], capsize=5, label = "CfC_48")
+# elif statistic == "median":
+#     ax.plot(CfC_48_evaluation_percentages[start:end], CfC_48_evaluation_statistic[start:end], label = "CfC_48")
 
-CfC_32_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_8_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32/{modified_parameter}/{statistic}s.npy")
-CfC_32_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_8_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32/{modified_parameter}/stddevs.npy")
-CfC_32_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_8_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32/{modified_parameter}/percentages.npy")
-CfC_32_evaluation_percentages = (CfC_32_evaluation_percentages*100)-100
+# CfC_32_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_8_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32/{modified_parameter}/{statistic}s.npy")
+# CfC_32_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_8_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32/{modified_parameter}/stddevs.npy")
+# CfC_32_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_8_2024131_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32/{modified_parameter}/percentages.npy")
+# CfC_32_evaluation_percentages = (CfC_32_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(CfC_32_evaluation_percentages[start:end], CfC_32_evaluation_statistic[start:end], CfC_32_evaluation_std[start:end], capsize=5, label = "CfC_32")
+# elif statistic == "median":
+#     ax.plot(CfC_32_evaluation_percentages[start:end], CfC_32_evaluation_statistic[start:end], label = "CfC_32")
+
+# LTC_AutoNCP_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_17_2024210_learningrate_0.001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/{statistic}s.npy")
+# LTC_AutoNCP_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_17_2024210_learningrate_0.001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/stddevs.npy")
+# LTC_AutoNCP_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_17_2024210_learningrate_0.001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/percentages.npy")
+# LTC_AutoNCP_evaluation_percentages = (LTC_AutoNCP_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(LTC_AutoNCP_evaluation_percentages[start:end], LTC_AutoNCP_evaluation_statistic[start:end], LTC_AutoNCP_evaluation_std[start:end], capsize=5, label = "LTC_AutoNCP")
+# elif statistic == "median":
+#     ax.plot(LTC_AutoNCP_evaluation_percentages[start:end], LTC_AutoNCP_evaluation_statistic[start:end], label = "LTC_AutoNCP")
+
+best_LTC_AutoNCP_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_19_2024211_learningrate_0.005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_24_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/{statistic}s.npy")
+best_LTC_AutoNCP_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_19_2024211_learningrate_0.005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_24_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/stddevs.npy")
+best_LTC_AutoNCP_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_19_2024211_learningrate_0.005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_24_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/percentages.npy")
+best_LTC_AutoNCP_evaluation_percentages = (best_LTC_AutoNCP_evaluation_percentages*100)-100
 if statistic == "mean":
-    ax.errorbar(CfC_32_evaluation_percentages[start:end], CfC_32_evaluation_statistic[start:end], CfC_32_evaluation_std[start:end], capsize=5, label = "CfC_32")
+    ax.errorbar(best_LTC_AutoNCP_evaluation_percentages[start:end], best_LTC_AutoNCP_evaluation_statistic[start:end], best_LTC_AutoNCP_evaluation_std[start:end], capsize=5, label = "best_LTC_AutoNCP")
 elif statistic == "median":
-    ax.plot(CfC_32_evaluation_percentages[start:end], CfC_32_evaluation_statistic[start:end], label = "CfC_32")
+    ax.plot(best_LTC_AutoNCP_evaluation_percentages[start:end], best_LTC_AutoNCP_evaluation_statistic[start:end], label = "best_LTC_AutoNCP")
+
+best_fully_connected_LTC_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_92_2024214_learningrate_0.001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True/{modified_parameter}/{statistic}s.npy")
+best_fully_connected_LTC_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_92_2024214_learningrate_0.001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True/{modified_parameter}/stddevs.npy")
+best_fully_connected_LTC_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_92_2024214_learningrate_0.001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True/{modified_parameter}/percentages.npy")
+best_fully_connected_LTC_evaluation_percentages = (best_fully_connected_LTC_evaluation_percentages*100)-100
+if statistic == "mean":
+    ax.errorbar(best_fully_connected_LTC_evaluation_percentages[start:end], best_fully_connected_LTC_evaluation_statistic[start:end], best_fully_connected_LTC_evaluation_std[start:end], capsize=5, label = "best_fully_connected_LTC")
+elif statistic == "median":
+    ax.plot(best_fully_connected_LTC_evaluation_percentages[start:end], best_fully_connected_LTC_evaluation_statistic[start:end], label = "best_fully_connected_LTC")
+
+best_fully_connected_CfC_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_88_2024214_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_pure/{modified_parameter}/{statistic}s.npy")
+best_fully_connected_CfC_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_88_2024214_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_pure/{modified_parameter}/stddevs.npy")
+best_fully_connected_CfC_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_88_2024214_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_pure/{modified_parameter}/percentages.npy")
+best_fully_connected_CfC_evaluation_percentages = (best_fully_connected_CfC_evaluation_percentages*100)-100
+if statistic == "mean":
+    ax.errorbar(best_fully_connected_CfC_evaluation_percentages[start:end], best_fully_connected_CfC_evaluation_statistic[start:end], best_fully_connected_CfC_evaluation_std[start:end], capsize=5, label = "best_fully_connected_CfC")
+elif statistic == "median":
+    ax.plot(best_fully_connected_CfC_evaluation_percentages[start:end], best_fully_connected_CfC_evaluation_statistic[start:end], label = "best_fully_connected_CfC")
 
 # BP_evaluation_statistic = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_10models/{modified_parameter}/{statistic}s.npy")
 # BP_evaluation_std = np.load(f"../BP_A2C/evaluation_results/BP_A2C_RNN_10models/{modified_parameter}/stddevs.npy")

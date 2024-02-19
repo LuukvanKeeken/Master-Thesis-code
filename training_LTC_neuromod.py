@@ -205,8 +205,8 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
 
 nums = [32]
-randomization_factors = [0.2, 0.35, 0.5]
-learning_rates = [0.005, 0.001, 0.0005, 0.0001]
+randomization_factors = [0.35]
+learning_rates = [0.0001]
 
 for num_neurons in nums:
     for factor in randomization_factors:
@@ -261,7 +261,7 @@ for num_neurons in nums:
             best_average_all = []
             for i in range(num_models):
                 print(f"Run # {i}")
-                seed = int(training_seeds[i])
+                seed = int(training_seeds[i+5])
 
                 torch.manual_seed(seed)
                 random.seed(seed)

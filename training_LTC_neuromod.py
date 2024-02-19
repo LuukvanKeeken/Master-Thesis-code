@@ -49,32 +49,32 @@ def evaluate_BP_agent_pole_length(agent_net, env_name, num_episodes, evaluation_
 
 def get_privileged_info(env):
     pole_length = env.unwrapped.length
-    gravity = env.unwrapped.gravity
-    masscart = env.unwrapped.masscart
+    # gravity = env.unwrapped.gravity
+    # masscart = env.unwrapped.masscart
     masspole = env.unwrapped.masspole
     force_mag = env.unwrapped.force_mag
 
-    privileged_info = [pole_length, gravity, masscart, masspole, force_mag]
+    privileged_info = [pole_length, masspole, force_mag]
     return torch.tensor(privileged_info, dtype=torch.float32)
 
 def randomize_env_params(env, randomization_params):
     pole_length = env.unwrapped.length
-    gravity = env.unwrapped.gravity
-    masscart = env.unwrapped.masscart
+    # gravity = env.unwrapped.gravity
+    # masscart = env.unwrapped.masscart
     masspole = env.unwrapped.masspole
     force_mag = env.unwrapped.force_mag
 
-    params = [pole_length, gravity, masscart, masspole, force_mag]
+    params = [pole_length, masspole, force_mag]
     for i in range(len(params)):
         low = params[i] - params[i] * randomization_params[i]
         high = params[i] + params[i] * randomization_params[i]
         params[i] = np.random.uniform(low, high)
 
     env.unwrapped.length = params[0]
-    env.unwrapped.gravity = params[1]
-    env.unwrapped.masscart = params[2]
-    env.unwrapped.masspole = params[3]
-    env.unwrapped.force_mag = params[4]
+    # env.unwrapped.gravity = params[1]
+    # env.unwrapped.masscart = params[2]
+    env.unwrapped.masspole = params[1]
+    env.unwrapped.force_mag = params[2]
 
     return env
     
@@ -205,8 +205,8 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
 
 nums = [32]
-randomization_factors = [0.35]
-learning_rates = [0.0001]
+randomization_factors = [0.2, 0.35, 0.5]
+learning_rates = [0.001, 0.0005, 0.0001, 0.00005]
 
 for num_neurons in nums:
     for factor in randomization_factors:
@@ -221,8 +221,8 @@ for num_neurons in nums:
             # num_neurons = 32
             neuron_type = "CfC"
             mode = "neuromodulated"
-            neuromod_network_dims = [5, 256, 128, num_neurons]
-            randomization_params = 5*[factor]
+            neuromod_network_dims = [3, 256, 128, num_neurons]
+            randomization_params = 3*[factor]
             num_training_episodes = 20000
 
             tau_sys_extraction = True

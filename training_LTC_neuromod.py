@@ -226,8 +226,8 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
 
 nums = [32]
-randomization_factors = [0.5]
-learning_rates = [0.0005]
+randomization_factors = [0.35, 0.5]
+learning_rates = [0.0005, 0.0001, 0.00005]
 
 for num_neurons in nums:
     for factor in randomization_factors:
@@ -236,7 +236,7 @@ for num_neurons in nums:
             print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, rand factor: {factor}")
             device = "cpu"
             # learning_rate = 0.001
-            selection_method = "evaluation"
+            selection_method = "range_evaluatation"
             gamma = 0.99
             training_method = "standard"
             # num_neurons = 32

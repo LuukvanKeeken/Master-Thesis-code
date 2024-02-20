@@ -10,12 +10,12 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def get_privileged_info(env):
     pole_length = env.unwrapped.length
-    gravity = env.unwrapped.gravity
-    masscart = env.unwrapped.masscart
+    # gravity = env.unwrapped.gravity
+    # masscart = env.unwrapped.masscart
     masspole = env.unwrapped.masspole
     force_mag = env.unwrapped.force_mag
 
-    privileged_info = [pole_length, gravity, masscart, masspole, force_mag]
+    privileged_info = [pole_length, masspole, force_mag]
     return torch.tensor(privileged_info, dtype=torch.float32)
 
 

@@ -129,13 +129,13 @@ num_neurons = 32
 sparsity_level = 0.5
 seed = 5
 mode = "neuromodulated"
-neuromod_network_dims = [5, 256, 128, num_neurons]
+neuromod_network_dims = [3, 256, 128, num_neurons]
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
 wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-results_dir = f"CfC_a2c_result_132_2024217_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.35, 0.35, 0.35, 0.35, 0.35]"
+results_dir = f"CfC_a2c_result_147_2024220_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.5, 0.5, 0.5]"
 os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}")
 
 

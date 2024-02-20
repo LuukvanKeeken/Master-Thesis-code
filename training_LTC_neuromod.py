@@ -152,10 +152,31 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
                     if best_average == max_reward:
                         print(f'Best {selection_method}: ', best_average, ' reached at episode ',
-                        best_average_after, '. Model saved in folder best.')
+                        best_average_after, f'. Model saved in folder {result_dir}')
                         return smoothed_scores, scores, best_average, best_average_after
 
+                elif ((selection_method == "range_evaluatation") and (episode % evaluate_every == 0)):
+                    pole_length_mods = [0.1, 0.5, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 17.0, 20.0]
+                    evaluation_performance = 0
+                    for i, mod in enumerate(pole_length_mods):
+                        # Get performance over one episode with this pole length modifier, 
+                        # skip over the first i evaluation seeds so not all episodes have
+                        # the same seed.
+                        evaluation_performance += np.mean(evaluate_BP_agent_pole_length(agent_net, env_name, 1, evaluation_seeds[i:], mod))
 
+                    evaluation_performance /= len(pole_length_mods)
+                    print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                    if evaluation_performance >= best_average:
+                        best_average = evaluation_performance
+                        best_average_after = episode
+                        torch.save(agent_net.state_dict(),
+                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                    
+                    if best_average == max_reward:
+                        print(f'Best {selection_method}: ', best_average, ' reached at episode ',
+                        best_average_after, f'. Model saved in folder {result_dir}')
+                        return smoothed_scores, scores, best_average, best_average_after
 
                 elif (selection_method == "100 episode average"):
                     scores_window.append(score)
@@ -198,7 +219,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
         optimizer.step()
     
     print(f'Best {selection_method}: ', best_average, ' reached at episode ',
-              best_average_after, '. Model saved in folder best.')
+              best_average_after, f'. Model saved in folder {result_dir}')
     
     return smoothed_scores, scores, best_average, best_average_after
 

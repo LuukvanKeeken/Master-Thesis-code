@@ -226,12 +226,15 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
 
 nums = [32]
-randomization_factors = [0.35, 0.5]
+randomization_factors = [0.5, 0.35]
 learning_rates = [0.0005, 0.0001, 0.00005]
 
 for num_neurons in nums:
     for factor in randomization_factors:
         for learning_rate in learning_rates:
+            if factor == 0.35 and learning_rate != 0.00005:
+                continue
+            
             # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
             print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, rand factor: {factor}")
             device = "cpu"

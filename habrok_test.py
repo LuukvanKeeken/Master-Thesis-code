@@ -38,3 +38,10 @@ policy_output, value, hidden_state = agent_net((state.float(), priv), hidden_sta
 print(policy_output)
 print(value)
 print(hidden_state)
+
+result_dir = 'Master_Thesis_Code/LTC_A2C/training_results/epic_habrok_test'
+
+neuron_type = "CfC"
+i_run = 0
+
+torch.save(agent_net.state_dict(), result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')

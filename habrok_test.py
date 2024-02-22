@@ -40,7 +40,7 @@ print(value)
 print(hidden_state)
 
 result_dir = 'Master_Thesis_Code/LTC_A2C/training_results/epic_habrok_test'
-
+os.mkdir(result_dir)
 neuron_type = "CfC"
 i_run = 0
 

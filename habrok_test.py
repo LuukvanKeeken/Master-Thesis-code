@@ -25,7 +25,8 @@ learning_rate = args.learning_rate
 
 print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, rand factor: {randomization_factor}")
 
-
+with open('quick_test_text.txt', 'w') as f:
+    f.write(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, rand factor: {randomization_factor}")
 
 
 # device = "cpu"

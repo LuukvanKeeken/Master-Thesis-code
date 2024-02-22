@@ -254,7 +254,7 @@ neuron_type = "CfC"
 mode = "neuromodulated"
 neuromod_network_dims = [3, 256, 128, num_neurons]
 randomization_params = 3*[factor]
-num_training_episodes = 20
+num_training_episodes = 20000
 
 tau_sys_extraction = True
 num_models = 5

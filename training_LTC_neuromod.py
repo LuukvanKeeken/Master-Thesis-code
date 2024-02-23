@@ -155,7 +155,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         best_average_after, f'. Model saved in folder {result_dir}')
                         return smoothed_scores, scores, best_average, best_average_after
 
-                elif ((selection_method == "range_evaluatation") and (episode % evaluate_every == 0)):
+                elif ((selection_method == "range_evaluation") and (episode % evaluate_every == 0)):
                     pole_length_mods = [0.1, 0.5, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 17.0, 20.0]
                     evaluation_performance = 0
                     for i, mod in enumerate(pole_length_mods):

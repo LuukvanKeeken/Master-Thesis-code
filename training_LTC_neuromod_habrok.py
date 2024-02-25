@@ -160,16 +160,17 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         return smoothed_scores, scores, best_average, best_average_after
 
                 elif ((selection_method == "range_evaluation") and (episode % evaluate_every == 0)):
-                    pole_length_mods = [0.1, 0.5, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 17.0, 20.0]
+                    # pole_length_mods = [0.1, 0.5, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 17.0, 20.0]
+                    pole_length_mods = [0.55, 10.5]
                     evaluation_performance = 0
                     for i, mod in enumerate(pole_length_mods):
                         # Get performance over one episode with this pole length modifier, 
                         # skip over the first i evaluation seeds so not all episodes have
                         # the same seed.
-                        evaluation_performance += np.mean(evaluate_BP_agent_pole_length(agent_net, env_name, 1, evaluation_seeds[i:], mod))
+                        evaluation_performance += np.mean(evaluate_BP_agent_pole_length(agent_net, env_name, 5, evaluation_seeds[i:], mod))
 
-                    evaluation_performance /= len(pole_length_mods)
-                    print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+                    # evaluation_performance /= len(pole_length_mods)
+                    evaluation_performance /= 10
 
                     if evaluation_performance >= best_average:
                         best_average = evaluation_performance
@@ -246,19 +247,19 @@ learning_rate = args.learning_rate
 print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, rand factor: {factor}")
 device = "cpu"
 # learning_rate = 0.001
-selection_method = "evaluation"
+selection_method = "range_evaluation"
 gamma = 0.99
 training_method = "standard"
 # num_neurons = 32
 neuron_type = "CfC"
 mode = "neuromodulated"
 neuromod_network_dims = [3, 256, 128, num_neurons]
-# randomization_params = 3*[factor]
-randomization_params = None
+randomization_params = 3*[factor]
+
 num_training_episodes = 20000
 
 tau_sys_extraction = True
-num_models = 10
+num_models = 5
 sparsity_level = 0.5
 seed = 5
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)

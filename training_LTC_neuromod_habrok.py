@@ -293,7 +293,7 @@ best_average_after_all = []
 best_average_all = []
 for i in range(num_models):
     print(f"Run # {i}")
-    seed = int(training_seeds[i+5])
+    seed = int(training_seeds[i])
 
     torch.manual_seed(seed)
     random.seed(seed)

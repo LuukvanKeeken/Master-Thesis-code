@@ -258,7 +258,7 @@ randomization_params = None
 num_training_episodes = 20000
 
 tau_sys_extraction = True
-num_models = 5
+num_models = 10
 sparsity_level = 0.5
 seed = 5
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)

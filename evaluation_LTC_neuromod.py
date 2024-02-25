@@ -135,7 +135,7 @@ wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-results_dir = f"CfC_a2c_result_153_2024222_learningrate_0.0001_selectiomethod_range_evaluatation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.5, 0.5, 0.5]"
+results_dir = f"CfC_a2c_result_156_2024225_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated"
 os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}")
 
 

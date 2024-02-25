@@ -226,14 +226,13 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
 
 nums = [32]
-randomization_factors = [0.5]
-learning_rates = [0.0001]
+randomization_factors = [0]
+learning_rates = [0.0005]
 
 for num_neurons in nums:
     for factor in randomization_factors:
         for learning_rate in learning_rates:
-            if factor == 0.35 and learning_rate != 0.00005:
-                continue
+            
 
             # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
             print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, rand factor: {factor}")
@@ -246,7 +245,8 @@ for num_neurons in nums:
             neuron_type = "CfC"
             mode = "neuromodulated"
             neuromod_network_dims = [3, 256, 128, num_neurons]
-            randomization_params = 3*[factor]
+            # randomization_params = 3*[factor]
+            randomization_params = None
             num_training_episodes = 20000
 
             tau_sys_extraction = True

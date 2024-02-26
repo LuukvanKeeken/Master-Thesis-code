@@ -169,8 +169,8 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         # the same seed.
                         evaluation_performance += np.mean(evaluate_BP_agent_pole_length(agent_net, env_name, 5, evaluation_seeds[i:], mod))
 
-                    # evaluation_performance /= len(pole_length_mods)
-                    evaluation_performance /= 10
+                    evaluation_performance /= len(pole_length_mods)
+                    print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
 
                     if evaluation_performance >= best_average:
                         best_average = evaluation_performance

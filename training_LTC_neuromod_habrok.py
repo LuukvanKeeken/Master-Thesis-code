@@ -162,12 +162,13 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                 elif ((selection_method == "range_evaluation") and (episode % evaluate_every == 0)):
                     # pole_length_mods = [0.1, 0.5, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 17.0, 20.0]
                     pole_length_mods = [0.55, 10.5]
+                    eps_per_setting = 5
                     evaluation_performance = 0
                     for i, mod in enumerate(pole_length_mods):
                         # Get performance over one episode with this pole length modifier, 
                         # skip over the first i evaluation seeds so not all episodes have
                         # the same seed.
-                        evaluation_performance += np.mean(evaluate_BP_agent_pole_length(agent_net, env_name, 5, evaluation_seeds[i:], mod))
+                        evaluation_performance += np.mean(evaluate_BP_agent_pole_length(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], mod))
 
                     evaluation_performance /= len(pole_length_mods)
                     print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")

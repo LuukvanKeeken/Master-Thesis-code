@@ -160,9 +160,9 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         return smoothed_scores, scores, best_average, best_average_after
 
                 elif ((selection_method == "range_evaluation") and (episode % evaluate_every == 0)):
-                    # pole_length_mods = [0.1, 0.5, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 17.0, 20.0]
-                    pole_length_mods = [0.55, 10.5]
-                    eps_per_setting = 5
+                    pole_length_mods = [0.1, 0.5, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 17.0, 20.0]
+                    # pole_length_mods = [0.55, 10.5]
+                    eps_per_setting = 1
                     evaluation_performance = 0
                     for i, mod in enumerate(pole_length_mods):
                         # Get performance over one episode with this pole length modifier, 
@@ -255,12 +255,13 @@ training_method = "standard"
 neuron_type = "CfC"
 mode = "neuromodulated"
 neuromod_network_dims = [3, 256, 128, num_neurons]
-randomization_params = 3*[factor]
+# randomization_params = 3*[factor]
+randomization_params = None
 
 num_training_episodes = 20000
 
 tau_sys_extraction = True
-num_models = 5
+num_models = 10
 sparsity_level = 0.5
 seed = 5
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)

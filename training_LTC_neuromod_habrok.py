@@ -248,7 +248,7 @@ learning_rate = args.learning_rate
 print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, rand factor: {factor}")
 device = "cpu"
 # learning_rate = 0.001
-selection_method = "range_evaluation"
+selection_method = "evaluation"
 gamma = 0.99
 training_method = "standard"
 # num_neurons = 32

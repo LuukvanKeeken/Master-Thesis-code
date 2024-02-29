@@ -13,11 +13,47 @@ from ncps_time_constant_extraction.ncps.wirings import AutoNCP
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def evaluate_BP_agent_pole_length(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier):
+def evaluate_agent_pole_length(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier):
 
     eval_rewards = []
     env = gym.make(env_name)
     env.unwrapped.length *= pole_length_modifier
+        
+    for i_episode in range(num_episodes):
+        hidden_state = None
+        
+        env.seed(int(evaluation_seeds[i_episode]))
+        
+        state = env.reset()
+        total_reward = 0
+        done = False
+
+        while not done:
+            state = torch.from_numpy(state)
+            state = state.unsqueeze(0).to(device) #This as well?
+            privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
+            policy_output, value, hidden_state = agent_net((state.float(), privileged_info), hidden_state)
+            
+            policy_dist = torch.softmax(policy_output, dim = 1)
+            
+            action = torch.argmax(policy_dist)
+            
+
+            state, r, done, _ = env.step(action.item())
+
+            total_reward += r
+        eval_rewards.append(total_reward)
+
+    return eval_rewards
+
+
+def evaluate_agent_all_params(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier, pole_mass_modifier, force_mag_modifier):
+
+    eval_rewards = []
+    env = gym.make(env_name)
+    env.unwrapped.length *= pole_length_modifier
+    env.unwrapped.masspole *= pole_mass_modifier
+    env.unwrapped.force_mag *= force_mag_modifier
         
     for i_episode in range(num_episodes):
         hidden_state = None
@@ -141,7 +177,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                 Qval = Qval.detach().cpu().numpy()[0, 0]
 
                 if ((selection_method == "evaluation") and (episode % evaluate_every == 0)):
-                    evaluation_performance = np.mean(evaluate_BP_agent_pole_length(agent_net, env_name, num_evaluation_episodes, evaluation_seeds, 1.0))
+                    evaluation_performance = np.mean(evaluate_agent_pole_length(agent_net, env_name, num_evaluation_episodes, evaluation_seeds, 1.0))
                     print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
 
                     if evaluation_performance >= best_average:
@@ -164,7 +200,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         # Get performance over one episode with this pole length modifier, 
                         # skip over the first i evaluation seeds so not all episodes have
                         # the same seed.
-                        evaluation_performance += np.mean(evaluate_BP_agent_pole_length(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], mod))
+                        evaluation_performance += np.mean(evaluate_agent_pole_length(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], mod))
 
                     evaluation_performance /= len(pole_length_mods)
                     print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
@@ -179,6 +215,36 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         print(f'Best {selection_method}: ', best_average, ' reached at episode ',
                         best_average_after, f'. Model saved in folder {result_dir}')
                         return smoothed_scores, scores, best_average, best_average_after
+
+
+                elif ((selection_method == "range_evaluation_all_params") and (episode % evaluate_every == 0)):
+                    pole_length_mods = [0.55, 10.5]
+                    pole_mass_mods = [3.0]
+                    force_mag_mods = [0.6, 3.5]
+
+                    eps_per_setting = 1
+                    evaluation_performance = 0
+                    total_eval_eps = 10
+                    for i in range(total_eval_eps):
+                        pole_length_mod = np.random.choice(pole_length_mods)
+                        pole_mass_mod = np.random.choice(pole_mass_mods)
+                        force_mag_mod = np.random.choice(force_mag_mods)
+                        evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                    evaluation_performance /= total_eval_eps
+                    print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                    if evaluation_performance >= best_average:
+                        best_average = evaluation_performance
+                        best_average_after = episode
+                        torch.save(agent_net.state_dict(),
+                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                        
+                    if best_average == max_reward:
+                        print(f'Best {selection_method}: ', best_average, ' reached at episode ',
+                        best_average_after, f'. Model saved in folder {result_dir}')
+                        return smoothed_scores, scores, best_average, best_average_after
+
 
                 elif (selection_method == "100 episode average"):
                     scores_window.append(score)

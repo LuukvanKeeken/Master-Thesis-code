@@ -1,3 +1,4 @@
+import argparse
 from datetime import date
 import os
 import random
@@ -250,79 +251,85 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
 
 
-nums = [32]
-neuron_types = ["CfC"]
-learning_rates = [0.0005]
+parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole environment')
+parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
+parser.add_argument('--neuron_type', type=str, default='CfC', help='Type of neuron, either "LTC" or "CfC"')
+parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
 
-for num_neurons in nums:
-    for neuron_type in neuron_types:
-        for learning_rate in learning_rates:
-            # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
-            print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, neuron type: {neuron_type}")
-            device = "cpu"
-            # learning_rate = 0.001
-            selection_method = "range_evaluation_all_params"
-            gamma = 0.99
-            training_method = "standard"
-            # num_neurons = 32
-            # neuron_type = "CfC"
-            mode = "pure"
-            tau_sys_extraction = True
-            num_models = 5
-            sparsity_level = 0.5
-            seed = 5
-            # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
-            wiring = None
-
-            dirs = os.listdir('Master_Thesis_Code/LTC_A2C/training_results/')
-            if not any('a2c_result' in d for d in dirs):
-                result_id = 1
-            else:
-                results = [d for d in dirs if 'a2c_result' in d]
-                result_id = len(results) + 1
-            d = date.today()
-            result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
-            if neuron_type == "CfC":
-                result_dir += "_mode_" + mode
-            if wiring:
-                result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
-            os.mkdir(result_dir)
-            print('Created Directory {} to store the results in'.format(result_dir))
+args = parser.parse_args()
 
 
+num_neurons = args.num_neurons
+neuron_type = args.neuron_type
+learning_rate = args.learning_rate
 
 
-            env = gym.make('CartPole-v0')
-            evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
-            training_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/training_seeds.npy')
+# print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
+print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, neuron type: {neuron_type}")
+device = "cpu"
+# learning_rate = 0.001
+selection_method = "range_evaluation_all_params"
+gamma = 0.99
+training_method = "standard"
+# num_neurons = 32
+# neuron_type = "CfC"
+mode = "pure"
+tau_sys_extraction = True
+num_models = 10
+sparsity_level = 0.5
+seed = 5
+# wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
+wiring = None
+
+dirs = os.listdir('Master_Thesis_Code/LTC_A2C/training_results/')
+if not any('a2c_result' in d for d in dirs):
+    result_id = 1
+else:
+    results = [d for d in dirs if 'a2c_result' in d]
+    result_id = len(results) + 1
+d = date.today()
+result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
+if neuron_type == "CfC":
+    result_dir += "_mode_" + mode
+if wiring:
+    result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
+os.mkdir(result_dir)
+print('Created Directory {} to store the results in'.format(result_dir))
 
 
-            best_average_after_all = []
-            best_average_all = []
-            for i in range(num_models):
-                print(f"Run # {i}")
-                seed = int(training_seeds[i])
-
-                torch.manual_seed(seed)
-                random.seed(seed)
-                
-                if neuron_type == "LTC":
-                    agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
-                elif neuron_type == "CfC":
-                    agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
-
-                optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
-
-                smoothed_scores, scores, best_average, best_average_after = train_agent(env, 10000, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma)
-                best_average_after_all.append(best_average_after)
-                best_average_all.append(best_average)
 
 
-            with open(f"{result_dir}/best_average_after.txt", 'w') as f:
-                for i, best_episode in enumerate(best_average_after_all):
-                    f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
+env = gym.make('CartPole-v0')
+evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
+training_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/training_seeds.npy')
 
-                f.write(f"Average: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}")
+
+best_average_after_all = []
+best_average_all = []
+for i in range(num_models):
+    print(f"Run # {i}")
+    seed = int(training_seeds[i])
+
+    torch.manual_seed(seed)
+    random.seed(seed)
+    
+    if neuron_type == "LTC":
+        agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
+    elif neuron_type == "CfC":
+        agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
+
+    optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
+
+    smoothed_scores, scores, best_average, best_average_after = train_agent(env, 10000, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma)
+    best_average_after_all.append(best_average_after)
+    best_average_all.append(best_average)
+
+
+with open(f"{result_dir}/best_average_after.txt", 'w') as f:
+    for i, best_episode in enumerate(best_average_after_all):
+        f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
+
+    f.write(f"Average: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}")
 
 
 

@@ -149,6 +149,7 @@ with open(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/original
             agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
         elif neuron_type == "CfC":
             agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
+            w['cfc_model.rnn_cell.tau_system'] = torch.reshape(w['cfc_model.rnn_cell.tau_system'], (num_neurons,))
         
         agent_net.load_state_dict(w)
 

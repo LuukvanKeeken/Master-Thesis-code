@@ -9,3 +9,4 @@
 8: 200.0 after 3500
 9: 200.0 after 7110
 Average: 3878.0, std dev: 2295.7996428260026
+Mean average performance: 196.1, std: 6.093603203360062

@@ -9,3 +9,4 @@
 8: 200.0 after 2620
 9: 200.0 after 9350
 Average: 4249.0, std dev: 2384.3047204583563
+Mean average performance: 194.06, std: 6.976990755332847

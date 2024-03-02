@@ -9,3 +9,4 @@
 8: 175.5 after 9040
 9: 156.7 after 7050
 Average: 8179.0, std dev: 1545.292528940718
+Mean average performance: 143.4, std: 25.556173422482477

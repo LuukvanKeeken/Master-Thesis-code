@@ -1,11 +1,13 @@
-0: 190.7 after 6330
-1: 186.8 after 2280
-2: 149.8 after 800
-3: 200.0 after 1000
-4: 200.0 after 1540
-5: 200.0 after 1890
-6: 183.9 after 3790
-7: 180.7 after 2750
-8: 165.0 after 6710
-9: 191.2 after 6800
-Average: 3389.0, std dev: 2262.4873480309234
+0: 195.8 after 1300
+1: 191.9 after 1600
+2: 193.8 after 1570
+3: 200.0 after 1700
+4: 192.5 after 1310
+5: 200.0 after 6000
+6: 200.0 after 1790
+7: 197.9 after 1800
+8: 200.0 after 2060
+9: 199.4 after 2900
+Average: 2203.0, std dev: 1337.408314614501
+
+Mean average performance: 197.13000000000002, std: 3.1676647549890733

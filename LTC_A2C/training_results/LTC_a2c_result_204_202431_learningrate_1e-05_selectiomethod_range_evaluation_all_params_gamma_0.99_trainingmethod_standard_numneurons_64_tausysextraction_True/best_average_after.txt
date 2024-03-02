@@ -9,3 +9,4 @@
 8: 110.5 after 6880
 9: 84.8 after 3790
 Average: 5489.0, std dev: 2568.8925629539276
+Mean average performance: 57.46, std: 41.211411041118204

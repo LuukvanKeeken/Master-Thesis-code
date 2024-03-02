@@ -9,3 +9,4 @@
 8: 189.6 after 2050
 9: 184.1 after 9880
 Average: 3288.0, std dev: 2494.2165102492604
+Mean average performance: 194.82999999999998, std: 6.4145225855086085

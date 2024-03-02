@@ -9,3 +9,4 @@
 8: 188.0 after 2080
 9: 200.0 after 2080
 Average: 3800.0, std dev: 3066.251783529852
+Mean average performance: 194.17, std: 5.456198310178981

@@ -9,3 +9,4 @@
 8: 182.4 after 8400
 9: 182.8 after 9380
 Average: 8738.0, std dev: 1120.3463750108713
+Mean average performance: 174.41000000000003, std: 12.710031471243493

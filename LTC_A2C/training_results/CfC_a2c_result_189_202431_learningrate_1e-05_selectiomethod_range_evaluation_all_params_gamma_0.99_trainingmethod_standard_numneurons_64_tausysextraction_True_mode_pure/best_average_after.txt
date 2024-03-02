@@ -9,3 +9,4 @@
 8: 27.2 after 5040
 9: 32.5 after 9800
 Average: 8258.0, std dev: 2090.740538660883
+Mean average performance: 75.47000000000001, std: 59.656970254950096

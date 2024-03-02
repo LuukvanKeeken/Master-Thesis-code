@@ -9,3 +9,4 @@
 8: 200.0 after 6990
 9: 200.0 after 6970
 Average: 6177.0, std dev: 1303.8255251374703
+Mean average performance: 197.42000000000002, std: 4.851556451284473

@@ -385,5 +385,6 @@ with open(f"{result_dir}/best_average_after.txt", 'w') as f:
     for i, best_episode in enumerate(best_average_after_all):
         f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
 
-    f.write(f"Average: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}")
+    f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}")
+    f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
 

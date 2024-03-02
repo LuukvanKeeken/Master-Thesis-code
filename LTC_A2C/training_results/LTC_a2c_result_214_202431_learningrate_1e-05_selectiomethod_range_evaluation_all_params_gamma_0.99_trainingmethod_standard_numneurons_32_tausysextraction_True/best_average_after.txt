@@ -9,3 +9,4 @@
 8: 28.8 after 1600
 9: 27.8 after 530
 Average: 5060.0, std dev: 3034.699326127714
+Mean average performance: 44.05, std: 37.809555670491555

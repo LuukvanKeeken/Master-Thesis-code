@@ -254,12 +254,14 @@ nums = [32]
 neuron_types = ["CfC"]
 learning_rates = [0.0005]
 
+
 for num_neurons in nums:
     for neuron_type in neuron_types:
         for learning_rate in learning_rates:
             # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
             print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, neuron type: {neuron_type}")
             device = "cpu"
+            num_training_eps = 20000
             # learning_rate = 0.001
             selection_method = "range_evaluation_all_params"
             gamma = 0.99
@@ -313,7 +315,7 @@ for num_neurons in nums:
 
                 optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
-                smoothed_scores, scores, best_average, best_average_after = train_agent(env, 10000, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma)
+                smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_eps, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma)
                 best_average_after_all.append(best_average_after)
                 best_average_all.append(best_average)
 

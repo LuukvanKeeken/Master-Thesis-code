@@ -53,9 +53,9 @@ else:
 # Get today's date and add it to the results directory
 d = date.today()
 result_dir = f'Master_Thesis_Code/BP_A2C/training_results/{network_type}_a2c_result_' + str(result_id) + "_{}_entropycoef_{}_valuepredcoef_{}_batchsize_{}_maxsteps_{}_\
-maxgradnorm_{}_gammaR_{}_learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}".format(
+maxgradnorm_{}_gammaR_{}_learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}_numneurons_{}".format(
     str(d.year) + str(d.month) + str(d.day), entropy_coef, value_pred_coef, batch_size, max_steps, max_grad_norm, gammaR,
-    learning_rate, num_training_episodes, selection_method, training_method)
+    learning_rate, num_training_episodes, selection_method, training_method, num_neurons)
 if training_method == "range":
     result_dir += "_rangemin_{}_rangemax_{}".format(range_min, range_max)
 
@@ -103,7 +103,7 @@ for i_run in range(num_models):
 
 with open(f"{result_dir}/best_average_after.txt", 'w') as f:
     for i, best_episode in enumerate(best_average_after_all):
-        f.write(f"{i}: {best_episode}\n")
+        f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
 
-    f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}")
+    f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
     f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")

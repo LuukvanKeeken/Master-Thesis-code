@@ -267,6 +267,7 @@ learning_rate = args.learning_rate
 # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
 print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, neuron type: {neuron_type}")
 device = "cpu"
+num_training_eps = 20000
 # learning_rate = 0.001
 selection_method = "range_evaluation_all_params"
 gamma = 0.99
@@ -320,7 +321,7 @@ for i in range(num_models):
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
-    smoothed_scores, scores, best_average, best_average_after = train_agent(env, 10000, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma)
+    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_eps, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma)
     best_average_after_all.append(best_average_after)
     best_average_all.append(best_average)
 
@@ -329,7 +330,7 @@ with open(f"{result_dir}/best_average_after.txt", 'w') as f:
     for i, best_episode in enumerate(best_average_after_all):
         f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
 
-    f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}")
+    f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
     f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
 
 

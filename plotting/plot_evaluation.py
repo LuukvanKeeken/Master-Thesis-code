@@ -45,14 +45,14 @@ CfC_evaluation_percentages = (CfC_evaluation_percentages*100)-100
 # elif statistic == "median":
 #     ax.plot(LTC_AutoNCP_evaluation_percentages[start:end], LTC_AutoNCP_evaluation_statistic[start:end], label = "LTC_AutoNCP")
 
-best_LTC_AutoNCP_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_19_2024211_learningrate_0.005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_24_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/{statistic}s.npy")
-best_LTC_AutoNCP_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_19_2024211_learningrate_0.005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_24_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/stddevs.npy")
-best_LTC_AutoNCP_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_19_2024211_learningrate_0.005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_24_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/percentages.npy")
-best_LTC_AutoNCP_evaluation_percentages = (best_LTC_AutoNCP_evaluation_percentages*100)-100
-if statistic == "mean":
-    ax.errorbar(best_LTC_AutoNCP_evaluation_percentages[start:end], best_LTC_AutoNCP_evaluation_statistic[start:end], best_LTC_AutoNCP_evaluation_std[start:end], capsize=5, label = "best_LTC_AutoNCP")
-elif statistic == "median":
-    ax.plot(best_LTC_AutoNCP_evaluation_percentages[start:end], best_LTC_AutoNCP_evaluation_statistic[start:end], label = "best_LTC_AutoNCP")
+# best_LTC_AutoNCP_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_19_2024211_learningrate_0.005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_24_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/{statistic}s.npy")
+# best_LTC_AutoNCP_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_19_2024211_learningrate_0.005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_24_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/stddevs.npy")
+# best_LTC_AutoNCP_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_19_2024211_learningrate_0.005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_24_tausysextraction_True_wiring_AutoNCP/{modified_parameter}/percentages.npy")
+# best_LTC_AutoNCP_evaluation_percentages = (best_LTC_AutoNCP_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(best_LTC_AutoNCP_evaluation_percentages[start:end], best_LTC_AutoNCP_evaluation_statistic[start:end], best_LTC_AutoNCP_evaluation_std[start:end], capsize=5, label = "best_LTC_AutoNCP")
+# elif statistic == "median":
+#     ax.plot(best_LTC_AutoNCP_evaluation_percentages[start:end], best_LTC_AutoNCP_evaluation_statistic[start:end], label = "best_LTC_AutoNCP")
 
 best_fully_connected_LTC_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_92_2024214_learningrate_0.001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True/{modified_parameter}/{statistic}s.npy")
 best_fully_connected_LTC_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_92_2024214_learningrate_0.001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True/{modified_parameter}/stddevs.npy")
@@ -62,6 +62,103 @@ if statistic == "mean":
     ax.errorbar(best_fully_connected_LTC_evaluation_percentages[start:end], best_fully_connected_LTC_evaluation_statistic[start:end], best_fully_connected_LTC_evaluation_std[start:end], capsize=5, label = "best_fully_connected_LTC")
 elif statistic == "median":
     ax.plot(best_fully_connected_LTC_evaluation_percentages[start:end], best_fully_connected_LTC_evaluation_statistic[start:end], label = "best_fully_connected_LTC")
+
+CfC_neuromod_rand_035_selectiononvalranges = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_180_2024227_learningrate_5e-05_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.35, 0.35, 0.35]/{modified_parameter}/{statistic}s.npy")
+CfC_neuromod_rand_035_selectiononvalranges_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_180_2024227_learningrate_5e-05_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.35, 0.35, 0.35]/{modified_parameter}/stddevs.npy")
+CfC_neuromod_rand_035_selectiononvalranges_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_180_2024227_learningrate_5e-05_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.35, 0.35, 0.35]/{modified_parameter}/percentages.npy")
+CfC_neuromod_rand_035_selectiononvalranges_percentages = (CfC_neuromod_rand_035_selectiononvalranges_percentages*100)-100
+if statistic == "mean":
+    ax.errorbar(CfC_neuromod_rand_035_selectiononvalranges_percentages[start:end], CfC_neuromod_rand_035_selectiononvalranges[start:end], CfC_neuromod_rand_035_selectiononvalranges_std[start:end], capsize=5, label = "CfC_neuromod_rand0.35_selectiononvalranges")
+elif statistic == "median":
+    ax.plot(CfC_neuromod_rand_035_selectiononvalranges_percentages[start:end], CfC_neuromod_rand_035_selectiononvalranges[start:end], label = "CfC_neuromod_rand0.35_selectiononvalranges")
+
+
+
+# CfC_neuromod_rand_0_5_3privparams_rangevalselection_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_153_2024222_learningrate_0.0001_selectiomethod_range_evaluatation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.5, 0.5, 0.5]/{modified_parameter}/{statistic}s.npy")
+# CfC_neuromod_rand_0_5_3privparams_rangevalselection_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_153_2024222_learningrate_0.0001_selectiomethod_range_evaluatation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.5, 0.5, 0.5]/{modified_parameter}/stddevs.npy")
+# CfC_neuromod_rand_0_5_3privparams_rangevalselection_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_153_2024222_learningrate_0.0001_selectiomethod_range_evaluatation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.5, 0.5, 0.5]/{modified_parameter}/percentages.npy")
+# CfC_neuromod_rand_0_5_3privparams_rangevalselection_evaluation_percentages = (CfC_neuromod_rand_0_5_3privparams_rangevalselection_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(CfC_neuromod_rand_0_5_3privparams_rangevalselection_evaluation_percentages[start:end], CfC_neuromod_rand_0_5_3privparams_rangevalselection_evaluation_statistic[start:end], CfC_neuromod_rand_0_5_3privparams_rangevalselection_evaluation_std[start:end], capsize=5, label = "CfC_neuromod_rand0.5_3privparams_rangevalselection")
+# elif statistic == "median":
+#     ax.plot(CfC_neuromod_rand_0_5_3privparams_rangevalselection_evaluation_percentages[start:end], CfC_neuromod_rand_0_5_3privparams_rangevalselection_evaluation_statistic[start:end], label = "CfC_neuromod_rand0.5_3privparams_rangevalselection")
+
+
+# CfC_neuromod_rand_0_5_3privilegedparams_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_147_2024220_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.5, 0.5, 0.5]/{modified_parameter}/{statistic}s.npy")
+# CfC_neuromod_rand_0_5_3privilegedparams_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_147_2024220_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.5, 0.5, 0.5]/{modified_parameter}/stddevs.npy")
+# CfC_neuromod_rand_0_5_3privilegedparams_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_147_2024220_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.5, 0.5, 0.5]/{modified_parameter}/percentages.npy")
+# CfC_neuromod_rand_0_5_3privilegedparams_evaluation_percentages = (CfC_neuromod_rand_0_5_3privilegedparams_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(CfC_neuromod_rand_0_5_3privilegedparams_evaluation_percentages[start:end], CfC_neuromod_rand_0_5_3privilegedparams_evaluation_statistic[start:end], CfC_neuromod_rand_0_5_3privilegedparams_std[start:end], capsize=5, label = "CfC_neuromod_rand0.5_3privilegedparams")
+# elif statistic == "median":
+#     ax.plot(CfC_neuromod_rand_0_5_3privilegedparams_evaluation_percentages[start:end], CfC_neuromod_rand_0_5_3privilegedparams_evaluation_statistic[start:end], label = "CfC_neuromod_rand0.5_3privilegedparams")
+
+
+# CfC_neuromod_rand_0_35_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_132_2024217_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.35, 0.35, 0.35, 0.35, 0.35]/{modified_parameter}/{statistic}s.npy")
+# CfC_neuromod_rand_0_35_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_132_2024217_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.35, 0.35, 0.35, 0.35, 0.35]/{modified_parameter}/stddevs.npy")
+# CfC_neuromod_rand_0_35_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_132_2024217_learningrate_0.0001_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.35, 0.35, 0.35, 0.35, 0.35]/{modified_parameter}/percentages.npy")
+# CfC_neuromod_rand_0_35_evaluation_percentages = (CfC_neuromod_rand_0_35_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(CfC_neuromod_rand_0_35_evaluation_percentages[start:end], CfC_neuromod_rand_0_35_evaluation_statistic[start:end], CfC_neuromod_rand_0_35_evaluation_std[start:end], capsize=5, label = "CfC_neuromod_rand0.35")
+# elif statistic == "median":
+#     ax.plot(CfC_neuromod_rand_0_35_evaluation_percentages[start:end], CfC_neuromod_rand_0_35_evaluation_statistic[start:end], label = "CfC_neuromod_rand0.35")
+
+
+
+# CfC_neuromod_rand_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_122_2024216_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.1, 0.1, 0.1, 0.1, 0.1]/{modified_parameter}/{statistic}s.npy")
+# CfC_neuromod_rand_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_122_2024216_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.1, 0.1, 0.1, 0.1, 0.1]/{modified_parameter}/stddevs.npy")
+# CfC_neuromod_rand_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_122_2024216_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.1, 0.1, 0.1, 0.1, 0.1]/{modified_parameter}/percentages.npy")
+# CfC_neuromod_rand_evaluation_percentages = (CfC_neuromod_rand_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(CfC_neuromod_rand_evaluation_percentages[start:end], CfC_neuromod_rand_evaluation_statistic[start:end], CfC_neuromod_rand_evaluation_std[start:end], capsize=5, label = "CfC_neuromod_rand0.1")
+# elif statistic == "median":
+#     ax.plot(CfC_neuromod_rand_evaluation_percentages[start:end], CfC_neuromod_rand_evaluation_statistic[start:end], label = "CfC_neuromod_rand0.1")
+
+# CfC_neuromod_norand_randomencoder_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_157_2024225_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated/{modified_parameter}/{statistic}s.npy")
+# CfC_neuromod_norand_randomencoder_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_157_2024225_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated/{modified_parameter}/stddevs.npy")
+# CfC_neuromod_norand_randomencoder_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_157_2024225_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated/{modified_parameter}/percentages.npy")
+# CfC_neuromod_norand_randomencoder_evaluation_percentages = (CfC_neuromod_norand_randomencoder_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(CfC_neuromod_norand_randomencoder_evaluation_percentages[start:end], CfC_neuromod_norand_randomencoder_evaluation_statistic[start:end], CfC_neuromod_norand_randomencoder_evaluation_std[start:end], capsize=5, label = "CfC_neuromod_norand_randomencoder")
+# elif statistic == "median":
+#     ax.plot(CfC_neuromod_norand_randomencoder_evaluation_percentages[start:end], CfC_neuromod_norand_randomencoder_evaluation_statistic[start:end], label = "CfC_neuromod_norand_randomencoder")
+
+# CfC_neuromod_norand_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_174_2024227_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated/{modified_parameter}/{statistic}s.npy")
+# CfC_neuromod_norand_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_174_2024227_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated/{modified_parameter}/stddevs.npy")
+# CfC_neuromod_norand_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_174_2024227_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated/{modified_parameter}/percentages.npy")
+# CfC_neuromod_norand_evaluation_percentages = (CfC_neuromod_norand_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(CfC_neuromod_norand_evaluation_percentages[start:end], CfC_neuromod_norand_evaluation_statistic[start:end], CfC_neuromod_norand_evaluation_std[start:end], capsize=5, label = "CfC_neuromod_norand")
+# elif statistic == "median":
+#     ax.plot(CfC_neuromod_norand_evaluation_percentages[start:end], CfC_neuromod_norand_evaluation_statistic[start:end], label = "CfC_neuromod_norand")
+
+# CfC_neuromod_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_117_2024216_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated/{modified_parameter}/{statistic}s.npy")
+# CfC_neuromod_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_117_2024216_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated/{modified_parameter}/stddevs.npy")
+# CfC_neuromod_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_117_2024216_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated/{modified_parameter}/percentages.npy")
+# CfC_neuromod_evaluation_percentages = (CfC_neuromod_evaluation_percentages*100)-100
+# if statistic == "mean":
+#     ax.errorbar(CfC_neuromod_evaluation_percentages[start:end], CfC_neuromod_evaluation_statistic[start:end], CfC_neuromod_evaluation_std[start:end], capsize=5, label = "CfC_neuromod_norand")
+# elif statistic == "median":
+#     ax.plot(CfC_neuromod_evaluation_percentages[start:end], CfC_neuromod_evaluation_statistic[start:end], label = "CfC_neuromod_norand")
+
+best_fully_connected_CfC_validationrangeselection_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_192_202431_learningrate_0.0001_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_48_tausysextraction_True_mode_pure/{modified_parameter}/{statistic}s.npy")
+best_fully_connected_CfC_validationrangeselection_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_192_202431_learningrate_0.0001_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_48_tausysextraction_True_mode_pure/{modified_parameter}/stddevs.npy")
+best_fully_connected_CfC_validationrangeselection_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_192_202431_learningrate_0.0001_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_48_tausysextraction_True_mode_pure/{modified_parameter}/percentages.npy")
+best_fully_connected_CfC_validationrangeselection_evaluation_percentages = (best_fully_connected_CfC_validationrangeselection_evaluation_percentages*100)-100
+if statistic == "mean":
+    ax.errorbar(best_fully_connected_CfC_validationrangeselection_evaluation_percentages[start:end], best_fully_connected_CfC_validationrangeselection_evaluation_statistic[start:end], best_fully_connected_CfC_validationrangeselection_evaluation_std[start:end], capsize=5, label = "best_fully_connected_CfC_validationrangeselection")
+elif statistic == "median":
+    ax.plot(best_fully_connected_CfC_validationrangeselection_evaluation_percentages[start:end], best_fully_connected_CfC_validationrangeselection_evaluation_statistic[start:end], label = "best_fully_connected_CfC_validationrangeselection")
+
+best_fully_connected_LTC_validationrangeselection_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_206_202431_learningrate_0.0005_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_48_tausysextraction_True/{modified_parameter}/{statistic}s.npy")
+best_fully_connected_LTC_validationrangeselection_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_206_202431_learningrate_0.0005_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_48_tausysextraction_True/{modified_parameter}/stddevs.npy")
+best_fully_connected_LTC_validationrangeselection_evaluation_percentages = np.load(f"../LTC_A2C/evaluation_results/LTC_a2c_result_206_202431_learningrate_0.0005_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_48_tausysextraction_True/{modified_parameter}/percentages.npy")
+best_fully_connected_LTC_validationrangeselection_evaluation_percentages = (best_fully_connected_LTC_validationrangeselection_evaluation_percentages*100)-100
+if statistic == "mean":
+    ax.errorbar(best_fully_connected_LTC_validationrangeselection_evaluation_percentages[start:end], best_fully_connected_LTC_validationrangeselection_evaluation_statistic[start:end], best_fully_connected_LTC_validationrangeselection_evaluation_std[start:end], capsize=5, label = "best_fully_connected_LTC_validationrangeselection")
+elif statistic == "median":
+    ax.plot(best_fully_connected_LTC_validationrangeselection_evaluation_percentages[start:end], best_fully_connected_LTC_validationrangeselection_evaluation_statistic[start:end], label = "best_fully_connected_LTC_validationrangeselection")
+
 
 best_fully_connected_CfC_evaluation_statistic = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_88_2024214_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_pure/{modified_parameter}/{statistic}s.npy")
 best_fully_connected_CfC_evaluation_std = np.load(f"../LTC_A2C/evaluation_results/CfC_a2c_result_88_2024214_learningrate_0.0005_selectiomethod_evaluation_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_pure/{modified_parameter}/stddevs.npy")

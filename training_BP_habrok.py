@@ -80,7 +80,7 @@ for i_run in range(num_models):
     elif network_type == 'Standard_RNN':
         agent_net = Standard_RNetwork(4, num_neurons, 2, seed)
     elif network_type == 'Standard_MLP':
-        agent_net = Standard_FFNetwork(4, num_neurons, 2, seed)
+        agent_net = Standard_FFNetwork(4, num_neurons, num_neurons, 2, seed)
     else:
         raise NotImplementedError("Network type not recognized")
 

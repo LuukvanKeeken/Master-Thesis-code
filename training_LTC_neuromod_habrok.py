@@ -107,9 +107,16 @@ def randomize_env_params(env, randomization_params):
     force_mag = env.unwrapped.force_mag
 
     params = [pole_length, masspole, force_mag]
+
+    
     for i in range(len(params)):
-        low = params[i] - params[i] * randomization_params[i]
-        high = params[i] + params[i] * randomization_params[i]
+        if isinstance(randomization_params[i], float):
+            low = params[i] - params[i] * randomization_params[i]
+            high = params[i] + params[i] * randomization_params[i]
+        elif isinstance(randomization_params[i], tuple):
+            low = params[i]*randomization_params[i][0]
+            high = params[i]*randomization_params[i][1]
+            
         params[i] = np.random.uniform(low, high)
 
     env.unwrapped.length = params[0]
@@ -303,32 +310,41 @@ parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole
 parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
 parser.add_argument('--randomization_factor', type=float, default=0.5, help='Factor to randomize the environment parameters')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
-
+parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
+parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 256, 128], help='Dimensions of the neuromodulation network, without output layer')
+parser.add_argument('--selection_method', type=str, default = "range_evaluation_all_params", help='Method to select the best model')
+parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
+parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of episodes to train the agent')
 args = parser.parse_args()
 
 
 num_neurons = args.num_neurons
 factor = args.randomization_factor
 learning_rate = args.learning_rate
-
+training_method = args.training_method
+selection_method = args.selection_method
+neuromod_network_dims = args.neuromod_network_dims
+neuromod_network_dims.append(num_neurons)
+num_models = args.num_models
+num_training_episodes = args.num_training_episodes
 
 # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
 print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, rand factor: {factor}")
 device = "cpu"
-# learning_rate = 0.001
-selection_method = "range_evaluation_all_params"
+
 gamma = 0.99
-training_method = "standard"
 # num_neurons = 32
 neuron_type = "CfC"
 mode = "neuromodulated"
-neuromod_network_dims = [3, 256, 128, num_neurons]
-randomization_params = 3*[factor]
 
-num_training_episodes = 20000
+if training_method == "quarter_range":
+    randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
+else:
+    randomization_params = 3*[factor]
+
+
 
 tau_sys_extraction = True
-num_models = 5
 sparsity_level = 0.5
 seed = 5
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)

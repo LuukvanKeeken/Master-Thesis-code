@@ -101,9 +101,16 @@ def randomize_env_params(env, randomization_params):
     force_mag = env.unwrapped.force_mag
 
     params = [pole_length, masspole, force_mag]
+
+
     for i in range(len(params)):
-        low = params[i] - params[i] * randomization_params[i]
-        high = params[i] + params[i] * randomization_params[i]
+        if isinstance(randomization_params[i], float):
+            low = params[i] - params[i] * randomization_params[i]
+            high = params[i] + params[i] * randomization_params[i]
+        elif isinstance(randomization_params[i], tuple):
+            low = params[i]*randomization_params[i][0]
+            high = params[i]*randomization_params[i][1]
+
         params[i] = np.random.uniform(low, high)
 
     env.unwrapped.length = params[0]
@@ -308,12 +315,17 @@ for num_neurons in nums:
             # learning_rate = 0.001
             selection_method = "range_evaluation"
             gamma = 0.99
-            training_method = "standard"
+            training_method = "quarter_range"
             # num_neurons = 32
             neuron_type = "CfC"
             mode = "neuromodulated"
             neuromod_network_dims = [3, 256, 128, num_neurons]
-            randomization_params = 3*[factor]
+
+            if training_method == "quarter_range":
+                randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
+            else:
+                randomization_params = 3*[factor]
+
             num_training_episodes = 20000
 
             tau_sys_extraction = True

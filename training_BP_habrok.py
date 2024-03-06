@@ -13,12 +13,16 @@ parser.add_argument('--num_neurons', type=int, default=32, help='Number of neuro
 parser.add_argument('--network_type', type=str, default='BP_RNN', help='Type of network to use')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
+parser.add_argument('--selection_method', type=str, default='range_evaluation_all_params', help='Method to use for selecting the best model')
+parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
 
 args = parser.parse_args()
 learning_rate = args.learning_rate
 num_neurons = args.num_neurons
 network_type = args.network_type
 num_models = args.num_models
+selection_method = args.selection_method
+training_method = args.training_method
 
 
 device = "cpu"
@@ -32,14 +36,17 @@ max_steps = 200
 batch_size = 1
 num_training_episodes = 20000
 evaluate_every = 10
-selection_method = "range_evaluation_all_params"
 num_evaluation_episodes = 10
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 training_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/training_seeds.npy')
 max_reward = 200
-training_method = "original"
 range_min = 0.7
 range_max = 1.3
+
+if training_method == "quarter_range":
+    randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
+else:
+    randomization_params = None
 
 
 # Create Results Directory
@@ -52,12 +59,14 @@ else:
 
 # Get today's date and add it to the results directory
 d = date.today()
-result_dir = f'Master_Thesis_Code/BP_A2C/training_results/{network_type}_a2c_result_' + str(result_id) + "_{}_entropycoef_{}_valuepredcoef_{}_batchsize_{}_maxsteps_{}_\
-maxgradnorm_{}_gammaR_{}_learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}_numneurons_{}".format(
-    str(d.year) + str(d.month) + str(d.day), entropy_coef, value_pred_coef, batch_size, max_steps, max_grad_norm, gammaR,
+result_dir = f'Master_Thesis_Code/BP_A2C/training_results/{network_type}_a2c_result_' + str(result_id) + "_{}_entropycoef_{}_valuepredcoef_{}_\
+learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}_numneurons_{}".format(
+    str(d.year) + str(d.month) + str(d.day), entropy_coef, value_pred_coef,
     learning_rate, num_training_episodes, selection_method, training_method, num_neurons)
 if training_method == "range":
     result_dir += "_rangemin_{}_rangemax_{}".format(range_min, range_max)
+if training_method == "quarter_range":
+    result_dir += "_randomizationparams_{}".format(randomization_params)
 
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
@@ -95,6 +104,8 @@ for i_run in range(num_models):
         smoothed_scores, scores, best_average, best_average_after = agent.train_agent()
     elif training_method == "range":
         smoothed_scores, scores, best_average, best_average_after = agent.train_agent_on_range(range_min, range_max)
+    elif training_method == "quarter_range":
+        smoothed_scores, scores, best_average, best_average_after = agent.train_agent(randomization_params = randomization_params)
 
     best_average_after_all.append(best_average_after)
     best_average_all.append(best_average)

@@ -60,7 +60,7 @@ class A2C_Agent:
         self.hidden_activations = self.agent_net.initialZeroState(self.batch_size).to(device)
 
 
-    def train_agent(self):
+    def train_agent(self, randomization_params = None, randomize_every = 5):
 
         best_average = -np.inf
         best_average_after = np.inf
@@ -72,6 +72,11 @@ class A2C_Agent:
 
 
         for episode in range(1, self.num_training_episodes + 1):
+            
+            if randomization_params and episode % randomize_every == 0:
+                env = gym.make(self.env_name)
+                env = randomize_env_params(env, randomization_params)
+            
             self.hidden_activations = self.agent_net.initialZeroState(self.batch_size)
             self.hebbian_traces = self.agent_net.initialZeroHebb(self.batch_size)
             
@@ -617,7 +622,33 @@ def evaluate_agent_all_params(agent_net, env_name, num_episodes, evaluation_seed
 
     return eval_rewards
 
+def randomize_env_params(env, randomization_params):
+    pole_length = env.unwrapped.length
+    # gravity = env.unwrapped.gravity
+    # masscart = env.unwrapped.masscart
+    masspole = env.unwrapped.masspole
+    force_mag = env.unwrapped.force_mag
 
+    params = [pole_length, masspole, force_mag]
+
+    
+    for i in range(len(params)):
+        if isinstance(randomization_params[i], float):
+            low = params[i] - params[i] * randomization_params[i]
+            high = params[i] + params[i] * randomization_params[i]
+        elif isinstance(randomization_params[i], tuple):
+            low = params[i]*randomization_params[i][0]
+            high = params[i]*randomization_params[i][1]
+            
+        params[i] = np.random.uniform(low, high)
+
+    env.unwrapped.length = params[0]
+    # env.unwrapped.gravity = params[1]
+    # env.unwrapped.masscart = params[2]
+    env.unwrapped.masspole = params[1]
+    env.unwrapped.force_mag = params[2]
+
+    return env
     # Based on version from BP paper:
     # def train_agent(self):
         

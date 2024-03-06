@@ -185,6 +185,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                     evaluation_performance = 0
                     total_eval_eps = 10
                     for i in range(total_eval_eps):
+                        np.random.seed(evaluation_seeds[i+eps_per_setting-1])
                         pole_length_mod = np.random.choice(pole_length_mods)
                         pole_mass_mod = np.random.choice(pole_mass_mods)
                         force_mag_mod = np.random.choice(force_mag_mods)

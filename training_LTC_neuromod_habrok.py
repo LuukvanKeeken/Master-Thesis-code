@@ -238,6 +238,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                     evaluation_performance = 0
                     total_eval_eps = 10
                     for i in range(total_eval_eps):
+                        np.random.seed(evaluation_seeds[i+eps_per_setting-1])
                         pole_length_mod = np.random.choice(pole_length_mods)
                         pole_mass_mod = np.random.choice(pole_mass_mods)
                         force_mag_mod = np.random.choice(force_mag_mods)
@@ -360,6 +361,8 @@ d = date.today()
 result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
 if neuron_type == "CfC":
     result_dir += "_mode_" + mode
+    if mode == "neuromodulated":
+        result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
 if wiring:
     result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
 if randomization_params:
@@ -401,6 +404,6 @@ with open(f"{result_dir}/best_average_after.txt", 'w') as f:
     for i, best_episode in enumerate(best_average_after_all):
         f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
 
-    f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}")
+    f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
     f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
 

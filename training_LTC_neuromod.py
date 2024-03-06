@@ -233,6 +233,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                     evaluation_performance = 0
                     total_eval_eps = 10
                     for i in range(total_eval_eps):
+                        np.random.seed(evaluation_seeds[i+eps_per_setting-1])
                         pole_length_mod = np.random.choice(pole_length_mods)
                         pole_mass_mod = np.random.choice(pole_mass_mods)
                         force_mag_mod = np.random.choice(force_mag_mods)
@@ -345,6 +346,8 @@ for num_neurons in nums:
             result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
             if neuron_type == "CfC":
                 result_dir += "_mode_" + mode
+                if mode == "neuromodulated":
+                    result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
             if wiring:
                 result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
             if randomization_params:

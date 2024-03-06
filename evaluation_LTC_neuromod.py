@@ -125,17 +125,17 @@ max_reward = 200
 max_steps = 200
 n_evaluations = 100
 neuron_type = "CfC"
-num_neurons = 32
+num_neurons = 48
 sparsity_level = 0.5
 seed = 5
 mode = "neuromodulated"
-neuromod_network_dims = [3, 256, 128, num_neurons]
+neuromod_network_dims = [3, 128, 80, num_neurons]
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
 wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-results_dir = f"CfC_a2c_result_180_2024227_learningrate_5e-05_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_32_tausysextraction_True_mode_neuromodulated_randomization_params_[0.35, 0.35, 0.35]"
+results_dir = f"CfC_a2c_result_242_202435_learningrate_0.0001_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_quarter_range_numneurons_48_tausysextraction_True_mode_neuromodulated_randomization_params_[(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]"
 os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}")
 
 

@@ -1,11 +1,11 @@
-0: 136.7 after 3480
-1: 195.8 after 11450
-2: 200.0 after 14690
-3: 200.0 after 4190
-4: 200.0 after 7450
-5: 200.0 after 3710
-6: 200.0 after 14160
-7: 200.0 after 12420
-8: 200.0 after 12380
-9: 200.0 after 4180
-Average training episodes: 8811.0, std dev: 4415.804456721335Mean average performance: 193.25, std dev: 18.891545728182226
+0: 200.0 after 5720
+1: 146.2 after 19680
+2: 140.0 after 18620
+3: 200.0 after 6710
+4: 200.0 after 11630
+5: 200.0 after 8510
+6: 200.0 after 8780
+7: 184.4 after 18770
+8: 200.0 after 17320
+9: 200.0 after 17100
+Average training episodes: 13284.0, std dev: 5259.025004694311Mean average performance: 187.06, std dev: 22.50191991808699

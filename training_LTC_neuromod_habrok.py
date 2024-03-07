@@ -311,7 +311,7 @@ parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole
 parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
 parser.add_argument('--randomization_factor', type=float, default=0.5, help='Factor to randomize the environment parameters')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
-parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
+parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
 parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 256, 128], help='Dimensions of the neuromodulation network, without output layer')
 parser.add_argument('--selection_method', type=str, default = "range_evaluation_all_params", help='Method to select the best model')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
@@ -340,8 +340,10 @@ mode = "neuromodulated"
 
 if training_method == "quarter_range":
     randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
-else:
+elif training_method == "randfactor":
     randomization_params = 3*[factor]
+elif training_method == "original":
+    randomization_params = None
 
 
 
@@ -358,7 +360,7 @@ else:
     results = [d for d in dirs if 'a2c_result' in d]
     result_id = len(results) + 1
 d = date.today()
-result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
+result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
 if neuron_type == "CfC":
     result_dir += "_mode_" + mode
     if mode == "neuromodulated":

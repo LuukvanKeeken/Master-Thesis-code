@@ -20,9 +20,9 @@ n_evaluations = 100
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
 
-network_type = 'Standard_RNN'
-num_neurons = 32
-results_dir = f"Standard_RNN_a2c_result_91_202437_entropycoef_0.01_valuepredcoef_0.1_learningrate_0.001_numtrainepisodes_20000_selectionmethod_range_evaluation_all_params_trainingmethod_quarter_range_numneurons_32"
+network_type = 'Standard_MLP'
+num_neurons = 64
+results_dir = f"Standard_MLP_a2c_result_96_202437_entropycoef_0.01_valuepredcoef_0.1_learningrate_0.001_numtrainepisodes_20000_selectionmethod_range_evaluation_all_params_trainingmethod_quarter_range_numneurons_64"
 os.mkdir(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}")
 
 

@@ -65,8 +65,7 @@ learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}_numneur
     learning_rate, num_training_episodes, selection_method, training_method, num_neurons)
 if training_method == "range":
     result_dir += "_rangemin_{}_rangemax_{}".format(range_min, range_max)
-if training_method == "quarter_range":
-    result_dir += "_randomizationparams_{}".format(randomization_params)
+
 
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))

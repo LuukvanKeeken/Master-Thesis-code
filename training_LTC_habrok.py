@@ -83,8 +83,37 @@ def evaluate_agent_all_params(agent_net, env_name, num_episodes, evaluation_seed
     return eval_rewards
 
 
+def randomize_env_params(env, randomization_params):
+    pole_length = env.unwrapped.length
+    # gravity = env.unwrapped.gravity
+    # masscart = env.unwrapped.masscart
+    masspole = env.unwrapped.masspole
+    force_mag = env.unwrapped.force_mag
 
-def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10):
+    params = [pole_length, masspole, force_mag]
+
+    
+    for i in range(len(params)):
+        if isinstance(randomization_params[i], float):
+            low = params[i] - params[i] * randomization_params[i]
+            high = params[i] + params[i] * randomization_params[i]
+        elif isinstance(randomization_params[i], tuple):
+            low = params[i]*randomization_params[i][0]
+            high = params[i]*randomization_params[i][1]
+            
+        params[i] = np.random.uniform(low, high)
+
+    env.unwrapped.length = params[0]
+    # env.unwrapped.gravity = params[1]
+    # env.unwrapped.masscart = params[2]
+    env.unwrapped.masspole = params[1]
+    env.unwrapped.force_mag = params[2]
+
+    return env
+
+
+
+def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5):
     best_average = -np.inf
     best_average_after = np.inf
     scores = []
@@ -94,6 +123,11 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
     entropy_term = 0
 
     for episode in range(1, num_training_episodes + 1):
+
+        if randomization_params and episode % randomize_every == 0:
+            env = gym.make(env_name)
+            env = randomize_env_params(env, randomization_params)
+
         hidden_state = None
 
         score = 0
@@ -256,6 +290,8 @@ parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole
 parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
 parser.add_argument('--neuron_type', type=str, default='CfC', help='Type of neuron, either "LTC" or "CfC"')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
+parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
+parser.add_argument('--selection_method', type=str, default = "range_evaluation_all_params", help='Method to select the best model')
 
 args = parser.parse_args()
 
@@ -263,18 +299,17 @@ args = parser.parse_args()
 num_neurons = args.num_neurons
 neuron_type = args.neuron_type
 learning_rate = args.learning_rate
+training_method = args.training_method
+selection_method = args.selection_method
 
 
 # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
 print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, neuron type: {neuron_type}")
 device = "cpu"
 num_training_eps = 20000
-# learning_rate = 0.001
-selection_method = "range_evaluation_all_params"
+
 gamma = 0.99
-training_method = "standard"
-# num_neurons = 32
-# neuron_type = "CfC"
+
 mode = "pure"
 tau_sys_extraction = True
 num_models = 10
@@ -282,6 +317,15 @@ sparsity_level = 0.5
 seed = 5
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
 wiring = None
+factor = 0.2
+
+if training_method == "quarter_range":
+    randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
+elif training_method == "randfactor":
+    randomization_params = 3*[factor]
+elif training_method == "original":
+    randomization_params = None
+
 
 dirs = os.listdir('Master_Thesis_Code/LTC_A2C/training_results/')
 if not any('a2c_result' in d for d in dirs):
@@ -290,7 +334,7 @@ else:
     results = [d for d in dirs if 'a2c_result' in d]
     result_id = len(results) + 1
 d = date.today()
-result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
+result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
 if neuron_type == "CfC":
     result_dir += "_mode_" + mode
 if wiring:
@@ -322,7 +366,7 @@ for i in range(num_models):
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
-    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_eps, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma)
+    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_eps, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params)
     best_average_after_all.append(best_average_after)
     best_average_all.append(best_average)
 

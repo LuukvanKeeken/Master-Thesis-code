@@ -110,8 +110,8 @@ env_name = "CartPole-v0"
 max_reward = 200
 max_steps = 200
 n_evaluations = 100
-neuron_type = "LTC"
-num_neurons = 32
+neuron_type = "CfC"
+num_neurons = 48
 sparsity_level = 0.5
 seed = 5
 mode = "pure"
@@ -120,7 +120,7 @@ wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-results_dir = f"LTC_a2c_result_331_202438_learningrate_0.0005_selectiomethod_range_evaluation_all_params_trainingmethod_quarter_range_numneurons_32_tausysextraction_True"
+results_dir = f"CfC_a2c_result_311_202438_learningrate_0.0005_selectiomethod_range_evaluation_all_params_trainingmethod_quarter_range_numneurons_48_tausysextraction_True_mode_pure"
 os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}")
 
 

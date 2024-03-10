@@ -1,0 +1,11 @@
+Run 0: avg reward: 52.93
+Run 1: avg reward: 24.88
+Run 2: avg reward: 36.63
+Run 3: avg reward: 199.97
+Run 4: avg reward: 143.89
+Run 5: avg reward: 174.11
+Run 6: avg reward: 33.6
+Run 7: avg reward: 109.87
+Run 8: avg reward: 175.24
+Run 9: avg reward: 17.65
+Mean avg reward: 96.877, +/- 67.92525819604957

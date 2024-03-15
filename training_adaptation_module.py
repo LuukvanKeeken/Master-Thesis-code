@@ -1,5 +1,6 @@
 from collections import OrderedDict, deque
 from copy import deepcopy
+from datetime import date
 import gym
 import numpy as np
 import torch
@@ -265,15 +266,15 @@ parser.add_argument('--seed', type=int, default=5)
 parser.add_argument('--mode', type=str, default='neuromodulated', help='Mode of the CfC network')
 parser.add_argument('--wiring', type=str, default='None', help='Wiring of the CfC network')
 parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 192, 96], help='Dimensions of the neuromodulation network, without output layer')
-parser.add_argument('--num_training_eps', type=int, default=10, help="Number of episodes to train the adaptation module")
+parser.add_argument('--num_training_eps', type=int, default=1000, help="Number of episodes to train the adaptation module")
 parser.add_argument('--env_name', type=str, default="CartPole-v0", help="Gym RL environment name")
 parser.add_argument('--lr_adapt_mod', type=float, default=0.0005, help="Learning rate of the adaptation module")
 parser.add_argument('--wd_adapt_mod', type=float, default=0.0, help="Weight decay of the adaptation module")
 parser.add_argument('--training_range', type=str, default='quarter_range', help='Range from which training data is sampled')
 parser.add_argument('--randomize_every', type=int, default=1, help='Number of episodes between randomization of environment parameters')
-parser.add_argument('--validate_every', type=int, default=5, help='Number of training episodes between validations')
+parser.add_argument('--validate_every', type=int, default=10, help='Number of training episodes between validations')
 parser.add_argument('--num_validation_eps', type=int, default=10, help='Number of episodes to validate the adaptation module')
-
+parser.add_argument('--adapt_mod_type', type=str, default='StandardRNN', help='Type of adaptation module to use')
 
 
 args = parser.parse_args()
@@ -298,6 +299,7 @@ training_range = args.training_range
 randomize_every = args.randomize_every
 validate_every = args.validate_every
 num_validation_eps = args.num_validation_eps
+adapt_mod_type = args.adapt_mod_type
 if training_range == 'quarter_range':
     randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
 else:
@@ -311,7 +313,17 @@ evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evalua
 
 phase_1_dir = "CfC_a2c_result_296_202437_learningrate_0.0005_selectiomethod_range_evaluation_all_params_trainingmethod_original_numneurons_32_tausysextraction_True_mode_neuromodulated_neuromod_network_dims_3_192_96_32"
 
-results_dir = f"Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/CfC_result_296_202437_numneuronsadaptmod_{num_neurons_adaptation}_lradaptmod_{lr_adapt_mod}_wdadaptmod_{wd_adapt_mod}"
+
+dirs = os.listdir('Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/')
+if not any('adaptation_module' in d for d in dirs):
+    result_id = 1
+else:
+    results = [d for d in dirs if 'adaptation_module' in d]
+    result_id = len(results) + 1
+d = date.today()
+
+
+results_dir = f"Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/adaptation_module_{adapt_mod_type}_result_{result_id}_{str(d.year) + str(d.month) + str(d.day)}_CfC_result_296_202437_numneuronsadaptmod_{num_neurons_adaptation}_lradaptmod_{lr_adapt_mod}_wdadaptmod_{wd_adapt_mod}"
 os.mkdir(results_dir)
 
 
@@ -360,8 +372,10 @@ for i, w in enumerate(weights):
     for name, param in encoder.named_parameters():
         param.requires_grad = False
 
-    adaptation_module = StandardRNN(state_dims + action_dims, num_neurons_adaptation, num_neurons_policy, seed = seed)
-
+    if adapt_mod_type == 'StandardRNN':
+        adaptation_module = StandardRNN(state_dims + action_dims, num_neurons_adaptation, num_neurons_policy, seed = seed)
+    else:
+        raise NotImplementedError
     
 
     optimizer = torch.optim.Adam(adaptation_module.parameters(), lr = lr_adapt_mod, weight_decay = wd_adapt_mod)

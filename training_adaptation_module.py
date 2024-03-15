@@ -265,13 +265,13 @@ parser.add_argument('--seed', type=int, default=5)
 parser.add_argument('--mode', type=str, default='neuromodulated', help='Mode of the CfC network')
 parser.add_argument('--wiring', type=str, default='None', help='Wiring of the CfC network')
 parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 192, 96], help='Dimensions of the neuromodulation network, without output layer')
-parser.add_argument('--num_training_eps', type=int, default=1000, help="Number of episodes to train the adaptation module")
+parser.add_argument('--num_training_eps', type=int, default=10, help="Number of episodes to train the adaptation module")
 parser.add_argument('--env_name', type=str, default="CartPole-v0", help="Gym RL environment name")
 parser.add_argument('--lr_adapt_mod', type=float, default=0.0005, help="Learning rate of the adaptation module")
 parser.add_argument('--wd_adapt_mod', type=float, default=0.0, help="Weight decay of the adaptation module")
 parser.add_argument('--training_range', type=str, default='quarter_range', help='Range from which training data is sampled')
 parser.add_argument('--randomize_every', type=int, default=1, help='Number of episodes between randomization of environment parameters')
-parser.add_argument('--validate_every', type=int, default=10, help='Number of training episodes between validations')
+parser.add_argument('--validate_every', type=int, default=5, help='Number of training episodes between validations')
 parser.add_argument('--num_validation_eps', type=int, default=10, help='Number of episodes to validate the adaptation module')
 
 
@@ -342,8 +342,8 @@ for i, w in enumerate(weights):
         
         
         layer_list = []
-        for i in range(len(neuromod_network_dims) - 1):
-            layer_list.append(torch.nn.Linear(neuromod_network_dims[i], neuromod_network_dims[i + 1]))
+        for dim in range(len(neuromod_network_dims) - 1):
+            layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
             layer_list.append(torch.nn.Tanh())
         encoder = torch.nn.Sequential(*layer_list)
         

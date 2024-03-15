@@ -12,9 +12,15 @@ class StandardRNN(nn.Module):
         np.random.seed(seed)
         torch.manual_seed(seed)
 
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.activation_function = activation_function
+
+
         self.rnn = nn.RNN(input_size, hidden_size)
         self.linear = nn.Linear(hidden_size, output_size)
-        self.hidden_state = None
+        # self.hidden_state = None
 
         if activation_function == "Tanh":
             self.activation = nn.Tanh()
@@ -22,14 +28,10 @@ class StandardRNN(nn.Module):
             raise NotImplementedError("Given activation function not implemented yet.")
         
     
-    def forward(self, input):
-        rnn_out, self.hidden_state = self.rnn(input, self.hidden_state)
+    def forward(self, input, hidden_state = None):
+        rnn_out, hidden_state = self.rnn(input, hidden_state)
         output = self.linear(rnn_out)
-        return output
-    
-
-    def reset_hidden_state(self):
-        self.hidden_state = None
+        return output, hidden_state
 
 
     

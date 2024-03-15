@@ -59,7 +59,7 @@ class LTC_Network(nn.Module):
 
 class CfC_Network(nn.Module):
 
-    def __init__(self, isize, hsize, num_actions, seed, extract_tau_sys = False, mode = "default", wiring = None, neuromod_network_dims = None, neuromod_network_activation = nn.Tanh):
+    def __init__(self, isize, hsize, num_actions, seed, extract_tau_sys = False, mode = "default", wiring = None):#, neuromod_network_dims = None, neuromod_network_activation = nn.Tanh):
         super(CfC_Network, self).__init__()
 
         # Is all of this really needed?
@@ -69,12 +69,13 @@ class CfC_Network(nn.Module):
 
 
         if not wiring:
-            self.cfc_model = CfC(isize, hsize, track_tau_system=extract_tau_sys, mode=mode, neuromod_network_dims=neuromod_network_dims, neuromod_network_activation=neuromod_network_activation)
+            # self.cfc_model = CfC(isize, hsize, track_tau_system=extract_tau_sys, mode=mode, neuromod_network_dims=neuromod_network_dims, neuromod_network_activation=neuromod_network_activation)
+            self.cfc_model = CfC(isize, hsize, track_tau_system=extract_tau_sys, mode=mode)
             self.h2o = nn.Linear(hsize, num_actions)
             self.h2v = nn.Linear(hsize, 1)
         else:
-            self.cfc_model = CfC(isize, wiring, track_tau_system=extract_tau_sys, mode=mode, neuromod_network_dims=neuromod_network_dims, neuromod_network_activation=neuromod_network_activation)
-
+            # self.cfc_model = CfC(isize, wiring, track_tau_system=extract_tau_sys, mode=mode, neuromod_network_dims=neuromod_network_dims, neuromod_network_activation=neuromod_network_activation)
+            self.cfc_model = CfC(isize, wiring, track_tau_system=extract_tau_sys, mode=mode)
         
         
 
@@ -82,12 +83,12 @@ class CfC_Network(nn.Module):
         self.wiring = wiring
 
     
-    def forward(self, inputs, hidden):
+    def forward(self, inputs, hidden, neuromod_signal = None):
 
         if self.extract_tau_sys:
-            cfc_output, next_hidden, tau_sys = self.cfc_model(inputs, hidden)
+            cfc_output, next_hidden, tau_sys = self.cfc_model(inputs, hx=hidden, neuromod_signal=neuromod_signal)
         else:
-            cfc_output, next_hidden = self.cfc_model(inputs, hidden)
+            cfc_output, next_hidden = self.cfc_model(inputs, hx=hidden, neuromod_signal=neuromod_signal)
 
         if not self.wiring:
             actions = self.h2o(cfc_output)

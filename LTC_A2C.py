@@ -70,12 +70,12 @@ class CfC_Network(nn.Module):
 
         if not wiring:
             # self.cfc_model = CfC(isize, hsize, track_tau_system=extract_tau_sys, mode=mode, neuromod_network_dims=neuromod_network_dims, neuromod_network_activation=neuromod_network_activation)
-            self.cfc_model = CfC(isize, hsize, track_tau_system=extract_tau_sys, mode=mode)
+            self.cfc_model = CfC(isize, hsize, track_tau_system=extract_tau_sys, mode=mode, batch_first=False)
             self.h2o = nn.Linear(hsize, num_actions)
             self.h2v = nn.Linear(hsize, 1)
         else:
             # self.cfc_model = CfC(isize, wiring, track_tau_system=extract_tau_sys, mode=mode, neuromod_network_dims=neuromod_network_dims, neuromod_network_activation=neuromod_network_activation)
-            self.cfc_model = CfC(isize, wiring, track_tau_system=extract_tau_sys, mode=mode)
+            self.cfc_model = CfC(isize, wiring, track_tau_system=extract_tau_sys, mode=mode, batch_first=False)
         
         
 

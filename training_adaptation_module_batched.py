@@ -165,13 +165,13 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
         encoder_outputs_batch = []
         adaptation_module_outputs_batch = []
 
-        running_encoder_outputs = []
-        running_adaptation_module_outputs = []
+        running_encoder_outputs = [[] for _ in range(num_parallel_envs)]
+        running_adaptation_module_outputs = [[] for _ in range(num_parallel_envs)]
 
         running_step_numbers = [0 for _ in range(num_parallel_envs)]
 
         # Initlialize the hidden states for the policy network and the adaptation module
-        policy_hidden_states = [None for _ in range(num_parallel_envs)]
+        policy_hidden_states = None
         adaptation_module_hidden_states = None
 
         # Initialize the environments' parameters
@@ -183,7 +183,7 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
         prev_actions = vec_env.action_space.sample()
         prev_actions = torch.tensor(prev_actions).to(device)
         prev_states = vec_env.observation_space.sample()
-        prev_states = torch.from_numpy(prev_states).to(device)
+        prev_states = torch.from_numpy(prev_states).unsqueeze(0).to(device)
 
 
         states = vec_env.reset()
@@ -194,20 +194,36 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
             
 
             # Feed the previous states and actions into the adaptation module
-            adaptation_module_inputs = torch.cat((prev_states, prev_actions.unsqueeze(1)), 1).to(torch.float32).to(device)
-            adaptation_module_inputs = adaptation_module_inputs.unsqueeze(0)
+            adaptation_module_inputs = torch.cat((prev_states, prev_actions.unsqueeze(0).unsqueeze(-1)), -1).to(torch.float32).to(device)
+            adaptation_module_inputs = adaptation_module_inputs
             vec_adaptation_module_outputs, adaptation_module_hidden_states = adaptation_module(adaptation_module_inputs, adaptation_module_hidden_states)
             
 
-            states = torch.from_numpy(states).to(device)
-            prev_states = states
+            states = torch.from_numpy(states).unsqueeze(0).to(device)
+            prev_states = states.to(device)
 
 
-            # DO SOMETHING TO NOT SAVE THE FIRST OUTPUTS OF THE ADAPTATION MODULE AND THE ENCODER
+            # In the first step, we don't save the output of the adaptation module
+            # and the encoder, since they are based on a randomly sampled state and action.
+            for i, (encoder_output, adapt_mod_output) in enumerate(zip(vec_encoder_outputs, vec_adaptation_module_outputs.squeeze(0))):
+                if running_step_numbers[i] > 0:
+                    running_encoder_outputs[i].append(encoder_output)
+                    running_adaptation_module_outputs[i].append(adapt_mod_output)
+
+            policy_outputs, values, policy_hidden_states = agent_net(states.float(), policy_hidden_states, vec_adaptation_module_outputs.squeeze(0))
+            
+            policy_dists = torch.softmax(policy_outputs, dim = 2)
+            actions = torch.argmax(policy_dists, dim = 2).squeeze().tolist()
+            prev_actions = torch.tensor(actions).to(device)
+            
+            states, rewards, dones, _ = vec_env.step(actions)
+
+            for i, (state, reward, done) in enumerate(zip(states, rewards, dones)):
+                if done:
+                    print("DONE")
 
 
-            policy_outputs, values, policy_hidden_states = agent_net(states.float(), policy_hidden_states, vec_adaptation_module_outputs)
-            test = 1
+
 
 
 
@@ -248,7 +264,7 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
             # the action with the highest probability.
             policy_dist = torch.softmax(policy_output, dim = 1)
             action = torch.argmax(policy_dist).item()
-            selected_actions.append(action)
+            # selected_actions.append(action)
             prev_action = action
             prev_action = torch.tensor(prev_action).view(1, -1)
 

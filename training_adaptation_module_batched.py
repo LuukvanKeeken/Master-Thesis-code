@@ -11,13 +11,20 @@ import os
 import argparse
 torch.autograd.set_detect_anomaly(True)
 
-def get_privileged_info(env):
-    pole_length = env.unwrapped.length
-    masspole = env.unwrapped.masspole
-    force_mag = env.unwrapped.force_mag
+# def get_privileged_info(env):
+#     pole_length = env.unwrapped.length
+#     masspole = env.unwrapped.masspole
+#     force_mag = env.unwrapped.force_mag
 
-    privileged_info = [pole_length, masspole, force_mag]
-    return torch.tensor(privileged_info, dtype=torch.float32)
+#     privileged_info = [pole_length, masspole, force_mag]
+#     return torch.tensor(privileged_info, dtype=torch.float32)
+
+def get_privileged_info(randomization_params):
+    params_values = [[d['length'], d['masspole'], d['force_mag']] for d in randomization_params]
+    params_tensor = torch.tensor(params_values, dtype=torch.float32)
+
+    return params_tensor
+
 
 def get_random_env_paramvals(env, randomization_params, batch_size = 1):
     pole_length = env.unwrapped.length
@@ -136,7 +143,7 @@ def validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation
 
 
 
-def train_adaptation_module(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, encoder, adaptation_module, optimizer, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_validation_eps = 10, validate_every = 10, randomization_params = None, randomize_every = 5):
+def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, encoder, adaptation_module, optimizer, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_validation_eps = 10, validate_every = 10, randomization_params = None, randomize_every = 5):
 
 
     training_losses = []
@@ -149,35 +156,65 @@ def train_adaptation_module(env, num_training_episodes, max_steps, agent_net, nu
     best_validation_loss = np.inf
     best_validation_loss_after = -1
 
-    # vec_env = gym.vector.make(env_name, num_envs = 10)
-    vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(env_name) for _ in range(10)])
+    total_episodes_trained = 0
 
-    for episode in range(1, num_training_episodes + 1):
-        if randomization_params and episode % randomize_every == 0:
-            env = gym.make(env_name)
-            randomized_env_params = get_random_env_paramvals(env, randomization_params, 10)
-            vec_env.set_env_params(randomized_env_params)
+    vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(env_name) for _ in range(num_parallel_envs)])
 
-        policy_hidden_state = None
-        adaptation_module_hidden_state = None
-        total_reward = 0
-        done = False
+        
+    while total_episodes_trained < num_training_episodes:
+        encoder_outputs_batch = []
+        adaptation_module_outputs_batch = []
 
-        selected_actions = []
-        states = []
-        adaptation_module_outputs = []
-        encoder_outputs = []
+        running_encoder_outputs = []
+        running_adaptation_module_outputs = []
 
-        # Randomly sample an action and state to 
-        # feed as the first input to the adaptation
-        # module.
-        prev_action = env.action_space.sample()
-        prev_action = torch.tensor(prev_action).view(1, -1)
-        prev_state = env.observation_space.sample()
-        prev_state = torch.from_numpy(prev_state)
-        prev_state = prev_state.unsqueeze(0).to(device)
+        running_step_numbers = [0 for _ in range(num_parallel_envs)]
 
-        state = env.reset()
+        # Initlialize the hidden states for the policy network and the adaptation module
+        policy_hidden_states = [None for _ in range(num_parallel_envs)]
+        adaptation_module_hidden_states = None
+
+        # Initialize the environments' parameters
+        randomized_env_params = get_random_env_paramvals(env, randomization_params, num_parallel_envs)
+        vec_env.set_env_params(randomized_env_params)
+
+        dones = [False for _ in range(num_parallel_envs)]
+
+        prev_actions = vec_env.action_space.sample()
+        prev_actions = torch.tensor(prev_actions).to(device)
+        prev_states = vec_env.observation_space.sample()
+        prev_states = torch.from_numpy(prev_states).to(device)
+
+
+        states = vec_env.reset()
+        while len(encoder_outputs_batch) < batch_size:
+            
+            # Feed the settings of the parallel environments into the encoder
+            vec_encoder_outputs = encoder(get_privileged_info(randomized_env_params))
+            
+
+            # Feed the previous states and actions into the adaptation module
+            adaptation_module_inputs = torch.cat((prev_states, prev_actions.unsqueeze(1)), 1).to(torch.float32).to(device)
+            adaptation_module_inputs = adaptation_module_inputs.unsqueeze(0)
+            vec_adaptation_module_outputs, adaptation_module_hidden_states = adaptation_module(adaptation_module_inputs, adaptation_module_hidden_states)
+            
+
+            states = torch.from_numpy(states).to(device)
+            prev_states = states
+
+
+            # DO SOMETHING TO NOT SAVE THE FIRST OUTPUTS OF THE ADAPTATION MODULE AND THE ENCODER
+
+
+            policy_outputs, values, policy_hidden_states = agent_net(states.float(), policy_hidden_states, vec_adaptation_module_outputs)
+            test = 1
+
+
+
+            
+
+        total_episodes_trained += batch_size
+
         for step in range(max_steps):
             # Concatenate the previous state and action to create one
             # vector. This vector is then fed into a copy of the adaptation module.
@@ -381,7 +418,7 @@ for i, w in enumerate(weights):
 
     optimizer = torch.optim.Adam(adaptation_module.parameters(), lr = lr_adapt_mod, weight_decay = wd_adapt_mod)
 
-    training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, num_training_eps, 200, agent_net, num_actions, evaluation_seeds, i, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps)
+    training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, 5, 5, num_training_eps, 200, agent_net, num_actions, evaluation_seeds, i, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps)
     all_training_losses.append(training_losses)
     all_training_total_rewards.append(training_total_rewards)
     all_validation_losses.append(validation_losses)

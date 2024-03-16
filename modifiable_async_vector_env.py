@@ -166,20 +166,32 @@ class ModifiableAsyncVectorEnv(VectorEnv):
         _, successes = zip(*[pipe.recv() for pipe in self.parent_pipes])
         self._raise_if_errors(successes)
 
-    def set_env_params(self, env_params):
+    def set_env_params(self, env_params, index = None):
         self._assert_is_running()
-        assert len(env_params) == self.num_envs
-        assert isinstance(env_params, list)
-        assert isinstance(env_params[0], dict)
-        
+
         if self._state != AsyncState.DEFAULT:
             raise AlreadyPendingCallError('Calling `set_env_params` while waiting '
                 'for a pending call to `{0}` to complete.'.format(
                 self._state.value), self._state.value)
         
-        for pipe, params in zip(self.parent_pipes, env_params):
-            pipe.send(('set_env_params', params))
-        _, successes = zip(*[pipe.recv() for pipe in self.parent_pipes])
+        if index is not None:
+            assert isinstance(index, int)
+            assert index < self.num_envs
+            assert isinstance(env_params, dict)
+
+            self.parent_pipes[index].send(('set_env_params', env_params))
+            _, successes = self.parent_pipes[index].recv()
+        else:
+            assert len(env_params) == self.num_envs
+            assert isinstance(env_params, list)
+            assert isinstance(env_params[0], dict)
+            
+            
+            
+            for pipe, params in zip(self.parent_pipes, env_params):
+                pipe.send(('set_env_params', params))
+            _, successes = zip(*[pipe.recv() for pipe in self.parent_pipes])
+        
         self._raise_if_errors(successes)
 
 

@@ -17,14 +17,14 @@ import argparse
 device = "cpu"
 
 
-def evaluate_agent_pole_length(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier):
+def evaluate_agent_pole_length(agent_net, encoder, env_name, num_episodes, evaluation_seeds, pole_length_modifier):
 
     eval_rewards = []
     env = gym.make(env_name)
     env.unwrapped.length *= pole_length_modifier
         
     for i_episode in range(num_episodes):
-        hidden_state = None
+        policy_hidden_state = None
         
         env.seed(int(evaluation_seeds[i_episode]))
         
@@ -36,7 +36,8 @@ def evaluate_agent_pole_length(agent_net, env_name, num_episodes, evaluation_see
             state = torch.from_numpy(state)
             state = state.unsqueeze(0).to(device) #This as well?
             privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            policy_output, value, hidden_state = agent_net((state.float(), privileged_info), hidden_state)
+            encoder_neuromod_output = encoder(privileged_info)
+            policy_output, value, policy_hidden_state = agent_net(state.float(), policy_hidden_state, encoder_neuromod_output)
             
             policy_dist = torch.softmax(policy_output, dim = 1)
             
@@ -52,7 +53,7 @@ def evaluate_agent_pole_length(agent_net, env_name, num_episodes, evaluation_see
 
 
 
-def evaluate_agent_all_params(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier, pole_mass_modifier, force_mag_modifier):
+def evaluate_agent_all_params(agent_net, encoder, env_name, num_episodes, evaluation_seeds, pole_length_modifier, pole_mass_modifier, force_mag_modifier):
 
     eval_rewards = []
     env = gym.make(env_name)
@@ -61,7 +62,7 @@ def evaluate_agent_all_params(agent_net, env_name, num_episodes, evaluation_seed
     env.unwrapped.force_mag *= force_mag_modifier
         
     for i_episode in range(num_episodes):
-        hidden_state = None
+        policy_hidden_state = None
         
         env.seed(int(evaluation_seeds[i_episode]))
         
@@ -73,7 +74,8 @@ def evaluate_agent_all_params(agent_net, env_name, num_episodes, evaluation_seed
             state = torch.from_numpy(state)
             state = state.unsqueeze(0).to(device) #This as well?
             privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            policy_output, value, hidden_state = agent_net((state.float(), privileged_info), hidden_state)
+            encoder_neuromod_output = encoder(privileged_info)
+            policy_output, value, policy_hidden_state = agent_net(state.float(), policy_hidden_state, encoder_neuromod_output)
             
             policy_dist = torch.softmax(policy_output, dim = 1)
             
@@ -130,7 +132,7 @@ def randomize_env_params(env, randomization_params):
 
 
 
-def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5):
+def train_agent(env, num_training_episodes, max_steps, agent_net, encoder, num_outputs, evaluation_seeds, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5):
     best_average = -np.inf
     best_average_after = np.inf
     scores = []
@@ -145,7 +147,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
             env = gym.make(env_name)
             env = randomize_env_params(env, randomization_params)
 
-        hidden_state = None
+        policy_hidden_state = None
 
         score = 0
 
@@ -160,7 +162,8 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
             state = state.unsqueeze(0).to(device)
 
             privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            policy_output, value, hidden_state = agent_net((state.float(), privileged_info), hidden_state)
+            encoder_neuromod_output = encoder(privileged_info)
+            policy_output, value, policy_hidden_state = agent_net(state.float(), policy_hidden_state, encoder_neuromod_output)
 
             # Get distribution over the action space
             policy_dist = torch.softmax(policy_output, dim = 1)
@@ -186,11 +189,12 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                 new_state = torch.from_numpy(new_state)
                 new_state = new_state.unsqueeze(0).to(device)
                 privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-                _, Qval, hidden_state = agent_net((new_state.float(), privileged_info), hidden_state)
+                encoder_neuromod_output = encoder(privileged_info)
+                _, Qval, policy_hidden_state = agent_net(new_state.float(), policy_hidden_state, encoder_neuromod_output)
                 Qval = Qval.detach().cpu().numpy()[0, 0]
 
                 if ((selection_method == "evaluation") and (episode % evaluate_every == 0)):
-                    evaluation_performance = np.mean(evaluate_agent_pole_length(agent_net, env_name, num_evaluation_episodes, evaluation_seeds, 1.0))
+                    evaluation_performance = np.mean(evaluate_agent_pole_length(agent_net, encoder, env_name, num_evaluation_episodes, evaluation_seeds, 1.0))
                     print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
 
                     if evaluation_performance >= best_average:
@@ -213,7 +217,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         # Get performance over one episode with this pole length modifier, 
                         # skip over the first i evaluation seeds so not all episodes have
                         # the same seed.
-                        evaluation_performance += np.mean(evaluate_agent_pole_length(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], mod))
+                        evaluation_performance += np.mean(evaluate_agent_pole_length(agent_net, encoder, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], mod))
 
                     evaluation_performance /= len(pole_length_mods)
                     print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
@@ -242,7 +246,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         pole_length_mod = np.random.choice(pole_length_mods)
                         pole_mass_mod = np.random.choice(pole_mass_mods)
                         force_mag_mod = np.random.choice(force_mag_mods)
-                        evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+                        evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, encoder, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
 
                     evaluation_performance /= total_eval_eps
                     print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
@@ -311,11 +315,13 @@ parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole
 parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
 parser.add_argument('--randomization_factor', type=float, default=0.5, help='Factor to randomize the environment parameters')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
-parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
+parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
 parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 256, 128], help='Dimensions of the neuromodulation network, without output layer')
 parser.add_argument('--selection_method', type=str, default = "range_evaluation_all_params", help='Method to select the best model')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
 parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of episodes to train the agent')
+parser.add_argument('--encoder_output_activation', type=str, default="identity", help="Activation function of the encoder's output layer")
+parser.add_argument('--result_id', type=int, default=-1, help='ID of the result folder')
 args = parser.parse_args()
 
 
@@ -328,6 +334,16 @@ neuromod_network_dims = args.neuromod_network_dims
 neuromod_network_dims.append(num_neurons)
 num_models = args.num_models
 num_training_episodes = args.num_training_episodes
+result_id = args.result_id
+if args.encoder_output_activation == "identity":
+    encoder_output_activation = torch.nn.Identity()
+elif args.encoder_output_activation == "relu":
+    encoder_output_activation = torch.nn.ReLU()
+elif args.ecnoder_output_activation == "tanh":
+    encoder_output_activation = torch.nn.Tanh()
+else:
+    raise NotImplementedError
+
 
 # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
 print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, rand factor: {factor}")
@@ -353,16 +369,19 @@ seed = 5
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
 wiring = None
 
-dirs = os.listdir('Master_Thesis_Code/LTC_A2C/training_results/')
-if not any('a2c_result' in d for d in dirs):
-    result_id = 1
-else:
-    results = [d for d in dirs if 'a2c_result' in d]
-    result_id = len(results) + 1
+if result_id == -1:
+    dirs = os.listdir('Master_Thesis_Code/LTC_A2C/training_results/')
+    if not any('a2c_result' in d for d in dirs):
+        result_id = 1
+    else:
+        results = [d for d in dirs if 'a2c_result' in d]
+        result_id = len(results) + 1
+
+
 d = date.today()
-result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectionmethod_{selection_method}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
+result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{args.encoder_output_activation}'
 if neuron_type == "CfC":
-    result_dir += "_mode_" + mode
+    # result_dir += "_mode_" + mode
     if mode == "neuromodulated":
         result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
 if wiring:
@@ -393,11 +412,20 @@ for i in range(num_models):
         raise NotImplementedError
         agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
     elif neuron_type == "CfC":
-        agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring, neuromod_network_dims=neuromod_network_dims).to(device)
+        layer_list = []
+        for dim in range(len(neuromod_network_dims) - 1):
+            layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
+            if dim < len(neuromod_network_dims)-2:
+                layer_list.append(torch.nn.Tanh())
+            else:
+                layer_list.append(encoder_output_activation)
+        encoder = torch.nn.Sequential(*layer_list)
+        
+        agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
-    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_episodes, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params)
+    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_episodes, 200, agent_net, encoder, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params)
     best_average_after_all.append(best_average_after)
     best_average_all.append(best_average)
 

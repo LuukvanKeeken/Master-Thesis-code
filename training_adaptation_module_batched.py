@@ -273,6 +273,8 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
         
         average_training_reward = np.mean(total_training_rewards_batch)
         stddev_training_reward = np.std(total_training_rewards_batch)
+        training_total_rewards.append(average_training_reward)
+
 
         print(f"Episode {total_episodes_trained}/{num_training_episodes}, average batch training loss: {average_loss.item()}, average batch training reward: {average_training_reward} +/- {stddev_training_reward:.2f}")
         end = time.time()
@@ -368,7 +370,7 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
                 break
 
     print(f"Best validation reward: {best_validation_reward} after {best_validation_reward_after} episodes")
-    print(f"Best validation loss_function: {best_validation_loss} after {best_validation_loss_after} episodes")
+    print(f"Best validation loss: {best_validation_loss} after {best_validation_loss_after} episodes")
     
     return training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after
 
@@ -386,7 +388,7 @@ parser.add_argument('--seed', type=int, default=5)
 parser.add_argument('--mode', type=str, default='neuromodulated', help='Mode of the CfC network')
 parser.add_argument('--wiring', type=str, default='None', help='Wiring of the CfC network')
 parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 192, 96], help='Dimensions of the neuromodulation network, without output layer')
-parser.add_argument('--num_training_eps', type=int, default=40000, help="Number of episodes to train the adaptation module")
+parser.add_argument('--num_training_eps', type=int, default=10000, help="Number of episodes to train the adaptation module")
 parser.add_argument('--env_name', type=str, default="CartPole-v0", help="Gym RL environment name")
 parser.add_argument('--lr_adapt_mod', type=float, default=0.0005, help="Learning rate of the adaptation module")
 parser.add_argument('--wd_adapt_mod', type=float, default=0.0, help="Weight decay of the adaptation module")
@@ -396,6 +398,8 @@ parser.add_argument('--validate_every', type=int, default=10, help='Number of tr
 parser.add_argument('--num_validation_eps', type=int, default=10, help='Number of episodes to validate the adaptation module')
 parser.add_argument('--adapt_mod_type', type=str, default='StandardRNN', help='Type of adaptation module to use')
 parser.add_argument('--result_id', type=int, default=-1, help='ID of the result')
+parser.add_argument('--batch_size', type=int, default=50, help='Batch size for training the adaptation module')
+parser.add_argument('--num_parallel_envs', type=int, default=10, help='Number of parallel environments to train the adaptation module')
 
 
 args = parser.parse_args()
@@ -422,6 +426,8 @@ validate_every = args.validate_every
 num_validation_eps = args.num_validation_eps
 adapt_mod_type = args.adapt_mod_type
 result_id = args.result_id
+batch_size = args.batch_size
+num_parallel_envs = args.num_parallel_envs
 if training_range == 'quarter_range':
     randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
 else:
@@ -503,7 +509,7 @@ for i, w in enumerate(weights):
 
     optimizer = torch.optim.Adam(adaptation_module.parameters(), lr = lr_adapt_mod, weight_decay = wd_adapt_mod)
 
-    training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, 10, 50, num_training_eps, 200, agent_net, num_actions, evaluation_seeds, i, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps)
+    training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, num_parallel_envs, batch_size, num_training_eps, 200, agent_net, num_actions, evaluation_seeds, i, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps)
     all_training_losses.append(training_losses)
     all_training_total_rewards.append(training_total_rewards)
     all_validation_losses.append(validation_losses)
@@ -529,4 +535,4 @@ with open(f"{results_dir}/best_validation_loss_after.txt", "w") as f:
         f.write(f"{i}: {loss_results[0]} after {loss_results[1]}\n")
 
     f.write(f"Average training episodes: {np.mean([x[1] for x in best_validation_losses])}\n")
-    f.write(f"Mean average loss_function: {np.mean([x[0] for x in best_validation_losses])}")
+    f.write(f"Mean average loss: {np.mean([x[0] for x in best_validation_losses])}")

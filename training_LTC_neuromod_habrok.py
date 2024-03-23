@@ -320,6 +320,7 @@ parser.add_argument('--num_models', type=int, default=10, help='Number of models
 parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of episodes to train the agent')
 parser.add_argument('--encoder_output_activation', type=str, default="identity", help="Activation function of the encoder's output layer")
 parser.add_argument('--result_id', type=int, default=-1, help='ID of the result folder')
+parser.add_argument('--mode', type=str, default="only_neuromodulated", help="The mode of the CfC network.")
 args = parser.parse_args()
 
 
@@ -333,6 +334,7 @@ neuromod_network_dims.append(num_neurons)
 num_models = args.num_models
 num_training_episodes = args.num_training_episodes
 result_id = args.result_id
+mode = args.mode
 if args.encoder_output_activation == "identity":
     encoder_output_activation = torch.nn.Identity()
 elif args.encoder_output_activation == "relu":
@@ -350,7 +352,6 @@ device = "cpu"
 gamma = 0.99
 # num_neurons = 32
 neuron_type = "CfC"
-mode = "neuromodulated"
 
 if training_method == "quarter_range":
     randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
@@ -379,8 +380,8 @@ if result_id == -1:
 d = date.today()
 result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{args.encoder_output_activation}'
 if neuron_type == "CfC":
-    # result_dir += "_mode_" + mode
-    if mode == "neuromodulated":
+    result_dir += "_mode_" + mode
+    if mode == "neuromodulated" or mode == "only_neuromodulated":
         result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
 if wiring:
     result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"

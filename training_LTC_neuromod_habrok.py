@@ -8,6 +8,7 @@ import numpy as np
 from collections import deque
 import torch
 from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
+from Master_Thesis_Code.Neuromodulated_Agent import NeuromodulatedAgent
 from ncps_time_constant_extraction.ncps.wirings import AutoNCP
 import argparse
 
@@ -17,77 +18,75 @@ import argparse
 device = "cpu"
 
 
-def evaluate_agent_pole_length(agent_net, encoder, env_name, num_episodes, evaluation_seeds, pole_length_modifier):
-
-    eval_rewards = []
-    env = gym.make(env_name)
-    env.unwrapped.length *= pole_length_modifier
-        
-    for i_episode in range(num_episodes):
-        policy_hidden_state = None
-        
-        env.seed(int(evaluation_seeds[i_episode]))
-        
-        state = env.reset()
-        total_reward = 0
-        done = False
-
-        while not done:
-            state = torch.from_numpy(state)
-            state = state.unsqueeze(0).to(device) #This as well?
-            privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            encoder_neuromod_output = encoder(privileged_info)
-            policy_output, value, policy_hidden_state = agent_net(state.float(), policy_hidden_state, encoder_neuromod_output)
+def evaluate_agent_pole_length(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier):
+    with torch.no_grad():
+        eval_rewards = []
+        env = gym.make(env_name)
+        env.unwrapped.length *= pole_length_modifier
             
-            policy_dist = torch.softmax(policy_output, dim = 1)
+        for i_episode in range(num_episodes):
+            policy_hidden_state = None
             
-            action = torch.argmax(policy_dist)
+            env.seed(int(evaluation_seeds[i_episode]))
             
+            state = env.reset()
+            total_reward = 0
+            done = False
 
-            state, r, done, _ = env.step(action.item())
+            while not done:
+                state = torch.from_numpy(state)
+                state = state.unsqueeze(0).to(device) #This as well?
+                privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
+                policy_output, value, policy_hidden_state = agent_net(state.float(), privileged_info, policy_hidden_state)
+                
+                policy_dist = torch.softmax(policy_output, dim = 1)
+                
+                action = torch.argmax(policy_dist)
+                
 
-            total_reward += r
-        eval_rewards.append(total_reward)
+                state, r, done, _ = env.step(action.item())
 
-    return eval_rewards
+                total_reward += r
+            eval_rewards.append(total_reward)
+
+        return eval_rewards
 
 
 
-def evaluate_agent_all_params(agent_net, encoder, env_name, num_episodes, evaluation_seeds, pole_length_modifier, pole_mass_modifier, force_mag_modifier):
-
-    eval_rewards = []
-    env = gym.make(env_name)
-    env.unwrapped.length *= pole_length_modifier
-    env.unwrapped.masspole *= pole_mass_modifier
-    env.unwrapped.force_mag *= force_mag_modifier
-        
-    for i_episode in range(num_episodes):
-        policy_hidden_state = None
-        
-        env.seed(int(evaluation_seeds[i_episode]))
-        
-        state = env.reset()
-        total_reward = 0
-        done = False
-
-        while not done:
-            state = torch.from_numpy(state)
-            state = state.unsqueeze(0).to(device) #This as well?
-            privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            encoder_neuromod_output = encoder(privileged_info)
-            policy_output, value, policy_hidden_state = agent_net(state.float(), policy_hidden_state, encoder_neuromod_output)
+def evaluate_agent_all_params(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier, pole_mass_modifier, force_mag_modifier):
+    with torch.no_grad():
+        eval_rewards = []
+        env = gym.make(env_name)
+        env.unwrapped.length *= pole_length_modifier
+        env.unwrapped.masspole *= pole_mass_modifier
+        env.unwrapped.force_mag *= force_mag_modifier
             
-            policy_dist = torch.softmax(policy_output, dim = 1)
+        for i_episode in range(num_episodes):
+            policy_hidden_state = None
             
-            action = torch.argmax(policy_dist)
+            env.seed(int(evaluation_seeds[i_episode]))
             
+            state = env.reset()
+            total_reward = 0
+            done = False
 
-            state, r, done, _ = env.step(action.item())
+            while not done:
+                state = torch.from_numpy(state)
+                state = state.unsqueeze(0).to(device) #This as well?
+                privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
+                policy_output, value, policy_hidden_state = agent_net(state.float(), privileged_info, policy_hidden_state)
+                
+                policy_dist = torch.softmax(policy_output, dim = 1)
+                
+                action = torch.argmax(policy_dist)
+                
 
-            total_reward += r
-        eval_rewards.append(total_reward)
+                state, r, done, _ = env.step(action.item())
 
-    return eval_rewards
+                total_reward += r
+            eval_rewards.append(total_reward)
+
+        return eval_rewards
 
 
 
@@ -132,7 +131,7 @@ def randomize_env_params(env, randomization_params):
 
 
 
-def train_agent(env, num_training_episodes, max_steps, agent_net, encoder, num_outputs, evaluation_seeds, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5):
+def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5):
     best_average = -np.inf
     best_average_after = np.inf
     scores = []
@@ -162,8 +161,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, encoder, num_o
             state = state.unsqueeze(0).to(device)
 
             privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            encoder_neuromod_output = encoder(privileged_info)
-            policy_output, value, policy_hidden_state = agent_net(state.float(), policy_hidden_state, encoder_neuromod_output)
+            policy_output, value, policy_hidden_state = agent_net(state.float(), privileged_info, policy_hidden_state)
 
             # Get distribution over the action space
             policy_dist = torch.softmax(policy_output, dim = 1)
@@ -189,12 +187,12 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, encoder, num_o
                 new_state = torch.from_numpy(new_state)
                 new_state = new_state.unsqueeze(0).to(device)
                 privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-                encoder_neuromod_output = encoder(privileged_info)
-                _, Qval, policy_hidden_state = agent_net(new_state.float(), policy_hidden_state, encoder_neuromod_output)
+                _, Qval, policy_hidden_state = agent_net(new_state.float(), privileged_info, policy_hidden_state)
                 Qval = Qval.detach().cpu().numpy()[0, 0]
 
+                
                 if ((selection_method == "evaluation") and (episode % evaluate_every == 0)):
-                    evaluation_performance = np.mean(evaluate_agent_pole_length(agent_net, encoder, env_name, num_evaluation_episodes, evaluation_seeds, 1.0))
+                    evaluation_performance = np.mean(evaluate_agent_pole_length(agent_net, env_name, num_evaluation_episodes, evaluation_seeds, 1.0))
                     print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
 
                     if evaluation_performance >= best_average:
@@ -217,7 +215,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, encoder, num_o
                         # Get performance over one episode with this pole length modifier, 
                         # skip over the first i evaluation seeds so not all episodes have
                         # the same seed.
-                        evaluation_performance += np.mean(evaluate_agent_pole_length(agent_net, encoder, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], mod))
+                        evaluation_performance += np.mean(evaluate_agent_pole_length(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], mod))
 
                     evaluation_performance /= len(pole_length_mods)
                     print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
@@ -246,7 +244,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, encoder, num_o
                         pole_length_mod = np.random.choice(pole_length_mods)
                         pole_mass_mod = np.random.choice(pole_mass_mods)
                         force_mag_mod = np.random.choice(force_mag_mods)
-                        evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, encoder, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+                        evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
 
                     evaluation_performance /= total_eval_eps
                     print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
@@ -421,11 +419,13 @@ for i in range(num_models):
                 layer_list.append(encoder_output_activation)
         encoder = torch.nn.Sequential(*layer_list)
         
-        agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
+        policy_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
+
+        agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
-    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_episodes, 200, agent_net, encoder, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params)
+    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_episodes, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params)
     best_average_after_all.append(best_average_after)
     best_average_all.append(best_average)
 

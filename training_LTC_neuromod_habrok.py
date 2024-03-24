@@ -100,7 +100,7 @@ def get_privileged_info(env):
     privileged_info = [pole_length, masspole, force_mag]
     return torch.tensor(privileged_info, dtype=torch.float32)
 
-def randomize_env_params(env, randomization_params):
+def randomize_env_params(env, randomization_params, schedule_factor = None):
     pole_length = env.unwrapped.length
     # gravity = env.unwrapped.gravity
     # masscart = env.unwrapped.masscart
@@ -112,11 +112,21 @@ def randomize_env_params(env, randomization_params):
     
     for i in range(len(params)):
         if isinstance(randomization_params[i], float):
+            if schedule_factor:
+                raise NotImplementedError
             low = params[i] - params[i] * randomization_params[i]
             high = params[i] + params[i] * randomization_params[i]
         elif isinstance(randomization_params[i], tuple):
-            low = params[i]*randomization_params[i][0]
-            high = params[i]*randomization_params[i][1]
+            # The schedule factor determines what percentage of the total training
+            # range of parameter modifiers can be sampled from.
+            if schedule_factor:
+                low_factor = randomization_params[i][0] * schedule_factor + (1 - schedule_factor)
+                high_factor = randomization_params[i][1] * schedule_factor + (1 - schedule_factor)
+                low = params[i]*low_factor
+                high = params[i]*high_factor
+            else:
+                low = params[i]*randomization_params[i][0]
+                high = params[i]*randomization_params[i][1]
             
         params[i] = np.random.uniform(low, high)
 
@@ -131,7 +141,7 @@ def randomize_env_params(env, randomization_params):
 
 
 
-def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5):
+def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5, schedule_start = None, schedule_end = None, schedule_type = None):
     best_average = -np.inf
     best_average_after = np.inf
     scores = []
@@ -144,7 +154,12 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
         
         if randomization_params and episode % randomize_every == 0:
             env = gym.make(env_name)
-            env = randomize_env_params(env, randomization_params)
+            
+            if schedule_type == 'linear':
+                schedule_factor = (episode/num_training_episodes) * (schedule_end - schedule_start) + schedule_start
+                env = randomize_env_params(env, randomization_params, schedule_factor=schedule_factor)
+            else:
+                env = randomize_env_params(env, randomization_params)
 
         policy_hidden_state = None
 
@@ -318,9 +333,12 @@ parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3
 parser.add_argument('--selection_method', type=str, default = "range_evaluation_all_params", help='Method to select the best model')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
 parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of episodes to train the agent')
-parser.add_argument('--encoder_output_activation', type=str, default="identity", help="Activation function of the encoder's output layer")
+parser.add_argument('--encoder_output_activation', type=str, default="relu", help="Activation function of the encoder's output layer")
 parser.add_argument('--result_id', type=int, default=-1, help='ID of the result folder')
 parser.add_argument('--mode', type=str, default="only_neuromodulated", help="The mode of the CfC network.")
+parser.add_argument('--schedule_start', type=float, default=0.00001, help="The starting value of the schedule factor")
+parser.add_argument('--schedule_end', type=float, default=1.0, help="The end value of the schedule factor")
+parser.add_argument('--schedule_type', type=str, default='linear', help="The type of schedule to use for the schedule factor")
 args = parser.parse_args()
 
 
@@ -335,14 +353,18 @@ num_models = args.num_models
 num_training_episodes = args.num_training_episodes
 result_id = args.result_id
 mode = args.mode
+schedule_start = args.schedule_start
+schedule_end = args.schedule_end
+schedule_type = args.schedule_type
 if args.encoder_output_activation == "identity":
     encoder_output_activation = torch.nn.Identity()
 elif args.encoder_output_activation == "relu":
     encoder_output_activation = torch.nn.ReLU()
-elif args.ecnoder_output_activation == "tanh":
+elif args.encoder_output_activation == "tanh":
     encoder_output_activation = torch.nn.Tanh()
 else:
     raise NotImplementedError
+
 
 
 # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
@@ -426,7 +448,7 @@ for i in range(num_models):
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
-    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_episodes, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params)
+    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_episodes, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, schedule_start = schedule_start, schedule_end=schedule_end, schedule_type=schedule_type)
     best_average_after_all.append(best_average_after)
     best_average_all.append(best_average)
 

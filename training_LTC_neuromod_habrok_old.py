@@ -53,39 +53,39 @@ def evaluate_agent_pole_length(agent_net, env_name, num_episodes, evaluation_see
 
 
 def evaluate_agent_all_params(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier, pole_mass_modifier, force_mag_modifier):
-
-    eval_rewards = []
-    env = gym.make(env_name)
-    env.unwrapped.length *= pole_length_modifier
-    env.unwrapped.masspole *= pole_mass_modifier
-    env.unwrapped.force_mag *= force_mag_modifier
-        
-    for i_episode in range(num_episodes):
-        hidden_state = None
-        
-        env.seed(int(evaluation_seeds[i_episode]))
-        
-        state = env.reset()
-        total_reward = 0
-        done = False
-
-        while not done:
-            state = torch.from_numpy(state)
-            state = state.unsqueeze(0).to(device) #This as well?
-            privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            policy_output, value, hidden_state = agent_net((state.float(), privileged_info), hidden_state)
+    with torch.no_grad():
+        eval_rewards = []
+        env = gym.make(env_name)
+        env.unwrapped.length *= pole_length_modifier
+        env.unwrapped.masspole *= pole_mass_modifier
+        env.unwrapped.force_mag *= force_mag_modifier
             
-            policy_dist = torch.softmax(policy_output, dim = 1)
+        for i_episode in range(num_episodes):
+            hidden_state = None
             
-            action = torch.argmax(policy_dist)
+            env.seed(int(evaluation_seeds[i_episode]))
             
+            state = env.reset()
+            total_reward = 0
+            done = False
 
-            state, r, done, _ = env.step(action.item())
+            while not done:
+                state = torch.from_numpy(state)
+                state = state.unsqueeze(0).to(device) #This as well?
+                privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
+                policy_output, value, hidden_state = agent_net((state.float(), privileged_info), hidden_state)
+                
+                policy_dist = torch.softmax(policy_output, dim = 1)
+                
+                action = torch.argmax(policy_dist)
+                
 
-            total_reward += r
-        eval_rewards.append(total_reward)
+                state, r, done, _ = env.step(action.item())
 
-    return eval_rewards
+                total_reward += r
+            eval_rewards.append(total_reward)
+
+        return eval_rewards
 
 
 

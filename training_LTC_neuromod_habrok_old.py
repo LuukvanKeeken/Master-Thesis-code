@@ -311,7 +311,7 @@ parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole
 parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
 parser.add_argument('--randomization_factor', type=float, default=0.5, help='Factor to randomize the environment parameters')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
-parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
+parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
 parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 256, 128], help='Dimensions of the neuromodulation network, without output layer')
 parser.add_argument('--selection_method', type=str, default = "range_evaluation_all_params", help='Method to select the best model')
 parser.add_argument('--num_models', type=int, default=3, help='Number of models to train')

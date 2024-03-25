@@ -362,9 +362,9 @@ if result_id == -1:
         results = [d for d in dirs if 'a2c_result' in d]
         result_id = len(results) + 1
 d = date.today()
-result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectionmethod_{selection_method}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
+result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selmet_{selection_method}_trainmet_{training_method}_numneurons_{num_neurons}'
 if neuron_type == "CfC":
-    result_dir += "_mode_" + mode
+    # result_dir += "_mode_" + mode
     if mode == "neuromodulated":
         result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
 if wiring:

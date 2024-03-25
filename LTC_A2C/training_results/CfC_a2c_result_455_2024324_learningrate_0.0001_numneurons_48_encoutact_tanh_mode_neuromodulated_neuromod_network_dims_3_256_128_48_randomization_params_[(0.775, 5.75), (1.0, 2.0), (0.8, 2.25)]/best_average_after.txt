@@ -1,0 +1,12 @@
+0: 73.2 after 19920
+1: 77.8 after 12960
+2: 71.3 after 12710
+3: 95.4 after 240
+4: 68.0 after 19910
+5: 77.8 after 5400
+6: 76.2 after 12370
+7: 69.9 after 16510
+8: 69.5 after 15250
+9: 70.8 after 15400
+Average training episodes: 13067.0, std dev: 5829.17155348854
+Mean average performance: 74.99, std dev: 7.5703962908159586

@@ -339,7 +339,7 @@ parser.add_argument('--num_training_episodes', type=int, default=20000, help='Nu
 parser.add_argument('--encoder_output_activation', type=str, default="tanh", help="Activation function of the encoder's output layer")
 parser.add_argument('--encoder_hidden_activation', type=str, default="tanh", help="Activation function of the encoder's hidden layers")
 parser.add_argument('--result_id', type=int, default=-1, help='ID of the result folder')
-parser.add_argument('--mode', type=str, default="only_neuromodulated", help="The mode of the CfC network.")
+parser.add_argument('--mode', type=str, default="neuromodulated", help="The mode of the CfC network.")
 parser.add_argument('--schedule_start', type=float, default=0.00001, help="The starting value of the schedule factor")
 parser.add_argument('--schedule_end', type=float, default=1.0, help="The end value of the schedule factor")
 parser.add_argument('--schedule_type', type=str, default='None', help="The type of schedule to use for the schedule factor")

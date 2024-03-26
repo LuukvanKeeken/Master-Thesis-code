@@ -337,8 +337,9 @@ parser.add_argument('--selection_method', type=str, default = "range_evaluation_
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
 parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of episodes to train the agent')
 parser.add_argument('--encoder_output_activation', type=str, default="tanh", help="Activation function of the encoder's output layer")
+parser.add_argument('--encoder_hidden_activation', type=str, default="tanh", help="Activation function of the encoder's hidden layers")
 parser.add_argument('--result_id', type=int, default=-1, help='ID of the result folder')
-parser.add_argument('--mode', type=str, default="neuromodulated", help="The mode of the CfC network.")
+parser.add_argument('--mode', type=str, default="only_neuromodulated", help="The mode of the CfC network.")
 parser.add_argument('--schedule_start', type=float, default=0.00001, help="The starting value of the schedule factor")
 parser.add_argument('--schedule_end', type=float, default=1.0, help="The end value of the schedule factor")
 parser.add_argument('--schedule_type', type=str, default='None', help="The type of schedule to use for the schedule factor")
@@ -365,6 +366,13 @@ elif args.encoder_output_activation == "relu":
     encoder_output_activation = torch.nn.ReLU()
 elif args.encoder_output_activation == "tanh":
     encoder_output_activation = torch.nn.Tanh()
+else:
+    raise NotImplementedError
+
+if args.encoder_hidden_activation == "relu":
+    encoder_hidden_activation = torch.nn.ReLU()
+elif args.encoder_hidden_activation == "tanh":
+    encoder_hidden_activation = torch.nn.Tanh()
 else:
     raise NotImplementedError
 
@@ -441,7 +449,7 @@ for i in range(num_models):
         for dim in range(len(neuromod_network_dims) - 1):
             layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
             if dim < len(neuromod_network_dims)-2:
-                layer_list.append(torch.nn.Tanh())
+                layer_list.append(encoder_hidden_activation)
             else:
                 layer_list.append(encoder_output_activation)
         encoder = torch.nn.Sequential(*layer_list)

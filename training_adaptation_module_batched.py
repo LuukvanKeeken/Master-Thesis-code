@@ -311,13 +311,13 @@ parser.add_argument('--neuron_type', type=str, default='CfC', help='Type of neur
 parser.add_argument('--device', type=str, default='cpu', help='Device to train on')
 parser.add_argument('--state_dims', type=int, default=4, help='Number of state dimensions')
 parser.add_argument('--action_dims', type=int, default=1, help='Number of action dimensions')
-parser.add_argument('--num_neurons_policy', type=int, default=32, help='Number of neurons in the policy network')
+parser.add_argument('--num_neurons_policy', type=int, default=48, help='Number of neurons in the policy network')
 parser.add_argument('--num_neurons_adaptation', type=int, default=64, help='Number of neurons in the adaptation module')
 parser.add_argument('--num_actions', type=int, default=2, help='Number of actions')
 parser.add_argument('--seed', type=int, default=5)
 parser.add_argument('--mode', type=str, default='neuromodulated', help='Mode of the CfC network')
 parser.add_argument('--wiring', type=str, default='None', help='Wiring of the CfC network')
-parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 256, 128], help='Dimensions of the neuromodulation network, without output layer')
+parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 128, 80], help='Dimensions of the neuromodulation network, without output layer')
 parser.add_argument('--num_training_eps', type=int, default=10000, help="Number of episodes to train the adaptation module")
 parser.add_argument('--env_name', type=str, default="CartPole-v0", help="Gym RL environment name")
 parser.add_argument('--lr_adapt_mod', type=float, default=0.0005, help="Learning rate of the adaptation module")
@@ -330,8 +330,8 @@ parser.add_argument('--adapt_mod_type', type=str, default='StandardRNN', help='T
 parser.add_argument('--result_id', type=int, default=-1, help='ID of the result')
 parser.add_argument('--batch_size', type=int, default=50, help='Batch size for training the adaptation module')
 parser.add_argument('--num_parallel_envs', type=int, default=10, help='Number of parallel environments to train the adaptation module')
-parser.add_argument('--encoder_hidden_activation', type=str, default='relu', help='Activation function for the encoder hidden layers')
-parser.add_argument('--encoder_output_activation', type=str, default='relu', help='Activation function for the encoder output layer')
+parser.add_argument('--encoder_hidden_activation', type=str, default='tanh', help='Activation function for the encoder hidden layers')
+parser.add_argument('--encoder_output_activation', type=str, default='tanh', help='Activation function for the encoder output layer')
 
 
 args = parser.parse_args()
@@ -386,7 +386,7 @@ else:
     raise NotImplementedError
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-phase_1_dir = "CfC_1136_2024326_lr_0.0001_nn_32_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_256_128"
+phase_1_dir = "CfC_a2c_result_242_202435_learningrate_0.0001_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_quarter_range_numneurons_48_tausysextraction_True_mode_neuromodulated_randomization_params_[(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]"
 
 if result_id == -1:
     dirs = os.listdir('Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/')
@@ -441,11 +441,11 @@ for i, w in enumerate(weights):
         # policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring).to(device)
 
         # agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
-        w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
+        w['cfc_model.rnn_cell.tau_system'] = torch.reshape(w['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
         
-        w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
-        w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in w.items() if 'neuromod' not in k)
-        w_encoder = OrderedDict((k.split('.', 1)[-1], v) for k, v in w.items() if 'neuromod' in k)
+        w['cfc_model.rnn_cell.tau_system'] = torch.reshape(w['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
+        w_policy = OrderedDict((k, v) for k, v in w.items() if 'neuromod' not in k)
+        w_encoder = OrderedDict((k.split('.', 3)[-1], v) for k, v in w.items() if 'neuromod' in k)
     elif neuron_type == "LTC":
         raise NotImplementedError
     

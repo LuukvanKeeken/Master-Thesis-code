@@ -1,7 +1,6 @@
 import os
 import numpy as np
 from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
-from Master_Thesis_Code.Neuromodulated_Agent import NeuromodulatedAgent
 from ncps_time_constant_extraction.ncps.wirings import AutoNCP
 import torch
 import gym
@@ -27,7 +26,7 @@ def evaluate_LTC_agent_pole_length(agent_net, env_name, num_episodes, evaluation
     env.unwrapped.length *= pole_length_modifier
         
     for i_episode in range(num_episodes):
-        policy_hidden_state = None
+        hidden_state = None
         
         env.seed(int(evaluation_seeds[i_episode]))
         
@@ -39,7 +38,7 @@ def evaluate_LTC_agent_pole_length(agent_net, env_name, num_episodes, evaluation
             state = torch.from_numpy(state)
             state = state.unsqueeze(0).to(device) #This as well?
             privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            policy_output, value, policy_hidden_state = agent_net(state.float(), privileged_info, policy_hidden_state)
+            policy_output, value, hidden_state = agent_net((state.float(), privileged_info), hidden_state)
             
             policy_dist = torch.softmax(policy_output, dim = 1)
             
@@ -60,7 +59,7 @@ def evaluate_LTC_agent_pole_mass(agent_net, env_name, num_episodes, evaluation_s
     env.unwrapped.masspole *= pole_mass_modifier
         
     for i_episode in range(num_episodes):
-        policy_hidden_state = None
+        hidden_state = None
         
         env.seed(int(evaluation_seeds[i_episode]))
         
@@ -72,7 +71,7 @@ def evaluate_LTC_agent_pole_mass(agent_net, env_name, num_episodes, evaluation_s
             state = torch.from_numpy(state)
             state = state.unsqueeze(0).to(device) #This as well?
             privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            policy_output, value, policy_hidden_state = agent_net(state.float(), privileged_info, policy_hidden_state)
+            policy_output, value, hidden_state = agent_net((state.float(), privileged_info), hidden_state)
             
             policy_dist = torch.softmax(policy_output, dim = 1)
             
@@ -93,7 +92,7 @@ def evaluate_LTC_agent_force_mag(agent_net, env_name, num_episodes, evaluation_s
     env.unwrapped.force_mag *= force_mag_modifier
         
     for i_episode in range(num_episodes):
-        policy_hidden_state = None
+        hidden_state = None
         
         env.seed(int(evaluation_seeds[i_episode]))
         
@@ -105,7 +104,7 @@ def evaluate_LTC_agent_force_mag(agent_net, env_name, num_episodes, evaluation_s
             state = torch.from_numpy(state)
             state = state.unsqueeze(0).to(device) #This as well?
             privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            policy_output, value, policy_hidden_state = agent_net(state.float(), privileged_info, policy_hidden_state)
+            policy_output, value, hidden_state = agent_net((state.float(), privileged_info), hidden_state)
             
             policy_dist = torch.softmax(policy_output, dim = 1)
             
@@ -130,15 +129,13 @@ num_neurons = 32
 sparsity_level = 0.5
 seed = 5
 mode = "neuromodulated"
-neuromod_network_dims = [3, 256, 128, num_neurons]
-encoder_hidden_activation = torch.nn.Tanh()
-encoder_output_activation = torch.nn.ReLU()
-
+neuromod_network_dims = [3, 192, 96, num_neurons]
+# wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
 wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-results_dir = "CfC_1036_2024326_lr_0.0001_nn_32_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_256_128"
+results_dir = "CfC_a2c_result_296_202437_learningrate_0.0005_selectiomethod_range_evaluation_all_params_trainingmethod_original_numneurons_32_tausysextraction_True_mode_neuromodulated_neuromod_network_dims_3_192_96_32"
 os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}")
 
 
@@ -166,19 +163,8 @@ with open(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/original
             raise NotImplementedError
             agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
         elif neuron_type == "CfC":
-            layer_list = []
-            for dim in range(len(neuromod_network_dims) - 1):
-                layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
-                if dim < len(neuromod_network_dims)-2:
-                    layer_list.append(encoder_hidden_activation)
-                else:
-                    layer_list.append(encoder_output_activation)
-            encoder = torch.nn.Sequential(*layer_list)
-
-            policy_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
-
-            agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
-            w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons,))
+            agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring, neuromod_network_dims=neuromod_network_dims).to(device)
+            w['cfc_model.rnn_cell.tau_system'] = torch.reshape(w['cfc_model.rnn_cell.tau_system'], (num_neurons,))
 
         agent_net.load_state_dict(w)
 
@@ -207,19 +193,8 @@ for percentage in percentages:
             raise NotImplementedError
             agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
         elif neuron_type == "CfC":
-            layer_list = []
-            for dim in range(len(neuromod_network_dims) - 1):
-                layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
-                if dim < len(neuromod_network_dims)-2:
-                    layer_list.append(encoder_hidden_activation)
-                else:
-                    layer_list.append(encoder_output_activation)
-            encoder = torch.nn.Sequential(*layer_list)
-
-            policy_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
-
-            agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
-            w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons,))
+            agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring, neuromod_network_dims=neuromod_network_dims).to(device)
+            w['cfc_model.rnn_cell.tau_system'] = torch.reshape(w['cfc_model.rnn_cell.tau_system'], (num_neurons,))
 
         agent_net.load_state_dict(w)
 
@@ -261,19 +236,8 @@ for percentage in percentages:
             raise NotImplementedError
             agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
         elif neuron_type == "CfC":
-            layer_list = []
-            for dim in range(len(neuromod_network_dims) - 1):
-                layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
-                if dim < len(neuromod_network_dims)-2:
-                    layer_list.append(encoder_hidden_activation)
-                else:
-                    layer_list.append(encoder_output_activation)
-            encoder = torch.nn.Sequential(*layer_list)
-
-            policy_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
-
-            agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
-            w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons,))
+            agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring, neuromod_network_dims=neuromod_network_dims).to(device)
+            w['cfc_model.rnn_cell.tau_system'] = torch.reshape(w['cfc_model.rnn_cell.tau_system'], (num_neurons,))
 
         agent_net.load_state_dict(w)
 
@@ -316,19 +280,8 @@ for percentage in percentages:
             raise NotImplementedError
             agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
         elif neuron_type == "CfC":
-            layer_list = []
-            for dim in range(len(neuromod_network_dims) - 1):
-                layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
-                if dim < len(neuromod_network_dims)-2:
-                    layer_list.append(encoder_hidden_activation)
-                else:
-                    layer_list.append(encoder_output_activation)
-            encoder = torch.nn.Sequential(*layer_list)
-
-            policy_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
-
-            agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
-            w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons,))
+            agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring, neuromod_network_dims=neuromod_network_dims).to(device)
+            w['cfc_model.rnn_cell.tau_system'] = torch.reshape(w['cfc_model.rnn_cell.tau_system'], (num_neurons,))
 
         agent_net.load_state_dict(w)
 

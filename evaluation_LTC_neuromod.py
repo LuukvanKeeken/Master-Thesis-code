@@ -126,19 +126,19 @@ max_reward = 200
 max_steps = 200
 n_evaluations = 100
 neuron_type = "CfC"
-num_neurons = 32
+num_neurons = 48
 sparsity_level = 0.5
 seed = 5
-mode = "neuromodulated"
-neuromod_network_dims = [3, 256, 128, num_neurons]
-encoder_hidden_activation = torch.nn.Tanh()
+mode = "only_neuromodulated"
+neuromod_network_dims = [3, 128, 80, num_neurons]
+encoder_hidden_activation = torch.nn.ReLU()
 encoder_output_activation = torch.nn.ReLU()
 
 wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-results_dir = "CfC_1036_2024326_lr_0.0001_nn_32_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_256_128"
+results_dir = "CfC_1068_2024326_lr_0.0001_nn_48_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_128_80"
 os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}")
 
 

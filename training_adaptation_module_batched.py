@@ -70,7 +70,7 @@ def validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation
         
         validation_rewards = []
         validation_losses = []
-        
+        settings = []
 
         for episode in range(num_validation_eps):
             env = gym.make(env_name)
@@ -79,15 +79,16 @@ def validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation
             adaptation_module_outputs = []
             encoder_outputs = []
 
-            np.random.seed(evaluation_seeds[episode])
+            
             pole_length_mod = np.random.choice(pole_length_mods)
             pole_mass_mod = np.random.choice(pole_mass_mods)
             force_mag_mod = np.random.choice(force_mag_mods)
-            env.seed(int(evaluation_seeds[episode]))
+            settings.append((pole_length_mod, pole_mass_mod, force_mag_mod))
+            # env.seed(int(evaluation_seeds[episode]))
 
-            env.unwrapped.length = pole_length_mod
-            env.unwrapped.masspole = pole_mass_mod
-            env.unwrapped.force_mag = force_mag_mod
+            env.unwrapped.length *= pole_length_mod
+            env.unwrapped.masspole *= pole_mass_mod
+            env.unwrapped.force_mag *= force_mag_mod
 
             state = env.reset()
             total_reward = 0
@@ -144,7 +145,7 @@ def validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation
                     validation_losses.append(loss_val.item())
                     break
 
-        return np.mean(validation_losses), np.mean(validation_rewards)
+        return np.mean(validation_losses), np.mean(validation_rewards), np.std(validation_rewards)
 
 
 
@@ -280,10 +281,10 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
         end = time.time()
         # print(f"Time taken: {end - start}")
 
-        mean_valid_loss, mean_valid_reward = validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation_seeds, env_name, num_validation_eps, max_steps)
+        mean_valid_loss, mean_valid_reward, std_valid_reward = validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation_seeds, env_name, num_validation_eps, max_steps)
         validation_losses.append(mean_valid_loss)
         validation_total_rewards.append(mean_valid_reward)
-        print(f"average validation loss: {mean_valid_loss}, average validation reward: {mean_valid_reward}")
+        print(f"average validation loss: {mean_valid_loss}, average validation reward: {mean_valid_reward} +/- {std_valid_reward}")
 
         if mean_valid_reward >= best_validation_reward:
             best_validation_reward = mean_valid_reward
@@ -295,79 +296,8 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
             torch.save(adaptation_module.state_dict(), f"{results_dir}/best_adaptation_module_loss_{neuron_type}_A2C_{i_run}.pt")
             
 
-        continue
-        # del
         
-
-        for step in range(max_steps):
-            # Concatenate the previous state and action to create one
-            # vector. This vector is then fed into a copy of the adaptation module.
-            adaptation_module_input = torch.cat((prev_state, prev_action), 1).to(torch.float32).to(device)
-            adaptation_module_output, adaptation_module_hidden_state = adaptation_module(adaptation_module_input, adaptation_module_hidden_state)
-
-            # Get the output of the encoder given privileged info.
-            privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            encoder_output = encoder(privileged_info)
-            
-            
-
-            # Transform the state to the correct format and save it
-            # to be used as previous state in the next time step.
-            state = torch.from_numpy(state)
-            state = state.unsqueeze(0).to(device)
-            states.append(state)
-            prev_state = state
-
-            # In the first step, we don't save the output of the adaptation module
-            # and the encoder, since they are based on a randomly sampled state and action.
-            if not step == 0:
-                adaptation_module_outputs.append(adaptation_module_output)
-                encoder_outputs.append(encoder_output)
-            
-            # Feed the state and adaptation module input into the agent network
-            policy_output, value, policy_hidden_state = agent_net(state.float(), policy_hidden_state, adaptation_module_output)
-
-
-            # Get distribution over the action space and select
-            # the action with the highest probability.
-            policy_dist = torch.softmax(policy_output, dim = 1)
-            action = torch.argmax(policy_dist).item()
-            # selected_actions.append(action)
-            prev_action = action
-            prev_action = torch.tensor(prev_action).view(1, -1)
-
-            # Take a step in the environment
-            state, r, done, _ = env.step(action)
-            total_reward += r
-
-
-            if done or step == max_steps - 1:
-                training_total_rewards.append(total_reward)
-                assert len(adaptation_module_outputs) == len(encoder_outputs)
-                loss_function = torch.nn.MSELoss()
-                loss_val = loss_function(torch.stack(adaptation_module_outputs), torch.stack(encoder_outputs))
-
-                optimizer.zero_grad()
-                loss_val.backward()
-                optimizer.step()
-                training_losses.append(loss_val.item())
-                print(f"Episode {episode}/{num_training_episodes}, loss_function: {loss_val.item()}, total reward: {total_reward}")
-
-                if episode % validate_every == 0:
-                    mean_valid_loss, mean_valid_reward = validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation_seeds, env_name, num_validation_eps, max_steps)
-                    validation_losses.append(mean_valid_loss)
-                    validation_total_rewards.append(mean_valid_reward)
-                    print(f"Validation loss_function: {mean_valid_loss}, validation reward: {mean_valid_reward}")
-
-                    if mean_valid_reward >= best_validation_reward:
-                        best_validation_reward = mean_valid_reward
-                        best_validation_reward_after = episode
-                        torch.save(adaptation_module.state_dict(), f"{results_dir}/best_adaptation_module_reward_{neuron_type}_A2C_{i_run}.pt")
-                    if mean_valid_loss <= best_validation_loss:
-                        best_validation_loss = mean_valid_loss
-                        best_validation_loss_after = episode
-                        torch.save(adaptation_module.state_dict(), f"{results_dir}/best_adaptation_module_loss_{neuron_type}_A2C_{i_run}.pt")
-                break
+    
 
     print(f"Best validation reward: {best_validation_reward} after {best_validation_reward_after} episodes")
     print(f"Best validation loss: {best_validation_loss} after {best_validation_loss_after} episodes")
@@ -387,7 +317,7 @@ parser.add_argument('--num_actions', type=int, default=2, help='Number of action
 parser.add_argument('--seed', type=int, default=5)
 parser.add_argument('--mode', type=str, default='neuromodulated', help='Mode of the CfC network')
 parser.add_argument('--wiring', type=str, default='None', help='Wiring of the CfC network')
-parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 192, 96], help='Dimensions of the neuromodulation network, without output layer')
+parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 256, 128], help='Dimensions of the neuromodulation network, without output layer')
 parser.add_argument('--num_training_eps', type=int, default=10000, help="Number of episodes to train the adaptation module")
 parser.add_argument('--env_name', type=str, default="CartPole-v0", help="Gym RL environment name")
 parser.add_argument('--lr_adapt_mod', type=float, default=0.0005, help="Learning rate of the adaptation module")
@@ -400,6 +330,8 @@ parser.add_argument('--adapt_mod_type', type=str, default='StandardRNN', help='T
 parser.add_argument('--result_id', type=int, default=-1, help='ID of the result')
 parser.add_argument('--batch_size', type=int, default=50, help='Batch size for training the adaptation module')
 parser.add_argument('--num_parallel_envs', type=int, default=10, help='Number of parallel environments to train the adaptation module')
+parser.add_argument('--encoder_hidden_activation', type=str, default='tanh', help='Activation function for the encoder hidden layers')
+parser.add_argument('--encoder_output_activation', type=str, default='relu', help='Activation function for the encoder output layer')
 
 
 args = parser.parse_args()
@@ -428,6 +360,21 @@ adapt_mod_type = args.adapt_mod_type
 result_id = args.result_id
 batch_size = args.batch_size
 num_parallel_envs = args.num_parallel_envs
+if args.encoder_hidden_activation == 'relu':
+    encoder_hidden_activation = torch.nn.ReLU()
+elif args.encoder_hidden_activation == 'tanh':
+    encoder_hidden_activation = torch.nn.Tanh()
+else:
+    raise NotImplementedError
+
+if args.encoder_output_activation == 'relu':
+    encoder_output_activation = torch.nn.ReLU()
+elif args.encoder_output_activation == 'tanh':
+    encoder_output_activation = torch.nn.Tanh()
+else:
+    raise NotImplementedError
+
+
 if training_range == 'quarter_range':
     randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
 else:
@@ -439,7 +386,7 @@ else:
     raise NotImplementedError
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-phase_1_dir = "CfC_a2c_result_296_202437_learningrate_0.0005_selectiomethod_range_evaluation_all_params_trainingmethod_original_numneurons_32_tausysextraction_True_mode_neuromodulated_neuromod_network_dims_3_192_96_32"
+phase_1_dir = "CfC_1036_2024326_lr_0.0001_nn_32_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_256_128"
 
 if result_id == -1:
     dirs = os.listdir('Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/')
@@ -479,22 +426,30 @@ for i, w in enumerate(weights):
     print(f"Training adaptation module for model {i+1}")
 
     if neuron_type == "CfC":
-        agent_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring)
+        policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring)
         
         
         layer_list = []
         for dim in range(len(neuromod_network_dims) - 1):
             layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
-            layer_list.append(torch.nn.Tanh())
+            if dim < len(neuromod_network_dims)-2:
+                layer_list.append(encoder_hidden_activation)
+            else:
+                layer_list.append(encoder_output_activation)
         encoder = torch.nn.Sequential(*layer_list)
+
+        # policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring).to(device)
+
+        # agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
+        w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
         
-        w['cfc_model.rnn_cell.tau_system'] = torch.reshape(w['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
-        w_policy = OrderedDict((k, v) for k, v in w.items() if 'neuromod' not in k)
-        w_encoder = OrderedDict((k.split('.', 3)[-1], v) for k, v in w.items() if 'neuromod' in k)
+        w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
+        w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in w.items() if 'neuromod' not in k)
+        w_encoder = OrderedDict((k.split('.', 1)[-1], v) for k, v in w.items() if 'neuromod' in k)
     elif neuron_type == "LTC":
         raise NotImplementedError
     
-    agent_net.load_state_dict(w_policy)
+    policy_net.load_state_dict(w_policy)
     encoder.load_state_dict(w_encoder)
 
     
@@ -509,7 +464,7 @@ for i, w in enumerate(weights):
 
     optimizer = torch.optim.Adam(adaptation_module.parameters(), lr = lr_adapt_mod, weight_decay = wd_adapt_mod)
 
-    training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, num_parallel_envs, batch_size, num_training_eps, 200, agent_net, num_actions, evaluation_seeds, i, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps)
+    training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, num_parallel_envs, batch_size, num_training_eps, 200, policy_net, num_actions, evaluation_seeds, i, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps)
     all_training_losses.append(training_losses)
     all_training_total_rewards.append(training_total_rewards)
     all_validation_losses.append(validation_losses)

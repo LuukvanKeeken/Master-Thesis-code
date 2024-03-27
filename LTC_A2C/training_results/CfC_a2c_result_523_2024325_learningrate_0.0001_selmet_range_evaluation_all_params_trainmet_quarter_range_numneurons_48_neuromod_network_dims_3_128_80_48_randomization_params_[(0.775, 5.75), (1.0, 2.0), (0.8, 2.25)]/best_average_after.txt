@@ -1,5 +1,0 @@
-0: 76.0 after 12070
-1: 90.3 after 270
-2: 71.1 after 16580
-Average training episodes: 9640.0, std dev: 6876.6610114696405
-Mean average performance: 79.13333333333334, std dev: 8.145482729027721

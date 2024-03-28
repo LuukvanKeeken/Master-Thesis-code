@@ -187,8 +187,8 @@ parser = argparse.ArgumentParser(description='Evaluate adaptation module for neu
 parser.add_argument('--adapt_mod_type', type=str, default='StandardRNN', help='Type of adaptation module')
 parser.add_argument('--state_dims', type=int, default=4, help='Number of state dimensions')
 parser.add_argument('--action_dims', type=int, default=1, help='Number of action dimensions')
-parser.add_argument('--num_neurons_adaptmod', type=int, default=32, help='Number of neurons in the adaptation module')
-parser.add_argument('--num_neurons_policy', type=int, default=32, help='Number of neurons in the policy network')
+parser.add_argument('--num_neurons_adaptmod', type=int, default=48, help='Number of neurons in the adaptation module')
+parser.add_argument('--num_neurons_policy', type=int, default=48, help='Number of neurons in the policy network')
 parser.add_argument('--num_actions', type=int, default=2, help='Number of actions')
 parser.add_argument('--mode', type=str, default='neuromodulated', help='Mode of the CfC network')
 
@@ -216,8 +216,8 @@ wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-policy_dir = "CfC_1136_2024326_lr_0.0001_nn_32_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_256_128"
-adapt_mod_dir = "adaptation_module_StandardRNN_result_725_2024327_CfC_result_296_202437_numneuronsadaptmod_32_lradaptmod_0.0005_wdadaptmod_0.01"
+policy_dir = "CfC_a2c_result_242_202435_learningrate_0.0001_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_quarter_range_numneurons_48_tausysextraction_True_mode_neuromodulated_randomization_params_[(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]"
+adapt_mod_dir = "adaptation_module_StandardRNN_result_752_2024328_CfC_result_296_202437_numneuronsadaptmod_48_lradaptmod_0.001_wdadaptmod_0.01"
 
 os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}")
 
@@ -263,7 +263,7 @@ with torch.no_grad():
                     raise NotImplementedError
 
                 policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring).to(device)
-                w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in pw.items() if 'neuromod' not in k)
+                w_policy = OrderedDict((k, v) for k, v in pw.items() if 'neuromod' not in k)
                 w_policy['cfc_model.rnn_cell.tau_system'] = torch.reshape(w_policy['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
                 policy_net.load_state_dict(w_policy)
 
@@ -301,7 +301,7 @@ with torch.no_grad():
                     raise NotImplementedError
 
                 policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring).to(device)
-                w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in pw.items() if 'neuromod' not in k)
+                w_policy = OrderedDict((k, v) for k, v in pw.items() if 'neuromod' not in k)
                 w_policy['cfc_model.rnn_cell.tau_system'] = torch.reshape(w_policy['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
                 policy_net.load_state_dict(w_policy)
 
@@ -353,7 +353,7 @@ with torch.no_grad():
                     raise NotImplementedError
 
                 policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring).to(device)
-                w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in pw.items() if 'neuromod' not in k)
+                w_policy = OrderedDict((k, v) for k, v in pw.items() if 'neuromod' not in k)
                 w_policy['cfc_model.rnn_cell.tau_system'] = torch.reshape(w_policy['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
                 policy_net.load_state_dict(w_policy)
 
@@ -406,7 +406,7 @@ with torch.no_grad():
                     raise NotImplementedError
 
                 policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring).to(device)
-                w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in pw.items() if 'neuromod' not in k)
+                w_policy = OrderedDict((k, v) for k, v in pw.items() if 'neuromod' not in k)
                 w_policy['cfc_model.rnn_cell.tau_system'] = torch.reshape(w_policy['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
                 policy_net.load_state_dict(w_policy)
 

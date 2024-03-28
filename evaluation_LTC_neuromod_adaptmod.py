@@ -187,7 +187,7 @@ parser.add_argument('--action_dims', type=int, default=1, help='Number of action
 parser.add_argument('--num_neurons_adaptmod', type=int, default=32, help='Number of neurons in the adaptation module')
 parser.add_argument('--num_neurons_policy', type=int, default=32, help='Number of neurons in the policy network')
 parser.add_argument('--num_actions', type=int, default=2, help='Number of actions')
-parser.add_argument('--mode', type=str, default='only_neuromodulated', help='Mode of the CfC network')
+parser.add_argument('--mode', type=str, default='neuromodulated', help='Mode of the CfC network')
 
 args = parser.parse_args()
 
@@ -202,7 +202,7 @@ mode = args.mode
 env_name = "CartPole-v0"
 max_reward = 200
 max_steps = 200
-n_evaluations = 100
+n_evaluations = 2
 neuron_type = "CfC"
 sparsity_level = 0.5
 seed = 5
@@ -216,7 +216,7 @@ evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evalua
 policy_dir = "CfC_1136_2024326_lr_0.0001_nn_32_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_256_128"
 adapt_mod_dir = "adaptation_module_StandardRNN_result_725_2024327_CfC_result_296_202437_numneuronsadaptmod_32_lradaptmod_0.0005_wdadaptmod_0.01"
 
-os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}")
+os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}")
 
 
 policy_weights_0 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
@@ -245,7 +245,7 @@ am_weights = [am_weights_0, am_weights_1, am_weights_2, am_weights_3, am_weights
 
 with torch.no_grad():
     # ORIGINAL ENVIRONMENT EVALUATION ---------------------------
-    with open(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/original_env_evals.txt", "w") as f:
+    with open(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/original_env_evals.txt", "w") as f:
         eraser = '\b \b'
         original_eval_rewards = []
         for i, (pw, amw) in enumerate(zip(policy_weights, am_weights)):
@@ -323,11 +323,11 @@ with torch.no_grad():
         median_avgs.append(np.median(means_per_model))
 
 
-    os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_length")
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_length/means.npy", mean_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_length/stddevs.npy", std_dev_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_length/medians.npy", median_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_length/percentages.npy", percentages)
+    os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/pole_length")
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/pole_length/means.npy", mean_avgs)
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/pole_length/stddevs.npy", std_dev_avgs)
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/pole_length/medians.npy", median_avgs)
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/pole_length/percentages.npy", percentages)
 
 
 
@@ -375,11 +375,11 @@ with torch.no_grad():
         median_avgs.append(np.median(means_per_model))
 
 
-    os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_mass")
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_mass/means.npy", mean_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_mass/stddevs.npy", std_dev_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_mass/medians.npy", median_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_mass/percentages.npy", percentages)
+    os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/pole_mass")
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/pole_mass/means.npy", mean_avgs)
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/pole_mass/stddevs.npy", std_dev_avgs)
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/pole_mass/medians.npy", median_avgs)
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/pole_mass/percentages.npy", percentages)
 
 
 
@@ -428,11 +428,11 @@ with torch.no_grad():
         median_avgs.append(np.median(means_per_model))
 
 
-    os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/force_mag")
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/force_mag/means.npy", mean_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/force_mag/stddevs.npy", std_dev_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/force_mag/medians.npy", median_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/{adapt_mod_dir}/force_mag/percentages.npy", percentages)
+    os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/force_mag")
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/force_mag/means.npy", mean_avgs)
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/force_mag/stddevs.npy", std_dev_avgs)
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/force_mag/medians.npy", median_avgs)
+    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/REAL{adapt_mod_dir}/force_mag/percentages.npy", percentages)
 
 
 

@@ -187,10 +187,10 @@ parser = argparse.ArgumentParser(description='Evaluate adaptation module for neu
 parser.add_argument('--adapt_mod_type', type=str, default='StandardRNN', help='Type of adaptation module')
 parser.add_argument('--state_dims', type=int, default=4, help='Number of state dimensions')
 parser.add_argument('--action_dims', type=int, default=1, help='Number of action dimensions')
-parser.add_argument('--num_neurons_adaptmod', type=int, default=48, help='Number of neurons in the adaptation module')
-parser.add_argument('--num_neurons_policy', type=int, default=32, help='Number of neurons in the policy network')
+parser.add_argument('--num_neurons_adaptmod', type=int, default=64, help='Number of neurons in the adaptation module')
+parser.add_argument('--num_neurons_policy', type=int, default=48, help='Number of neurons in the policy network')
 parser.add_argument('--num_actions', type=int, default=2, help='Number of actions')
-parser.add_argument('--mode', type=str, default='neuromodulated', help='Mode of the CfC network')
+parser.add_argument('--mode', type=str, default='only_neuromodulated', help='Mode of the CfC network')
 
 args = parser.parse_args()
 
@@ -216,8 +216,8 @@ wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-policy_dir = "CfC_1036_2024326_lr_0.0001_nn_32_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_256_128"
-adapt_mod_dir = "adaptation_module_StandardRNN_result_617_2024327_CfC_result_296_202437_numneuronsadaptmod_48_lradaptmod_0.001_wdadaptmod_0.01"
+policy_dir = "CfC_1068_2024326_lr_0.0001_nn_48_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_128_80"
+adapt_mod_dir = "adaptation_module_StandardRNN_result_652_2024327_CfC_result_296_202437_numneuronsadaptmod_64_lradaptmod_0.0001_wdadaptmod_0.0001"
 
 os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}")
 

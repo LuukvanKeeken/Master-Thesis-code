@@ -9,6 +9,7 @@ from collections import deque
 import torch
 from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
 from Master_Thesis_Code.Neuromodulated_Agent import NeuromodulatedAgent
+from Master_Thesis_Code.backpropamine_A2C import BP_RNetwork
 from ncps_time_constant_extraction.ncps.wirings import AutoNCP
 import argparse
 
@@ -258,7 +259,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                     evaluation_performance = 0
                     total_eval_eps = 10
                     for i in range(total_eval_eps):
-                        # np.random.seed(evaluation_seeds[i+eps_per_setting-1])
+                        
                         pole_length_mod = np.random.choice(pole_length_mods)
                         pole_mass_mod = np.random.choice(pole_mass_mods)
                         force_mag_mod = np.random.choice(force_mag_mods)
@@ -336,13 +337,14 @@ parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3
 parser.add_argument('--selection_method', type=str, default = "range_evaluation_all_params", help='Method to select the best model')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
 parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of episodes to train the agent')
-parser.add_argument('--encoder_output_activation', type=str, default="tanh", help="Activation function of the encoder's output layer")
-parser.add_argument('--encoder_hidden_activation', type=str, default="tanh", help="Activation function of the encoder's hidden layers")
+parser.add_argument('--encoder_output_activation', type=str, default="relu", help="Activation function of the encoder's output layer")
+parser.add_argument('--encoder_hidden_activation', type=str, default="relu", help="Activation function of the encoder's hidden layers")
 parser.add_argument('--result_id', type=int, default=-1, help='ID of the result folder')
 parser.add_argument('--mode', type=str, default="neuromodulated", help="The mode of the CfC network.")
 parser.add_argument('--schedule_start', type=float, default=0.00001, help="The starting value of the schedule factor")
 parser.add_argument('--schedule_end', type=float, default=1.0, help="The end value of the schedule factor")
 parser.add_argument('--schedule_type', type=str, default='None', help="The type of schedule to use for the schedule factor")
+parser.add_argument('--neuron_type', type=str, default='BP', help="The type of neuron to use")
 args = parser.parse_args()
 
 
@@ -360,6 +362,7 @@ mode = args.mode
 schedule_start = args.schedule_start
 schedule_end = args.schedule_end
 schedule_type = args.schedule_type
+neuron_type = args.neuron_type
 if args.encoder_output_activation == "identity":
     encoder_output_activation = torch.nn.Identity()
 elif args.encoder_output_activation == "relu":
@@ -383,8 +386,6 @@ print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, rand factor:
 device = "cpu"
 
 gamma = 0.99
-# num_neurons = 32
-neuron_type = "CfC"
 
 if training_method == "quarter_range":
     randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
@@ -401,8 +402,13 @@ seed = 5
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
 wiring = None
 
+if neuron_type == "BP":
+    top_dir = "BP_A2C"
+elif neuron_type == "LTC" or neuron_type == "CfC":
+    top_dir = "LTC_A2C"
+
 if result_id == -1:
-    dirs = os.listdir('Master_Thesis_Code/LTC_A2C/training_results/')
+    dirs = os.listdir(f'Master_Thesis_Code/{top_dir}/training_results/')
     if not any('a2c_result' in d for d in dirs):
         result_id = 1
     else:
@@ -411,15 +417,15 @@ if result_id == -1:
 
 
 d = date.today()
-result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{args.encoder_output_activation}'
-if neuron_type == "CfC":
-    result_dir += "_mode_" + mode
-    if mode == "neuromodulated" or mode == "only_neuromodulated":
-        result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
+result_dir = f'Master_Thesis_Code/{top_dir}/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{args.encoder_output_activation}'
+# if neuron_type == "CfC":
+    # result_dir += "_mode_" + mode
+if mode == "neuromodulated" or mode == "only_neuromodulated":
+    result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
 if wiring:
     result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
-if randomization_params:
-    result_dir += "_randomization_params_" + str(randomization_params)
+# if randomization_params:
+#     result_dir += "_randomization_params_" + str(randomization_params)
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
 
@@ -457,6 +463,20 @@ for i in range(num_models):
         policy_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
 
         agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
+    elif neuron_type == "BP":
+        layer_list = []
+        for dim in range(len(neuromod_network_dims) - 1):
+            layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
+            if dim < len(neuromod_network_dims)-2:
+                layer_list.append(encoder_hidden_activation)
+            else:
+                layer_list.append(encoder_output_activation)
+        encoder = torch.nn.Sequential(*layer_list)
+
+        policy_net = BP_RNetwork(4, num_neurons, 2, seed, external_neuromodulation = True).to(device)
+
+        agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
+
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 

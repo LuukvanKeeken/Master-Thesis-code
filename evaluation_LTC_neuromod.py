@@ -2,6 +2,7 @@ import os
 import numpy as np
 from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
 from Master_Thesis_Code.Neuromodulated_Agent import NeuromodulatedAgent
+from Master_Thesis_Code.backpropamine_A2C import BP_RNetwork
 from ncps_time_constant_extraction.ncps.wirings import AutoNCP
 import torch
 import gym
@@ -125,8 +126,8 @@ env_name = "CartPole-v0"
 max_reward = 200
 max_steps = 200
 n_evaluations = 100
-neuron_type = "CfC"
-num_neurons = 32
+neuron_type = "BP"
+num_neurons = 64
 sparsity_level = 0.5
 seed = 5
 mode = "neuromodulated"
@@ -138,26 +139,26 @@ wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-results_dir = "CfC_1136_2024326_lr_0.0001_nn_32_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_256_128"
-os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}")
+results_dir = "BP_a2c_result_1013_2024331_learningrate_0.0001_numneurons_64_encoutact_relu_neuromod_network_dims_3_256_128_64"
+os.mkdir(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}")
 
 
-weights_0 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
-weights_1 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
-weights_2 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
-weights_3 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
-weights_4 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
-weights_5 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
-weights_6 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
-weights_7 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
-weights_8 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
-weights_9 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
+weights_0 = torch.load(f'Master_Thesis_Code/BP_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
+weights_1 = torch.load(f'Master_Thesis_Code/BP_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
+weights_2 = torch.load(f'Master_Thesis_Code/BP_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
+weights_3 = torch.load(f'Master_Thesis_Code/BP_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
+weights_4 = torch.load(f'Master_Thesis_Code/BP_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
+weights_5 = torch.load(f'Master_Thesis_Code/BP_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
+weights_6 = torch.load(f'Master_Thesis_Code/BP_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
+weights_7 = torch.load(f'Master_Thesis_Code/BP_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
+weights_8 = torch.load(f'Master_Thesis_Code/BP_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
+weights_9 = torch.load(f'Master_Thesis_Code/BP_A2C/training_results/{results_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
 weights = [weights_0, weights_1, weights_2, weights_3, weights_4, weights_5, weights_6, weights_7, weights_8, weights_9]
 # weights = [weights_0, weights_1, weights_2, weights_3, weights_4]
 
 
 # ORIGINAL ENVIRONMENT EVALUATION ---------------------------
-with open(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/original_env_evals.txt", "w") as f:
+with open(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/original_env_evals.txt", "w") as f:
     eraser = '\b \b'
     original_eval_rewards = []
     for i, w in enumerate(weights):
@@ -179,6 +180,20 @@ with open(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/original
 
             agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
             w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons,))
+        elif neuron_type == "BP":
+            layer_list = []
+            for dim in range(len(neuromod_network_dims) - 1):
+                layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
+                if dim < len(neuromod_network_dims)-2:
+                    layer_list.append(encoder_hidden_activation)
+                else:
+                    layer_list.append(encoder_output_activation)
+            encoder = torch.nn.Sequential(*layer_list)
+
+            policy_net = BP_RNetwork(4, num_neurons, 2, seed, external_neuromodulation = True).to(device)
+
+            agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
+
 
         agent_net.load_state_dict(w)
 
@@ -220,7 +235,20 @@ for percentage in percentages:
 
             agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
             w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons,))
+        elif neuron_type == "BP":
+            layer_list = []
+            for dim in range(len(neuromod_network_dims) - 1):
+                layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
+                if dim < len(neuromod_network_dims)-2:
+                    layer_list.append(encoder_hidden_activation)
+                else:
+                    layer_list.append(encoder_output_activation)
+            encoder = torch.nn.Sequential(*layer_list)
 
+            policy_net = BP_RNetwork(4, num_neurons, 2, seed, external_neuromodulation = True).to(device)
+
+            agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
+        
         agent_net.load_state_dict(w)
 
         rewards = evaluate_LTC_agent_pole_length(agent_net, env_name, n_evaluations, evaluation_seeds, percentage)
@@ -240,11 +268,11 @@ for results in all_modified_env_eval_rewards:
     median_avgs.append(np.median(means_per_model))
 
 
-os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_length")
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_length/means.npy", mean_avgs)
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_length/stddevs.npy", std_dev_avgs)
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_length/medians.npy", median_avgs)
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_length/percentages.npy", percentages)
+os.mkdir(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/pole_length")
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/pole_length/means.npy", mean_avgs)
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/pole_length/stddevs.npy", std_dev_avgs)
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/pole_length/medians.npy", median_avgs)
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/pole_length/percentages.npy", percentages)
 
 
 
@@ -274,7 +302,19 @@ for percentage in percentages:
 
             agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
             w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons,))
+        elif neuron_type == "BP":
+            layer_list = []
+            for dim in range(len(neuromod_network_dims) - 1):
+                layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
+                if dim < len(neuromod_network_dims)-2:
+                    layer_list.append(encoder_hidden_activation)
+                else:
+                    layer_list.append(encoder_output_activation)
+            encoder = torch.nn.Sequential(*layer_list)
 
+            policy_net = BP_RNetwork(4, num_neurons, 2, seed, external_neuromodulation = True).to(device)
+
+            agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
         agent_net.load_state_dict(w)
 
         rewards = evaluate_LTC_agent_pole_mass(agent_net, env_name, n_evaluations, evaluation_seeds, percentage)
@@ -294,11 +334,11 @@ for results in all_modified_env_eval_rewards:
     median_avgs.append(np.median(means_per_model))
 
 
-os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_mass")
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_mass/means.npy", mean_avgs)
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_mass/stddevs.npy", std_dev_avgs)
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_mass/medians.npy", median_avgs)
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/pole_mass/percentages.npy", percentages)
+os.mkdir(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/pole_mass")
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/pole_mass/means.npy", mean_avgs)
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/pole_mass/stddevs.npy", std_dev_avgs)
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/pole_mass/medians.npy", median_avgs)
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/pole_mass/percentages.npy", percentages)
 
 
 
@@ -329,7 +369,20 @@ for percentage in percentages:
 
             agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
             w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons,))
+        elif neuron_type == "BP":
+            layer_list = []
+            for dim in range(len(neuromod_network_dims) - 1):
+                layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
+                if dim < len(neuromod_network_dims)-2:
+                    layer_list.append(encoder_hidden_activation)
+                else:
+                    layer_list.append(encoder_output_activation)
+            encoder = torch.nn.Sequential(*layer_list)
 
+            policy_net = BP_RNetwork(4, num_neurons, 2, seed, external_neuromodulation = True).to(device)
+
+            agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
+        
         agent_net.load_state_dict(w)
 
         rewards = evaluate_LTC_agent_force_mag(agent_net, env_name, n_evaluations, evaluation_seeds, percentage)
@@ -349,11 +402,11 @@ for results in all_modified_env_eval_rewards:
     median_avgs.append(np.median(means_per_model))
 
 
-os.mkdir(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/force_mag")
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/force_mag/means.npy", mean_avgs)
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/force_mag/stddevs.npy", std_dev_avgs)
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/force_mag/medians.npy", median_avgs)
-np.save(f"Master_Thesis_Code/LTC_A2C/evaluation_results/{results_dir}/force_mag/percentages.npy", percentages)
+os.mkdir(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/force_mag")
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/force_mag/means.npy", mean_avgs)
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/force_mag/stddevs.npy", std_dev_avgs)
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/force_mag/medians.npy", median_avgs)
+np.save(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}/force_mag/percentages.npy", percentages)
 
 
 

@@ -131,15 +131,15 @@ num_neurons = 64
 sparsity_level = 0.5
 seed = 5
 mode = "neuromodulated"
-neuromod_network_dims = [3, 256, 128, num_neurons]
-encoder_hidden_activation = torch.nn.ReLU()
-encoder_output_activation = torch.nn.ReLU()
+neuromod_network_dims = [3, 192, 96, num_neurons]
+encoder_hidden_activation = torch.nn.Tanh()
+encoder_output_activation = torch.nn.Tanh()
 
 wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-results_dir = "BP_a2c_result_1013_2024331_learningrate_0.0001_numneurons_64_encoutact_relu_neuromod_network_dims_3_256_128_64"
+results_dir = "BP_a2c_result_1014_2024331_learningrate_0.0001_numneurons_64_encoutact_tanh_neuromod_network_dims_3_192_96_64"
 os.mkdir(f"Master_Thesis_Code/BP_A2C/evaluation_results/{results_dir}")
 
 

@@ -51,7 +51,10 @@ class BP_RNetwork(nn.Module):
         
     def forward(self, inputs, hidden, neuromod_signal = None): # hidden is a tuple containing the h-state (i.e. the recurrent hidden state) and the hebbian trace 
             if hidden is None:
-                hidden = (self.initialZeroState(inputs.size(0)), self.initialZeroHebb(inputs.size(0)))
+                if len(inputs.shape) == 2:
+                    hidden = (self.initialZeroState(inputs.size(0)), self.initialZeroHebb(inputs.size(0)))
+                else:
+                    hidden = (self.initialZeroState(inputs.size(1)), self.initialZeroHebb(inputs.size(1)))
             
             # hidden[0] is the h-state; hidden[1] is the Hebbian trace
             hebb = hidden[1]
@@ -63,7 +66,10 @@ class BP_RNetwork(nn.Module):
             valueout = self.h2v(hactiv)
 
             # Now computing the Hebbian updates...
-            deltahebb = torch.bmm(hidden[0].unsqueeze(2), hactiv.unsqueeze(1))  # Batched outer product of previous hidden state with new hidden state
+            part1 = hidden[0]  # Batched outer product of previous hidden state with new hidden state
+            part2 = hactiv  # Batched outer product of new hidden state with itself
+            deltahebb = torch.bmm(part1.unsqueeze(2), part2.unsqueeze(1))  # Batched outer product of previous hidden state with new hidden state
+            # deltahebb = torch.bmm(hidden[0].unsqueeze(2), hactiv)  # Batched outer product of previous hidden state with new hidden state
             
             if not self.external_neuromodulation:
                 neuromod_eta = torch.tanh(self.h2mod(hactiv)).unsqueeze(2)  # Shape: BatchSize x 1 x 1

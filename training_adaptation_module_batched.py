@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
 from Master_Thesis_Code.Adaptation_Module import StandardRNN
+from Master_Thesis_Code.backpropamine_A2C import BP_RNetwork
 from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVectorEnv
 import os
 import argparse
@@ -195,7 +196,10 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
         prev_actions = vec_env.action_space.sample()
         prev_actions = torch.tensor(prev_actions).detach().to(device)
         prev_states = vec_env.observation_space.sample()
-        prev_states = torch.from_numpy(prev_states).unsqueeze(0).detach().to(device)
+        if neuron_type == "BP":
+            prev_states = torch.from_numpy(prev_states).detach().to(device)
+        else:
+            prev_states = torch.from_numpy(prev_states).unsqueeze(0).detach().to(device)
 
 
         states = vec_env.reset()
@@ -206,12 +210,16 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
             vec_encoder_outputs = encoder(get_privileged_info(randomized_env_params))
 
             # Feed the previous states and actions into the adaptation module
-            adaptation_module_inputs = torch.cat((prev_states, prev_actions.unsqueeze(0).unsqueeze(-1)), -1).to(torch.float32).to(device)
-            adaptation_module_inputs = adaptation_module_inputs
+            if neuron_type == "BP":
+                adaptation_module_inputs = torch.cat((prev_states, prev_actions.unsqueeze(-1)), -1).to(torch.float32).to(device)
+            else:
+                adaptation_module_inputs = torch.cat((prev_states, prev_actions.unsqueeze(0).unsqueeze(-1)), -1).to(torch.float32).to(device)
             vec_adaptation_module_outputs, adaptation_module_hidden_states = adaptation_module(adaptation_module_inputs, adaptation_module_hidden_states)
             
-
-            states = torch.from_numpy(states).unsqueeze(0).detach().to(device)
+            if neuron_type == "BP":
+                states = torch.from_numpy(states).detach().to(device)
+            else:
+                states = torch.from_numpy(states).unsqueeze(0).detach().to(device)
             prev_states = states
 
 
@@ -228,8 +236,12 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
             with torch.no_grad():
                 policy_outputs, values, policy_hidden_states = agent_net(states.float(), policy_hidden_states, vec_adaptation_module_outputs.squeeze(0))
                 
-                policy_dists = torch.softmax(policy_outputs, dim = 2)
-                actions = torch.argmax(policy_dists, dim = 2).squeeze().tolist()
+                if neuron_type == "BP":
+                    policy_dists = torch.softmax(policy_outputs, dim = 1)
+                    actions = torch.argmax(policy_dists, dim = 1).squeeze().tolist()
+                else:
+                    policy_dists = torch.softmax(policy_outputs, dim = 2)
+                    actions = torch.argmax(policy_dists, dim = 2).squeeze().tolist()
                 prev_actions = torch.tensor(actions).to(device)
                 
                 states, rewards, dones, _ = vec_env.step(actions)
@@ -240,7 +252,11 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
                 running_total_training_rewards[i] += reward
 
                 if done:
-                    policy_hidden_states[i] = torch.zeros_like(policy_hidden_states[i])
+                    if neuron_type == "BP":
+                        policy_hidden_states[0][i] = torch.zeros_like(policy_hidden_states[0][i])
+                        policy_hidden_states[1][i] = torch.zeros_like(policy_hidden_states[1][i])
+                    else:
+                        policy_hidden_states[i] = torch.zeros_like(policy_hidden_states[i])
                     adaptation_module_hidden_states[0][i] = torch.zeros_like(adaptation_module_hidden_states[0][i])
 
                     if len(running_encoder_outputs[i]) > 0:
@@ -307,11 +323,11 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
 
 
 parser = argparse.ArgumentParser(description='Train adaptation module for neuromodulated CfC')
-parser.add_argument('--neuron_type', type=str, default='CfC', help='Type of neuron to train')
+parser.add_argument('--neuron_type', type=str, default='BP', help='Type of neuron to train')
 parser.add_argument('--device', type=str, default='cpu', help='Device to train on')
 parser.add_argument('--state_dims', type=int, default=4, help='Number of state dimensions')
 parser.add_argument('--action_dims', type=int, default=1, help='Number of action dimensions')
-parser.add_argument('--num_neurons_policy', type=int, default=32, help='Number of neurons in the policy network')
+parser.add_argument('--num_neurons_policy', type=int, default=64, help='Number of neurons in the policy network')
 parser.add_argument('--num_neurons_adaptation', type=int, default=64, help='Number of neurons in the adaptation module')
 parser.add_argument('--num_actions', type=int, default=2, help='Number of actions')
 parser.add_argument('--seed', type=int, default=5)
@@ -360,6 +376,10 @@ adapt_mod_type = args.adapt_mod_type
 result_id = args.result_id
 batch_size = args.batch_size
 num_parallel_envs = args.num_parallel_envs
+if neuron_type == "BP":
+    top_dir = "BP_A2C"
+else:
+    top_dir = "LTC_A2C"
 if args.encoder_hidden_activation == 'relu':
     encoder_hidden_activation = torch.nn.ReLU()
 elif args.encoder_hidden_activation == 'tanh':
@@ -386,10 +406,10 @@ else:
     raise NotImplementedError
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-phase_1_dir = "CfC_1136_2024326_lr_0.0001_nn_32_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_256_128"
+phase_1_dir = "BP_a2c_result_1013_2024331_learningrate_0.0001_numneurons_64_encoutact_relu_neuromod_network_dims_3_256_128_64"
 
 if result_id == -1:
-    dirs = os.listdir('Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/')
+    dirs = os.listdir(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/')
     if not any('adaptation_module' in d for d in dirs):
         result_id = 1
     else:
@@ -399,20 +419,20 @@ if result_id == -1:
 d = date.today()
 
 
-results_dir = f"Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/adaptation_module_{adapt_mod_type}_result_{result_id}_{str(d.year) + str(d.month) + str(d.day)}_CfC_result_296_202437_numneuronsadaptmod_{num_neurons_adaptation}_lradaptmod_{lr_adapt_mod}_wdadaptmod_{wd_adapt_mod}"
+results_dir = f"Master_Thesis_Code/{top_dir}/adaptation_module/training_results/adaptation_module_{adapt_mod_type}_result_{result_id}_{str(d.year) + str(d.month) + str(d.day)}_CfC_result_296_202437_numneuronsadaptmod_{num_neurons_adaptation}_lradaptmod_{lr_adapt_mod}_wdadaptmod_{wd_adapt_mod}"
 os.mkdir(results_dir)
 
 
-weights_0 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
-weights_1 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
-weights_2 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
-weights_3 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
-weights_4 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
-weights_5 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
-weights_6 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
-weights_7 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
-weights_8 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
-weights_9 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
+weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
+weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
+weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
+weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
+weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
+weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
+weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
+weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
+weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
+weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{phase_1_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
 weights = [weights_0, weights_1, weights_2, weights_3, weights_4, weights_5, weights_6, weights_7, weights_8, weights_9]
 
 
@@ -448,6 +468,21 @@ for i, w in enumerate(weights):
         w_encoder = OrderedDict((k.split('.', 1)[-1], v) for k, v in w.items() if 'neuromod' in k)
     elif neuron_type == "LTC":
         raise NotImplementedError
+    elif neuron_type == "BP":
+        policy_net = BP_RNetwork(4, num_neurons_policy, 2, seed, external_neuromodulation = True).to(device)
+
+        layer_list = []
+        for dim in range(len(neuromod_network_dims) - 1):
+            layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
+            if dim < len(neuromod_network_dims)-2:
+                layer_list.append(encoder_hidden_activation)
+            else:
+                layer_list.append(encoder_output_activation)
+        encoder = torch.nn.Sequential(*layer_list)
+
+        # w['policy_net.rnn_cell.tau_system'] = torch.reshape(w['policy_net.rnn_cell.tau_system'], (num_neurons_policy,))
+        w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in w.items() if 'neuromod' not in k)
+        w_encoder = OrderedDict((k.split('.', 1)[-1], v) for k, v in w.items() if 'neuromod' in k)
     
     policy_net.load_state_dict(w_policy)
     encoder.load_state_dict(w_encoder)

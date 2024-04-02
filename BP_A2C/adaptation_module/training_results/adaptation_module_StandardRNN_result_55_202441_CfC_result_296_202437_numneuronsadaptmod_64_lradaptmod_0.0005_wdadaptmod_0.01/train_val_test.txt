@@ -1,0 +1,3 @@
+Mean avg training reward: 197.684 +/- 3.193944896205945
+Mean avg validation reward: 193.21800000000002 +/- 7.04499084456467
+Mean avg testing reward: 128.197 +/- 8.154498206511544

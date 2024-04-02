@@ -406,7 +406,7 @@ else:
     raise NotImplementedError
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-phase_1_dir = "BP_a2c_result_1013_2024331_learningrate_0.0001_numneurons_64_encoutact_relu_neuromod_network_dims_3_256_128_64"
+phase_1_dir = "BP_a2c_result_1014_2024331_learningrate_0.0001_numneurons_64_encoutact_tanh_neuromod_network_dims_3_192_96_64"
 
 if result_id == -1:
     dirs = os.listdir(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/')

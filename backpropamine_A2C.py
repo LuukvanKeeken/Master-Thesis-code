@@ -141,7 +141,13 @@ class Standard_RNetwork(nn.Module):
 
         
     def forward(self, inputs, hidden): # hidden is a tuple containing the h-state (i.e. the recurrent hidden state) and the hebbian trace 
-            HS = self.hsize
+            if hidden is None:
+                if len(inputs.shape) == 2:
+                    hidden = (self.initialZeroState(inputs.size(0)), self.initialZeroHebb(inputs.size(0)))
+                else:
+                    hidden = (self.initialZeroState(inputs.size(1)), self.initialZeroHebb(inputs.size(1)))
+            
+            
             
             # hidden[0] is the h-state; hidden[1] is the Hebbian trace
             hebb = hidden[1]

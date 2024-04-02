@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
 from Master_Thesis_Code.Neuromodulated_Agent import NeuromodulatedAgent
-from Master_Thesis_Code.backpropamine_A2C import BP_RNetwork
+from Master_Thesis_Code.backpropamine_A2C import BP_RNetwork, Standard_RNetwork, Standard_FFNetwork
 from ncps_time_constant_extraction.ncps.wirings import AutoNCP
 from Master_Thesis_Code.BP_A2C.BP_A2C_agent import evaluate_BP_agent_all_params
 
@@ -63,13 +63,13 @@ testing_ranges = [[(0.1, 0.55), (10.5, 20.0)], [(5.0, 13.0)], [(0.2, 0.6), (3.5,
 
 
 device = "cpu"
-neuron_type = "BP"
-if neuron_type == "BP":
+neuron_type = "StandardMLP"
+if neuron_type == "BP" or neuron_type == "StandardRNN" or neuron_type == "StandardMLP":
     top_dir = "BP_A2C"
 else:
     top_dir = "LTC_A2C"
 mode = "pure"
-num_neurons_policy = 64
+num_neurons_policy = 32
 
 
 num_models = 10
@@ -85,20 +85,20 @@ wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-result_dir = "BP_RNN_a2c_result_24_202434_entropycoef_0.01_valuepredcoef_0.1_batchsize_1_maxsteps_200_maxgradnorm_4.0_gammaR_0.99_learningrate_5e-05_numtrainepisodes_20000_selectionmethod_range_evaluation_all_params_trainingmethod_original"
+result_dir = "Standard_MLP_a2c_result_64_202434_entropycoef_0.01_valuepredcoef_0.1_batchsize_1_maxsteps_200_maxgradnorm_4.0_gammaR_0.99_learningrate_5e-05_numtrainepisodes_20000_selectionmethod_range_evaluation_all_params_trainingmethod_original"
 
 
 
-policy_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_0.pt', map_location=torch.device(device))
-policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_1.pt', map_location=torch.device(device))
-policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_2.pt', map_location=torch.device(device))
-policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_3.pt', map_location=torch.device(device))
-policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_4.pt', map_location=torch.device(device))
-policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_5.pt', map_location=torch.device(device))
-policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_6.pt', map_location=torch.device(device))
-policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_7.pt', map_location=torch.device(device))
-policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_8.pt', map_location=torch.device(device))
-policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_9.pt', map_location=torch.device(device))
+policy_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_0.pt', map_location=torch.device(device))
+policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_1.pt', map_location=torch.device(device))
+policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_2.pt', map_location=torch.device(device))
+policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_3.pt', map_location=torch.device(device))
+policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_4.pt', map_location=torch.device(device))
+policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_5.pt', map_location=torch.device(device))
+policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_6.pt', map_location=torch.device(device))
+policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_7.pt', map_location=torch.device(device))
+policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_8.pt', map_location=torch.device(device))
+policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_9.pt', map_location=torch.device(device))
 policy_weights = [policy_weights_0, policy_weights_1, policy_weights_2, policy_weights_3, policy_weights_4, policy_weights_5, policy_weights_6, policy_weights_7, policy_weights_8, policy_weights_9]
 
 eraser = '\b \b'
@@ -117,6 +117,10 @@ with torch.no_grad():
             w['cfc_model.rnn_cell.tau_system'] = torch.reshape(w['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
         elif neuron_type == "BP":
             agent_net = BP_RNetwork(4, num_neurons_policy, 2, seed).to(device)
+        elif neuron_type == "StandardRNN":
+            agent_net = Standard_RNetwork(4, num_neurons_policy, 2, seed).to(device)
+        elif neuron_type == "StandardMLP":
+            agent_net = Standard_FFNetwork(4, num_neurons_policy, num_neurons_policy, 2, seed).to(device)
 
         agent_net.load_state_dict(w)
 
@@ -129,8 +133,8 @@ with torch.no_grad():
             pole_length_mod = np.random.uniform(training_ranges[0][0], training_ranges[0][1])
             pole_mass_mod = np.random.uniform(training_ranges[1][0], training_ranges[1][1])
             force_mag_mod = np.random.uniform(training_ranges[2][0], training_ranges[2][1])
-            print(f"pole_length_mod: {pole_length_mod}, pole_mass_mod: {pole_mass_mod}, force_mag_mod: {force_mag_mod}")
-            if neuron_type == "BP":
+
+            if neuron_type == "BP" or neuron_type == "StandardRNN" or neuron_type == "StandardMLP":
                 rewards_sum += np.mean(evaluate_BP_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
             else:
                 rewards_sum += np.mean(evaluate_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
@@ -152,7 +156,7 @@ with torch.no_grad():
             force_mag_range = random.choice(validation_ranges[2])
             force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
             
-            if neuron_type == "BP":
+            if neuron_type == "BP" or neuron_type == "StandardRNN" or neuron_type == "StandardMLP":
                 rewards_sum += np.mean(evaluate_BP_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
             else:
                 rewards_sum += np.mean(evaluate_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
@@ -174,7 +178,7 @@ with torch.no_grad():
             force_mag_range = random.choice(testing_ranges[2])
             force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
 
-            if neuron_type == "BP":
+            if neuron_type == "BP" or neuron_type == "StandardRNN" or neuron_type == "StandardMLP":
                 rewards_sum += np.mean(evaluate_BP_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
             else:
                 rewards_sum += np.mean(evaluate_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))

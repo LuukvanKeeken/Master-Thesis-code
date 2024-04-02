@@ -586,7 +586,7 @@ def evaluate_BP_agent_pole_mass(agent_net, env_name, num_episodes, evaluation_se
 
 
 
-def evaluate_agent_all_params(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier, pole_mass_modifier, force_mag_modifier):
+def evaluate_BP_agent_all_params(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier, pole_mass_modifier, force_mag_modifier):
 
     eval_rewards = []
     env = gym.make(env_name)

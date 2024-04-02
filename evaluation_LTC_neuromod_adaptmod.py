@@ -5,6 +5,7 @@ import numpy as np
 from Master_Thesis_Code.Adaptation_Module import StandardRNN
 from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
 from Master_Thesis_Code.Neuromodulated_Agent import NeuromodulatedAgent
+from Master_Thesis_Code.backpropamine_A2C import BP_RNetwork
 from ncps_time_constant_extraction.ncps.wirings import AutoNCP
 import torch
 import gym
@@ -50,15 +51,15 @@ def evaluate_LTC_agent_pole_length(policy_net, adaptation_module, env_name, num_
 
         while not done:
             adaptation_module_input = torch.cat((prev_state, prev_action), 1).to(torch.float32).to(device)
-            # adaptation_module_output, adaptation_module_hidden_state = adaptation_module(adaptation_module_input, adaptation_module_hidden_state)
-            random_neuromod_output = torch.randn(num_neurons_policy).to(device)
+            adaptation_module_output, adaptation_module_hidden_state = adaptation_module(adaptation_module_input, adaptation_module_hidden_state)
+            # random_neuromod_output = torch.randn(num_neurons_policy).to(device)
             
             state = torch.from_numpy(state)
             state = state.unsqueeze(0).to(device) #This as well?
             prev_state = state
 
 
-            policy_output, _, policy_hidden_state = policy_net(state.float(), policy_hidden_state, random_neuromod_output)
+            policy_output, _, policy_hidden_state = policy_net(state.float(), policy_hidden_state, adaptation_module_output)
             
             # Get distribution over the action space and select
             # the action with the highest probability.
@@ -103,15 +104,15 @@ def evaluate_LTC_agent_pole_mass(policy_net, adaptation_module, env_name, num_ep
 
         while not done:
             adaptation_module_input = torch.cat((prev_state, prev_action), 1).to(torch.float32).to(device)
-            # adaptation_module_output, adaptation_module_hidden_state = adaptation_module(adaptation_module_input, adaptation_module_hidden_state)
-            random_neuromod_output = torch.randn(num_neurons_policy).to(device)
+            adaptation_module_output, adaptation_module_hidden_state = adaptation_module(adaptation_module_input, adaptation_module_hidden_state)
+            # random_neuromod_output = torch.randn(num_neurons_policy).to(device)
             
             state = torch.from_numpy(state)
             state = state.unsqueeze(0).to(device) #This as well?
             prev_state = state
 
 
-            policy_output, _, policy_hidden_state = policy_net(state.float(), policy_hidden_state, random_neuromod_output)
+            policy_output, _, policy_hidden_state = policy_net(state.float(), policy_hidden_state, adaptation_module_output)
             
             # Get distribution over the action space and select
             # the action with the highest probability.
@@ -156,15 +157,15 @@ def evaluate_LTC_agent_force_mag(policy_net, adaptation_module, env_name, num_ep
 
         while not done:
             adaptation_module_input = torch.cat((prev_state, prev_action), 1).to(torch.float32).to(device)
-            # adaptation_module_output, adaptation_module_hidden_state = adaptation_module(adaptation_module_input, adaptation_module_hidden_state)
-            random_neuromod_output = torch.randn(num_neurons_policy).to(device)
+            adaptation_module_output, adaptation_module_hidden_state = adaptation_module(adaptation_module_input, adaptation_module_hidden_state)
+            # random_neuromod_output = torch.randn(num_neurons_policy).to(device)
             
             state = torch.from_numpy(state)
             state = state.unsqueeze(0).to(device) #This as well?
             prev_state = state
 
 
-            policy_output, _, policy_hidden_state = policy_net(state.float(), policy_hidden_state, random_neuromod_output)
+            policy_output, _, policy_hidden_state = policy_net(state.float(), policy_hidden_state, adaptation_module_output)
             
             # Get distribution over the action space and select
             # the action with the highest probability.
@@ -187,10 +188,11 @@ parser = argparse.ArgumentParser(description='Evaluate adaptation module for neu
 parser.add_argument('--adapt_mod_type', type=str, default='StandardRNN', help='Type of adaptation module')
 parser.add_argument('--state_dims', type=int, default=4, help='Number of state dimensions')
 parser.add_argument('--action_dims', type=int, default=1, help='Number of action dimensions')
-parser.add_argument('--num_neurons_adaptmod', type=int, default=48, help='Number of neurons in the adaptation module')
-parser.add_argument('--num_neurons_policy', type=int, default=48, help='Number of neurons in the policy network')
+parser.add_argument('--num_neurons_adaptmod', type=int, default=64, help='Number of neurons in the adaptation module')
+parser.add_argument('--num_neurons_policy', type=int, default=64, help='Number of neurons in the policy network')
 parser.add_argument('--num_actions', type=int, default=2, help='Number of actions')
 parser.add_argument('--mode', type=str, default='neuromodulated', help='Mode of the CfC network')
+parser.add_argument('--neuron_type', type=str, default='BP', help='Type of neuron')
 
 args = parser.parse_args()
 
@@ -201,12 +203,16 @@ num_neurons_adaptmod = args.num_neurons_adaptmod
 num_neurons_policy = args.num_neurons_policy
 num_actions = args.num_actions
 mode = args.mode
+neuron_type = args.neuron_type
+if neuron_type == "BP":
+    top_dir = "BP_A2C"
+else:
+    top_dir = "LTC_A2C"
 
 env_name = "CartPole-v0"
 max_reward = 200
 max_steps = 200
-n_evaluations = 100
-neuron_type = "CfC"
+n_evaluations = 2
 sparsity_level = 0.5
 seed = 5
 
@@ -216,39 +222,39 @@ wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-policy_dir = "CfC_a2c_result_242_202435_learningrate_0.0001_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_quarter_range_numneurons_48_tausysextraction_True_mode_neuromodulated_randomization_params_[(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]"
-adapt_mod_dir = "adaptation_module_StandardRNN_result_752_2024328_CfC_result_296_202437_numneuronsadaptmod_48_lradaptmod_0.001_wdadaptmod_0.01"
+policy_dir = "BP_a2c_result_1014_2024331_learningrate_0.0001_numneurons_64_encoutact_tanh_neuromod_network_dims_3_192_96_64"
+adapt_mod_dir = "adaptation_module_StandardRNN_result_55_202441_CfC_result_296_202437_numneuronsadaptmod_64_lradaptmod_0.0005_wdadaptmod_0.01"
 
-os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}")
+os.mkdir(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}")
 
 
-policy_weights_0 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
-policy_weights_1 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
-policy_weights_2 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
-policy_weights_3 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
-policy_weights_4 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
-policy_weights_5 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
-policy_weights_6 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
-policy_weights_7 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
-policy_weights_8 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
-policy_weights_9 = torch.load(f'Master_Thesis_Code/LTC_A2C/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
+policy_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
+policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
+policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
+policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
+policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
+policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
+policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
+policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
+policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
+policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
 policy_weights = [policy_weights_0, policy_weights_1, policy_weights_2, policy_weights_3, policy_weights_4, policy_weights_5, policy_weights_6, policy_weights_7, policy_weights_8, policy_weights_9]
 
-am_weights_0 = torch.load(f'Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_CfC_A2C_0.pt', map_location=torch.device(device))
-am_weights_1 = torch.load(f'Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_CfC_A2C_1.pt', map_location=torch.device(device))
-am_weights_2 = torch.load(f'Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_CfC_A2C_2.pt', map_location=torch.device(device))
-am_weights_3 = torch.load(f'Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_CfC_A2C_3.pt', map_location=torch.device(device))
-am_weights_4 = torch.load(f'Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_CfC_A2C_4.pt', map_location=torch.device(device))
-am_weights_5 = torch.load(f'Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_CfC_A2C_5.pt', map_location=torch.device(device))
-am_weights_6 = torch.load(f'Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_CfC_A2C_6.pt', map_location=torch.device(device))
-am_weights_7 = torch.load(f'Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_CfC_A2C_7.pt', map_location=torch.device(device))
-am_weights_8 = torch.load(f'Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_CfC_A2C_8.pt', map_location=torch.device(device))
-am_weights_9 = torch.load(f'Master_Thesis_Code/LTC_A2C/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_CfC_A2C_9.pt', map_location=torch.device(device))
+am_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
+am_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
+am_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
+am_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
+am_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
+am_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
+am_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
+am_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
+am_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
+am_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
 am_weights = [am_weights_0, am_weights_1, am_weights_2, am_weights_3, am_weights_4, am_weights_5, am_weights_6, am_weights_7, am_weights_8, am_weights_9]
 
 with torch.no_grad():
     # ORIGINAL ENVIRONMENT EVALUATION ---------------------------
-    with open(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/original_env_evals.txt", "w") as f:
+    with open(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/original_env_evals.txt", "w") as f:
         eraser = '\b \b'
         original_eval_rewards = []
         for i, (pw, amw) in enumerate(zip(policy_weights, am_weights)):
@@ -265,6 +271,17 @@ with torch.no_grad():
                 policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring).to(device)
                 w_policy = OrderedDict((k, v) for k, v in pw.items() if 'neuromod' not in k)
                 w_policy['cfc_model.rnn_cell.tau_system'] = torch.reshape(w_policy['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
+                policy_net.load_state_dict(w_policy)
+
+                adaptation_module.load_state_dict(amw)
+            elif neuron_type == "BP":
+                if adapt_mod_type == 'StandardRNN':
+                    adaptation_module = StandardRNN(state_dims + action_dims, num_neurons_adaptmod, num_neurons_policy, seed = seed)
+                else:
+                    raise NotImplementedError
+                
+                policy_net = BP_RNetwork(4, num_neurons_policy, 2, seed, external_neuromodulation = True).to(device)
+                w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in pw.items() if 'neuromod' not in k)
                 policy_net.load_state_dict(w_policy)
 
                 adaptation_module.load_state_dict(amw)
@@ -301,7 +318,7 @@ with torch.no_grad():
                     raise NotImplementedError
 
                 policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring).to(device)
-                w_policy = OrderedDict((k, v) for k, v in pw.items() if 'neuromod' not in k)
+                w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in pw.items() if 'neuromod' not in k)
                 w_policy['cfc_model.rnn_cell.tau_system'] = torch.reshape(w_policy['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
                 policy_net.load_state_dict(w_policy)
 
@@ -326,11 +343,11 @@ with torch.no_grad():
         median_avgs.append(np.median(means_per_model))
 
 
-    os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/pole_length")
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/pole_length/means.npy", mean_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/pole_length/stddevs.npy", std_dev_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/pole_length/medians.npy", median_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/pole_length/percentages.npy", percentages)
+    os.mkdir(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_length")
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_length/means.npy", mean_avgs)
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_length/stddevs.npy", std_dev_avgs)
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_length/medians.npy", median_avgs)
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_length/percentages.npy", percentages)
 
 
 
@@ -353,7 +370,7 @@ with torch.no_grad():
                     raise NotImplementedError
 
                 policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring).to(device)
-                w_policy = OrderedDict((k, v) for k, v in pw.items() if 'neuromod' not in k)
+                w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in pw.items() if 'neuromod' not in k)
                 w_policy['cfc_model.rnn_cell.tau_system'] = torch.reshape(w_policy['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
                 policy_net.load_state_dict(w_policy)
 
@@ -378,11 +395,11 @@ with torch.no_grad():
         median_avgs.append(np.median(means_per_model))
 
 
-    os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/pole_mass")
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/pole_mass/means.npy", mean_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/pole_mass/stddevs.npy", std_dev_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/pole_mass/medians.npy", median_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/pole_mass/percentages.npy", percentages)
+    os.mkdir(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_mass")
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_mass/means.npy", mean_avgs)
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_mass/stddevs.npy", std_dev_avgs)
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_mass/medians.npy", median_avgs)
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/pole_mass/percentages.npy", percentages)
 
 
 
@@ -406,7 +423,7 @@ with torch.no_grad():
                     raise NotImplementedError
 
                 policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring).to(device)
-                w_policy = OrderedDict((k, v) for k, v in pw.items() if 'neuromod' not in k)
+                w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in pw.items() if 'neuromod' not in k)
                 w_policy['cfc_model.rnn_cell.tau_system'] = torch.reshape(w_policy['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
                 policy_net.load_state_dict(w_policy)
 
@@ -431,11 +448,11 @@ with torch.no_grad():
         median_avgs.append(np.median(means_per_model))
 
 
-    os.mkdir(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/force_mag")
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/force_mag/means.npy", mean_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/force_mag/stddevs.npy", std_dev_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/force_mag/medians.npy", median_avgs)
-    np.save(f"Master_Thesis_Code/LTC_A2C/adaptation_module/evaluation_results/RANDOM{policy_dir}/force_mag/percentages.npy", percentages)
+    os.mkdir(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/force_mag")
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/force_mag/means.npy", mean_avgs)
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/force_mag/stddevs.npy", std_dev_avgs)
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/force_mag/medians.npy", median_avgs)
+    np.save(f"Master_Thesis_Code/{top_dir}/adaptation_module/evaluation_results/{adapt_mod_dir}/force_mag/percentages.npy", percentages)
 
 
 

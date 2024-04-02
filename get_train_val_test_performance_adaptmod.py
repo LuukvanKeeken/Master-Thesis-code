@@ -119,8 +119,8 @@ wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-policy_dir = "BP_a2c_result_1014_2024331_learningrate_0.0001_numneurons_64_encoutact_tanh_neuromod_network_dims_3_192_96_64"
-adapt_mod_dir = "adaptation_module_StandardRNN_result_55_202441_CfC_result_296_202437_numneuronsadaptmod_64_lradaptmod_0.0005_wdadaptmod_0.01"
+policy_dir = "BP_a2c_result_1013_2024331_learningrate_0.0001_numneurons_64_encoutact_relu_neuromod_network_dims_3_256_128_64"
+adapt_mod_dir = "adaptation_module_StandardRNN_result_6_202441_CfC_result_296_202437_numneuronsadaptmod_64_lradaptmod_0.0005_wdadaptmod_0.01"
 
 
 policy_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))

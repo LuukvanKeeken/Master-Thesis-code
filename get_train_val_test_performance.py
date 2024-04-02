@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from datetime import date
 import random
 import gym
@@ -211,12 +210,12 @@ if neuron_type == "BP":
 else:
     top_dir = "LTC_A2C"
 mode = "neuromodulated"
-num_neurons_policy = 48
-neuromod_network_dims = [3, 128, 80, num_neurons_policy]
+num_neurons_policy = 32
+neuromod_network_dims = [3, 256, 128, num_neurons_policy]
 encoder = True
 adaptmod = False
 assert not (encoder and adaptmod)
-encoder_func = "tanh"
+encoder_func = "relu"
 num_models = 10
 seed = 5
 env_name = "CartPole-v0"
@@ -235,7 +234,7 @@ elif encoder_func == "relu":
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-result_dir = "CfC_a2c_result_242_202435_learningrate_0.0001_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_quarter_range_numneurons_48_tausysextraction_True_mode_neuromodulated_randomization_params_[(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]"
+result_dir = "CfC_1136_2024326_lr_0.0001_nn_32_encoutact_relu_mode_neuromodulated_neuromod_network_dims_3_256_128"
 
 
 
@@ -275,10 +274,6 @@ for i, w in enumerate(policy_weights):
             policy_net = CfC_Network(4, num_neurons_policy, 2, seed, mode = mode, wiring = wiring).to(device)
 
             agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
-            w_policy = OrderedDict(('policy_net.' + k, v) for k, v in w.items() if not ('neuromod' in k))
-            w_neur = OrderedDict(('neuromod_net.' + k.split('.', 3)[-1], v) for k, v in w.items() if 'neuromod' in k)
-            w_policy.update(w_neur)
-            w = w_policy
             w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
     elif neuron_type == "BP":
         if encoder:
@@ -307,7 +302,6 @@ for i, w in enumerate(policy_weights):
         pole_mass_mod = np.random.uniform(training_ranges[1][0], training_ranges[1][1])
         force_mag_mod = np.random.uniform(training_ranges[2][0], training_ranges[2][1])
 
-
         rewards_sum += np.mean(evaluate_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
     
     rewards_sum /= n_evaluations
@@ -326,7 +320,7 @@ for i, w in enumerate(policy_weights):
         pole_mass_mod = np.random.uniform(validation_ranges[1][0][0], validation_ranges[1][0][1])
         force_mag_range = random.choice(validation_ranges[2])
         force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
-
+        print(pole_length_range)
         rewards_sum += np.mean(evaluate_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
 
     rewards_sum /= n_evaluations

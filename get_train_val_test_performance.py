@@ -63,7 +63,7 @@ testing_ranges = [[(0.1, 0.55), (10.5, 20.0)], [(5.0, 13.0)], [(0.2, 0.6), (3.5,
 
 
 device = "cpu"
-neuron_type = "CfC"
+neuron_type = "LTC"
 if neuron_type == "BP":
     top_dir = "BP_A2C"
 else:
@@ -85,7 +85,7 @@ wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-result_dir = "CfC_a2c_result_192_202431_learningrate_0.0001_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_48_tausysextraction_True_mode_pure"
+result_dir = "LTC_a2c_result_206_202431_learningrate_0.0005_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_48_tausysextraction_True"
 
 
 

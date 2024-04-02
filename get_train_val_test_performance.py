@@ -213,8 +213,6 @@ mode = "neuromodulated"
 num_neurons_policy = 32
 neuromod_network_dims = [3, 256, 128, num_neurons_policy]
 encoder = True
-adaptmod = False
-assert not (encoder and adaptmod)
 encoder_func = "relu"
 num_models = 10
 seed = 5

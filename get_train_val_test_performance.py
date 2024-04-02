@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import date
 import random
 import gym
@@ -204,14 +205,14 @@ testing_ranges = [[(0.1, 0.55), (10.5, 20.0)], [(5.0, 13.0)], [(0.2, 0.6), (3.5,
 
 
 device = "cpu"
-neuron_type = "BP"
+neuron_type = "CfC"
 if neuron_type == "BP":
     top_dir = "BP_A2C"
 else:
     top_dir = "LTC_A2C"
 mode = "neuromodulated"
-num_neurons_policy = 64
-neuromod_network_dims = [3, 192, 96, num_neurons_policy]
+num_neurons_policy = 48
+neuromod_network_dims = [3, 128, 80, num_neurons_policy]
 encoder = True
 adaptmod = False
 assert not (encoder and adaptmod)
@@ -234,7 +235,7 @@ elif encoder_func == "relu":
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-result_dir = "BP_a2c_result_1014_2024331_learningrate_0.0001_numneurons_64_encoutact_tanh_neuromod_network_dims_3_192_96_64"
+result_dir = "CfC_a2c_result_242_202435_learningrate_0.0001_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_quarter_range_numneurons_48_tausysextraction_True_mode_neuromodulated_randomization_params_[(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]"
 
 
 
@@ -274,6 +275,10 @@ for i, w in enumerate(policy_weights):
             policy_net = CfC_Network(4, num_neurons_policy, 2, seed, mode = mode, wiring = wiring).to(device)
 
             agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
+            w_policy = OrderedDict(('policy_net.' + k, v) for k, v in w.items() if not ('neuromod' in k))
+            w_neur = OrderedDict(('neuromod_net.' + k.split('.', 3)[-1], v) for k, v in w.items() if 'neuromod' in k)
+            w_policy.update(w_neur)
+            w = w_policy
             w['policy_net.cfc_model.rnn_cell.tau_system'] = torch.reshape(w['policy_net.cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
     elif neuron_type == "BP":
         if encoder:

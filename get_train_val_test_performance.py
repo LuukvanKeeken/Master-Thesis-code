@@ -63,13 +63,13 @@ testing_ranges = [[(0.1, 0.55), (10.5, 20.0)], [(5.0, 13.0)], [(0.2, 0.6), (3.5,
 
 
 device = "cpu"
-neuron_type = "LTC"
+neuron_type = "BP"
 if neuron_type == "BP":
     top_dir = "BP_A2C"
 else:
     top_dir = "LTC_A2C"
 mode = "pure"
-num_neurons_policy = 48
+num_neurons_policy = 64
 
 
 num_models = 10
@@ -85,20 +85,20 @@ wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-result_dir = "LTC_a2c_result_206_202431_learningrate_0.0005_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_48_tausysextraction_True"
+result_dir = "BP_RNN_a2c_result_24_202434_entropycoef_0.01_valuepredcoef_0.1_batchsize_1_maxsteps_200_maxgradnorm_4.0_gammaR_0.99_learningrate_5e-05_numtrainepisodes_20000_selectionmethod_range_evaluation_all_params_trainingmethod_original"
 
 
 
-policy_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
-policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
-policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
-policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
-policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
-policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
-policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
-policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
-policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
-policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
+policy_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_0.pt', map_location=torch.device(device))
+policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_1.pt', map_location=torch.device(device))
+policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_2.pt', map_location=torch.device(device))
+policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_3.pt', map_location=torch.device(device))
+policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_4.pt', map_location=torch.device(device))
+policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_5.pt', map_location=torch.device(device))
+policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_6.pt', map_location=torch.device(device))
+policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_7.pt', map_location=torch.device(device))
+policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_8.pt', map_location=torch.device(device))
+policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_{neuron_type}_RNN_A2C_9.pt', map_location=torch.device(device))
 policy_weights = [policy_weights_0, policy_weights_1, policy_weights_2, policy_weights_3, policy_weights_4, policy_weights_5, policy_weights_6, policy_weights_7, policy_weights_8, policy_weights_9]
 
 eraser = '\b \b'

@@ -211,11 +211,11 @@ else:
     top_dir = "LTC_A2C"
 mode = "neuromodulated"
 num_neurons_policy = 64
-neuromod_network_dims = [3, 256, 128, num_neurons_policy]
+neuromod_network_dims = [3, 192, 96, num_neurons_policy]
 encoder = True
 adaptmod = False
 assert not (encoder and adaptmod)
-encoder_func = "relu"
+encoder_func = "tanh"
 num_models = 10
 seed = 5
 env_name = "CartPole-v0"
@@ -234,7 +234,7 @@ elif encoder_func == "relu":
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-result_dir = "BP_a2c_result_1013_2024331_learningrate_0.0001_numneurons_64_encoutact_relu_neuromod_network_dims_3_256_128_64"
+result_dir = "BP_a2c_result_1014_2024331_learningrate_0.0001_numneurons_64_encoutact_tanh_neuromod_network_dims_3_192_96_64"
 
 
 

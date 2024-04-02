@@ -93,15 +93,15 @@ testing_ranges = [[(0.1, 0.55), (10.5, 20.0)], [(5.0, 13.0)], [(0.2, 0.6), (3.5,
 
 
 device = "cpu"
-neuron_type = "CfC"
+neuron_type = "BP"
 if neuron_type == "BP":
     top_dir = "BP_A2C"
 else:
     top_dir = "LTC_A2C"
 mode = "neuromodulated"
 adapt_mod_type = "StandardRNN"
-num_neurons_policy = 48
-num_neurons_adaptmod = 48
+num_neurons_policy = 64
+num_neurons_adaptmod = 64
 state_dims = 4
 action_dims = 1
 num_actions = 2
@@ -119,8 +119,8 @@ wiring = None
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-policy_dir = "CfC_a2c_result_242_202435_learningrate_0.0001_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_quarter_range_numneurons_48_tausysextraction_True_mode_neuromodulated_randomization_params_[(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]"
-adapt_mod_dir = "adaptation_module_StandardRNN_result_752_2024328_CfC_result_296_202437_numneuronsadaptmod_48_lradaptmod_0.001_wdadaptmod_0.01"
+policy_dir = "BP_a2c_result_1014_2024331_learningrate_0.0001_numneurons_64_encoutact_tanh_neuromod_network_dims_3_192_96_64"
+adapt_mod_dir = "adaptation_module_StandardRNN_result_55_202441_CfC_result_296_202437_numneuronsadaptmod_64_lradaptmod_0.0005_wdadaptmod_0.01"
 
 
 policy_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
@@ -196,7 +196,7 @@ with torch.no_grad():
             pole_length_mod = np.random.uniform(training_ranges[0][0], training_ranges[0][1])
             pole_mass_mod = np.random.uniform(training_ranges[1][0], training_ranges[1][1])
             force_mag_mod = np.random.uniform(training_ranges[2][0], training_ranges[2][1])
-            
+
             rewards_sum += np.mean(evaluate_agent_all_params(policy_net, adaptation_module, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
         
         rewards_sum /= n_evaluations

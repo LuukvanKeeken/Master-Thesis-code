@@ -93,7 +93,6 @@ for i_run in range(num_models):
         agent_net = Standard_FFNetwork(4, num_neurons, num_neurons, 2, seed)
     else:
         raise NotImplementedError("Network type not recognized")
-
     
     # optimizer = torch.optim.Adam(agent_net.parameters(), lr=1.0*learning_rate, eps=1e-4, weight_decay=l2_coef)
     optimizer = torch.optim.Adam(agent_net.parameters(), lr = learning_rate)

@@ -295,7 +295,6 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         pole_mass_mod = np.random.uniform(validation_ranges[1][0][0], validation_ranges[1][0][1])
                         force_mag_range = random.choice(validation_ranges[2])
                         force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
-                        print(f"{pole_length_mod}, {pole_mass_mod}, {force_mag_mod}")
                         evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
 
                     evaluation_performance /= total_eval_eps
@@ -314,7 +313,6 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
                     np.random.set_state(current_np_seed)
                     random.setstate(current_r_seed)
-                    print(f'First new random number: {np.random.random()}')
 
                 elif (selection_method == "100 episode average"):
                     scores_window.append(score)
@@ -379,7 +377,7 @@ parser.add_argument('--mode', type=str, default="neuromodulated", help="The mode
 parser.add_argument('--schedule_start', type=float, default=0.00001, help="The starting value of the schedule factor")
 parser.add_argument('--schedule_end', type=float, default=1.0, help="The end value of the schedule factor")
 parser.add_argument('--schedule_type', type=str, default='None', help="The type of schedule to use for the schedule factor")
-parser.add_argument('--neuron_type', type=str, default='CfC', help="The type of neuron to use")
+parser.add_argument('--neuron_type', type=str, default='BP', help="The type of neuron to use")
 args = parser.parse_args()
 
 

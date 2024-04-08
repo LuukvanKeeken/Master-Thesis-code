@@ -502,7 +502,7 @@ if result_id == -1:
 d = date.today()
 
 
-results_dir = f"Master_Thesis_Code/{top_dir}/adaptation_module/training_results/adaptation_module_{adapt_mod_type}_result_{result_id}_{str(d.year) + str(d.month) + str(d.day)}_CfC_a2c_result_2075_202448_numneuronsadaptmod_{num_neurons_adaptation}_lradaptmod_{lr_adapt_mod}_wdadaptmod_{wd_adapt_mod}"
+results_dir = f"Master_Thesis_Code/{top_dir}/adaptation_module/training_results/adaptation_module_{adapt_mod_type}_result_{result_id}_{str(d.year) + str(d.month) + str(d.day)}_CfC_a2c_result_2072_202448_numneuronsadaptmod_{num_neurons_adaptation}_lradaptmod_{lr_adapt_mod}_wdadaptmod_{wd_adapt_mod}"
 os.mkdir(results_dir)
 
 

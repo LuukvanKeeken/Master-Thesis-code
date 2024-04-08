@@ -13,8 +13,9 @@ parser.add_argument('--num_neurons', type=int, default=32, help='Number of neuro
 parser.add_argument('--network_type', type=str, default='BP_RNN', help='Type of network to use')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
-parser.add_argument('--selection_method', type=str, default='range_evaluation_all_params', help='Method to use for selecting the best model')
+parser.add_argument('--selection_method', type=str, default='true_range_eval_all_params', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
+parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
 
 args = parser.parse_args()
 learning_rate = args.learning_rate
@@ -23,6 +24,7 @@ network_type = args.network_type
 num_models = args.num_models
 selection_method = args.selection_method
 training_method = args.training_method
+result_id = args.result_id
 
 
 device = "cpu"
@@ -48,14 +50,14 @@ if training_method == "quarter_range":
 else:
     randomization_params = None
 
-
-# Create Results Directory
-dirs = os.listdir('Master_Thesis_Code/BP_A2C/training_results/')
-if not any('a2c_result' in d for d in dirs):
-    result_id = 1
-else:
-    results = [d for d in dirs if 'a2c_result' in d]
-    result_id = len(results) + 1
+if result_id == -1:
+    # Create Results Directory
+    dirs = os.listdir('Master_Thesis_Code/BP_A2C/training_results/')
+    if not any('a2c_result' in d for d in dirs):
+        result_id = 1
+    else:
+        results = [d for d in dirs if 'a2c_result' in d]
+        result_id = len(results) + 1
 
 # Get today's date and add it to the results directory
 d = date.today()

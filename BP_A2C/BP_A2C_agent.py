@@ -28,7 +28,7 @@ class A2C_Agent:
         np.random.seed(seed)
         random.seed(seed)
         torch.manual_seed(seed)
-
+        self.seed = seed
         self.num_inputs = self.env.observation_space.shape[0]
         self.num_outputs = self.env.action_space.n
 
@@ -173,7 +173,7 @@ class A2C_Agent:
                             pole_length_mod = np.random.choice(pole_length_mods)
                             pole_mass_mod = np.random.choice(pole_mass_mods)
                             force_mag_mod = np.random.choice(force_mag_mods)
-                            evaluation_performance += np.mean(evaluate_agent_all_params(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+                            evaluation_performance += np.mean(evaluate_BP_agent_all_params(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
 
                         evaluation_performance /= total_eval_eps
                         print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
@@ -189,6 +189,41 @@ class A2C_Agent:
                             best_average_after, f'. Model saved in folder {self.result_dir}')
                             return smoothed_scores, scores, best_average, best_average_after
     
+                    elif ((self.selection_method == "true_range_eval_all_params") and (episode % self.evaluate_every == 0)):
+                        validation_ranges = [[(0.55, 0.775), (5.75, 10.5)], [(2.0, 3.0)], [(0.6, 0.8), (2.25, 3.5)]]
+
+                        eps_per_setting = 1
+                        evaluation_performance = 0
+                        total_eval_eps = 10
+                        current_np_seed = np.random.get_state()
+                        current_r_seed = random.getstate()
+                        for i in range(total_eval_eps):
+                            np.random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
+                            random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
+                            pole_length_range = random.choice(validation_ranges[0])
+                            pole_length_mod = np.random.uniform(pole_length_range[0], pole_length_range[1])
+                            pole_mass_mod = np.random.uniform(validation_ranges[1][0][0], validation_ranges[1][0][1])
+                            force_mag_range = random.choice(validation_ranges[2])
+                            force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
+                            evaluation_performance += np.mean(evaluate_BP_agent_all_params(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                        evaluation_performance /= total_eval_eps
+                        print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                        if evaluation_performance >= best_average:
+                            best_average = evaluation_performance
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                        self.result_dir + f'/checkpoint_{self.network_type}_A2C_{self.i_run}.pt')
+                            
+                        if best_average == self.max_reward:
+                            print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                            best_average_after, f'. Model saved in folder {self.result_dir}')
+                            return smoothed_scores, scores, best_average, best_average_after
+
+                        np.random.set_state(current_np_seed)
+                        random.setstate(current_r_seed)
+
                     elif (self.selection_method == "100 episode average"):
                         scores_window.append(score)
                         scores.append(score)
@@ -314,7 +349,40 @@ class A2C_Agent:
                             best_average_after, '. Model saved in folder best.')
                             return smoothed_scores, scores, best_average, best_average_after
                             
+                    elif ((self.selection_method == "true_range_eval_all_params") and (episode % self.evaluate_every == 0)):
+                        validation_ranges = [[(0.55, 0.775), (5.75, 10.5)], [(2.0, 3.0)], [(0.6, 0.8), (2.25, 3.5)]]
 
+                        eps_per_setting = 1
+                        evaluation_performance = 0
+                        total_eval_eps = 10
+                        current_np_seed = np.random.get_state()
+                        current_r_seed = random.getstate()
+                        for i in range(total_eval_eps):
+                            np.random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
+                            random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
+                            pole_length_range = random.choice(validation_ranges[0])
+                            pole_length_mod = np.random.uniform(pole_length_range[0], pole_length_range[1])
+                            pole_mass_mod = np.random.uniform(validation_ranges[1][0][0], validation_ranges[1][0][1])
+                            force_mag_range = random.choice(validation_ranges[2])
+                            force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
+                            evaluation_performance += np.mean(evaluate_BP_agent_all_params(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                        evaluation_performance /= total_eval_eps
+                        print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                        if evaluation_performance >= best_average:
+                            best_average = evaluation_performance
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                        self.result_dir + f'/checkpoint_{self.network_type}_A2C_{self.i_run}.pt')
+                            
+                        if best_average == self.max_reward:
+                            print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                            best_average_after, f'. Model saved in folder {self.result_dir}')
+                            return smoothed_scores, scores, best_average, best_average_after
+
+                        np.random.set_state(current_np_seed)
+                        random.setstate(current_r_seed)
     
                     elif (self.selection_method == "100 episode average"):
                         scores_window.append(score)

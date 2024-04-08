@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
+import random
 import gym
 import numpy as np
 import torch
@@ -13,13 +14,7 @@ import argparse
 import time
 torch.autograd.set_detect_anomaly(True)
 
-# def get_privileged_info(env):
-#     pole_length = env.unwrapped.length
-#     masspole = env.unwrapped.masspole
-#     force_mag = env.unwrapped.force_mag
 
-#     privileged_info = [pole_length, masspole, force_mag]
-#     return torch.tensor(privileged_info, dtype=torch.float32)
 
 def get_privileged_info(randomized_env_params):
     params_values = [[d['length'], d['masspole'], d['force_mag']] for d in randomized_env_params]
@@ -62,7 +57,7 @@ def get_random_env_paramvals(env, randomization_params, batch_size = 1):
 
 
 
-def validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation_seeds, env_name, num_validation_eps, max_steps):
+def validate_adaptation_module_old(agent_net, encoder, adaptation_module, evaluation_seeds, env_name, num_validation_eps, max_steps):
     with torch.no_grad():
         pole_length_mods = [0.55, 10.5]
         pole_mass_mods = [3.0]
@@ -150,7 +145,95 @@ def validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation
 
 
 
+def validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation_seeds, env_name, num_validation_eps, max_steps):
+    with torch.no_grad():
+        validation_ranges = [[(0.55, 0.775), (5.75, 10.5)], [(2.0, 3.0)], [(0.6, 0.8), (2.25, 3.5)]]
+        
+        
+        validation_rewards = []
+        validation_losses = []
+        current_np_seed = np.random.get_state()
+        current_r_seed = random.getstate()
+        for episode in range(num_validation_eps):
+            env = gym.make(env_name)
+            policy_hidden_state = None
+            adaptation_module_hidden_state = None
+            adaptation_module_outputs = []
+            encoder_outputs = []
 
+            
+            np.random.seed((evaluation_seeds[episode] + seed)%(2**32))
+            random.seed((evaluation_seeds[episode] + seed)%(2**32))
+            pole_length_range = random.choice(validation_ranges[0])
+            pole_length_mod = np.random.uniform(pole_length_range[0], pole_length_range[1])
+            pole_mass_mod = np.random.uniform(validation_ranges[1][0][0], validation_ranges[1][0][1])
+            force_mag_range = random.choice(validation_ranges[2])
+            force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
+            
+            env.seed(int(evaluation_seeds[episode]))
+
+            env.unwrapped.length *= pole_length_mod
+            env.unwrapped.masspole *= pole_mass_mod
+            env.unwrapped.force_mag *= force_mag_mod
+
+            state = env.reset()
+            total_reward = 0
+            done = False
+
+            # Randomly sample an action and state to 
+            # feed as the first input to the adaptation
+            # module.
+            prev_action = env.action_space.sample()
+            prev_action = torch.tensor(prev_action).view(1, -1)
+            prev_state = env.observation_space.sample()
+            prev_state = torch.from_numpy(prev_state)
+            prev_state = prev_state.unsqueeze(0).to(device)
+
+            for step in range(max_steps):
+
+                adaptation_module_input = torch.cat((prev_state, prev_action), 1).to(torch.float32).to(device)
+                adaptation_module_output, adaptation_module_hidden_state = adaptation_module(adaptation_module_input, adaptation_module_hidden_state)
+
+                privileged_info = get_privileged_info2(env).unsqueeze(0).to(device)
+                encoder_output = encoder(privileged_info)
+
+                # Transform the state to the correct format and save it
+                # to be used as previous state in the next time step.
+                state = torch.from_numpy(state)
+                state = state.unsqueeze(0).to(device)
+                prev_state = state
+
+                # In the first step, we don't save the output of the adaptation module
+                # and the encoder, since they are based on a randomly sampled state and action.
+                if not step == 0:
+                    adaptation_module_outputs.append(adaptation_module_output)
+                    encoder_outputs.append(encoder_output)
+                
+                # Feed the state and adaptation module input into the agent network
+                policy_output, value, policy_hidden_state = agent_net(state.float(), policy_hidden_state, adaptation_module_output)
+
+                # Get distribution over the action space and select
+                # the action with the highest probability.
+                policy_dist = torch.softmax(policy_output, dim = 1)
+                action = torch.argmax(policy_dist).item()
+                prev_action = action
+                prev_action = torch.tensor(prev_action).view(1, -1)
+
+                # Take a step in the environment
+                state, r, done, _ = env.step(action)
+                total_reward += r
+
+                if done or step == max_steps - 1:
+                    validation_rewards.append(total_reward)
+                    assert len(adaptation_module_outputs) == len(encoder_outputs)
+                    loss_function = torch.nn.MSELoss()
+                    loss_val = loss_function(torch.stack(adaptation_module_outputs), torch.stack(encoder_outputs))
+                    validation_losses.append(loss_val.item())
+                    break
+        
+        np.random.set_state(current_np_seed)
+        random.setstate(current_r_seed)
+        return np.mean(validation_losses), np.mean(validation_rewards), np.std(validation_rewards)
 
 
 
@@ -323,11 +406,11 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
 
 
 parser = argparse.ArgumentParser(description='Train adaptation module for neuromodulated CfC')
-parser.add_argument('--neuron_type', type=str, default='BP', help='Type of neuron to train')
+parser.add_argument('--neuron_type', type=str, default='CfC', help='Type of neuron to train')
 parser.add_argument('--device', type=str, default='cpu', help='Device to train on')
 parser.add_argument('--state_dims', type=int, default=4, help='Number of state dimensions')
 parser.add_argument('--action_dims', type=int, default=1, help='Number of action dimensions')
-parser.add_argument('--num_neurons_policy', type=int, default=64, help='Number of neurons in the policy network')
+parser.add_argument('--num_neurons_policy', type=int, default=32, help='Number of neurons in the policy network')
 parser.add_argument('--num_neurons_adaptation', type=int, default=64, help='Number of neurons in the adaptation module')
 parser.add_argument('--num_actions', type=int, default=2, help='Number of actions')
 parser.add_argument('--seed', type=int, default=5)
@@ -346,8 +429,8 @@ parser.add_argument('--adapt_mod_type', type=str, default='StandardRNN', help='T
 parser.add_argument('--result_id', type=int, default=-1, help='ID of the result')
 parser.add_argument('--batch_size', type=int, default=50, help='Batch size for training the adaptation module')
 parser.add_argument('--num_parallel_envs', type=int, default=10, help='Number of parallel environments to train the adaptation module')
-parser.add_argument('--encoder_hidden_activation', type=str, default='tanh', help='Activation function for the encoder hidden layers')
-parser.add_argument('--encoder_output_activation', type=str, default='tanh', help='Activation function for the encoder output layer')
+parser.add_argument('--encoder_hidden_activation', type=str, default='relu', help='Activation function for the encoder hidden layers')
+parser.add_argument('--encoder_output_activation', type=str, default='relu', help='Activation function for the encoder output layer')
 
 
 args = parser.parse_args()
@@ -406,7 +489,7 @@ else:
     raise NotImplementedError
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-phase_1_dir = "BP_a2c_result_1014_2024331_learningrate_0.0001_numneurons_64_encoutact_tanh_neuromod_network_dims_3_192_96_64"
+phase_1_dir = "CfC_a2c_result_2075_202448_learningrate_0.0001_numneurons_32_encoutact_relu_neuromod_network_dims_3_192_96_32"
 
 if result_id == -1:
     dirs = os.listdir(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/')
@@ -419,7 +502,7 @@ if result_id == -1:
 d = date.today()
 
 
-results_dir = f"Master_Thesis_Code/{top_dir}/adaptation_module/training_results/adaptation_module_{adapt_mod_type}_result_{result_id}_{str(d.year) + str(d.month) + str(d.day)}_CfC_result_296_202437_numneuronsadaptmod_{num_neurons_adaptation}_lradaptmod_{lr_adapt_mod}_wdadaptmod_{wd_adapt_mod}"
+results_dir = f"Master_Thesis_Code/{top_dir}/adaptation_module/training_results/adaptation_module_{adapt_mod_type}_result_{result_id}_{str(d.year) + str(d.month) + str(d.day)}_CfC_a2c_result_2075_202448_numneuronsadaptmod_{num_neurons_adaptation}_lradaptmod_{lr_adapt_mod}_wdadaptmod_{wd_adapt_mod}"
 os.mkdir(results_dir)
 
 

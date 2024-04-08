@@ -145,7 +145,7 @@ def randomize_env_params(env, randomization_params, schedule_factor = None):
 
 
 
-def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5, schedule_start = None, schedule_end = None, schedule_type = None):
+def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, seed, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5, schedule_start = None, schedule_end = None, schedule_type = None):
     best_average = -np.inf
     best_average_after = np.inf
     scores = []
@@ -279,7 +279,42 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         best_average_after, f'. Model saved in folder {result_dir}')
                         return smoothed_scores, scores, best_average, best_average_after
                     
+                elif ((selection_method == "true_range_eval_all_params") and (episode % evaluate_every == 0)):
+                    validation_ranges = [[(0.55, 0.775), (5.75, 10.5)], [(2.0, 3.0)], [(0.6, 0.8), (2.25, 3.5)]]
 
+                    eps_per_setting = 1
+                    evaluation_performance = 0
+                    total_eval_eps = 10
+                    current_np_seed = np.random.get_state()
+                    current_r_seed = random.getstate()
+                    for i in range(total_eval_eps):
+                        np.random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
+                        random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
+                        pole_length_range = random.choice(validation_ranges[0])
+                        pole_length_mod = np.random.uniform(pole_length_range[0], pole_length_range[1])
+                        pole_mass_mod = np.random.uniform(validation_ranges[1][0][0], validation_ranges[1][0][1])
+                        force_mag_range = random.choice(validation_ranges[2])
+                        force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
+                        print(f"{pole_length_mod}, {pole_mass_mod}, {force_mag_mod}")
+                        evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                    evaluation_performance /= total_eval_eps
+                    print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                    if evaluation_performance >= best_average:
+                        best_average = evaluation_performance
+                        best_average_after = episode
+                        torch.save(agent_net.state_dict(),
+                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                        
+                    if best_average == max_reward:
+                        print(f'Best {selection_method}: ', best_average, ' reached at episode ',
+                        best_average_after, f'. Model saved in folder {result_dir}')
+                        return smoothed_scores, scores, best_average, best_average_after
+
+                    np.random.set_state(current_np_seed)
+                    random.setstate(current_r_seed)
+                    print(f'First new random number: {np.random.random()}')
 
                 elif (selection_method == "100 episode average"):
                     scores_window.append(score)
@@ -334,7 +369,7 @@ parser.add_argument('--randomization_factor', type=float, default=0.5, help='Fac
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
 parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
 parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 256, 128], help='Dimensions of the neuromodulation network, without output layer')
-parser.add_argument('--selection_method', type=str, default = "range_evaluation_all_params", help='Method to select the best model')
+parser.add_argument('--selection_method', type=str, default = "true_range_eval_all_params", help='Method to select the best model')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
 parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of episodes to train the agent')
 parser.add_argument('--encoder_output_activation', type=str, default="relu", help="Activation function of the encoder's output layer")
@@ -344,7 +379,7 @@ parser.add_argument('--mode', type=str, default="neuromodulated", help="The mode
 parser.add_argument('--schedule_start', type=float, default=0.00001, help="The starting value of the schedule factor")
 parser.add_argument('--schedule_end', type=float, default=1.0, help="The end value of the schedule factor")
 parser.add_argument('--schedule_type', type=str, default='None', help="The type of schedule to use for the schedule factor")
-parser.add_argument('--neuron_type', type=str, default='BP', help="The type of neuron to use")
+parser.add_argument('--neuron_type', type=str, default='CfC', help="The type of neuron to use")
 args = parser.parse_args()
 
 
@@ -398,7 +433,6 @@ elif training_method == "original":
 
 tau_sys_extraction = True
 sparsity_level = 0.5
-seed = 5
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
 wiring = None
 
@@ -480,7 +514,7 @@ for i in range(num_models):
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
-    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_episodes, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, schedule_start = schedule_start, schedule_end=schedule_end, schedule_type=schedule_type)
+    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_episodes, 200, agent_net, 2, evaluation_seeds, seed, i, neuron_type, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, schedule_start = schedule_start, schedule_end=schedule_end, schedule_type=schedule_type)
     best_average_after_all.append(best_average_after)
     best_average_all.append(best_average)
 

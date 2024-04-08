@@ -1,32 +1,3 @@
-# import numpy as np
-# import multiprocessing as mp
-# import time
-# import sys
-# from enum import Enum
-# from copy import deepcopy
-
-# from gym import logger
-# from gym.vector.vector_env import VectorEnv, AsyncVectorEnv
-# from gym.error import (AlreadyPendingCallError, NoAsyncCallError,
-#                        ClosedEnvironmentError)
-# from gym.vector.utils import (create_shared_memory, create_empty_array,
-#                               write_to_shared_memory, read_from_shared_memory,
-#                               concatenate, CloudpickleWrapper, clear_mpi_env_vars)
-
-# __all__ = ['ModifiableAsyncVectorEnv']
-
-
-# class AsyncState(Enum):
-#     DEFAULT = 'default'
-#     WAITING_RESET = 'reset'
-#     WAITING_STEP = 'step'
-
-
-# class ModifiableAsyncVectorEnv(AsyncVectorEnv):
-#     def __init__(self, env_fns, observation_space=None, action_space=None,
-#                  shared_memory=True, copy=True, context=None, daemon=True, worker=None):
-#         super().__init__(env_fns, observation_space, action_space, shared_memory, copy, context, daemon, worker)
-
 import numpy as np
 import multiprocessing as mp
 import time

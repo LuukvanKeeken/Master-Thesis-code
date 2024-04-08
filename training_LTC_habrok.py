@@ -239,6 +239,41 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         best_average_after, f'. Model saved in folder {result_dir}')
                         return smoothed_scores, scores, best_average, best_average_after
 
+                elif ((selection_method == "true_range_eval_all_params") and (episode % evaluate_every == 0)):
+                    validation_ranges = [[(0.55, 0.775), (5.75, 10.5)], [(2.0, 3.0)], [(0.6, 0.8), (2.25, 3.5)]]
+
+                    eps_per_setting = 1
+                    evaluation_performance = 0
+                    total_eval_eps = 10
+                    current_np_seed = np.random.get_state()
+                    current_r_seed = random.getstate()
+                    for i in range(total_eval_eps):
+                        np.random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
+                        random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
+                        pole_length_range = random.choice(validation_ranges[0])
+                        pole_length_mod = np.random.uniform(pole_length_range[0], pole_length_range[1])
+                        pole_mass_mod = np.random.uniform(validation_ranges[1][0][0], validation_ranges[1][0][1])
+                        force_mag_range = random.choice(validation_ranges[2])
+                        force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
+                        evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                    evaluation_performance /= total_eval_eps
+                    print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                    if evaluation_performance >= best_average:
+                        best_average = evaluation_performance
+                        best_average_after = episode
+                        torch.save(agent_net.state_dict(),
+                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                        
+                    if best_average == max_reward:
+                        print(f'Best {selection_method}: ', best_average, ' reached at episode ',
+                        best_average_after, f'. Model saved in folder {result_dir}')
+                        return smoothed_scores, scores, best_average, best_average_after
+
+                    np.random.set_state(current_np_seed)
+                    random.setstate(current_r_seed)
+
                 elif (selection_method == "100 episode average"):
                     scores_window.append(score)
                     scores.append(score)
@@ -291,11 +326,13 @@ parser.add_argument('--num_neurons', type=int, default=32, help='Number of neuro
 parser.add_argument('--neuron_type', type=str, default='CfC', help='Type of neuron, either "LTC" or "CfC"')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
 parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
-parser.add_argument('--selection_method', type=str, default = "range_evaluation_all_params", help='Method to select the best model')
+parser.add_argument('--selection_method', type=str, default = "true_range_eval_all_params", help='Method to select the best model')
+parser.add_argument('--seed', type=int, default=5, help='Seed for the random number generator')
+parser.add_argument('--result_id', type=int, default=-1, help='ID for the result directory')
 
 args = parser.parse_args()
 
-
+result_id = args.result_id
 num_neurons = args.num_neurons
 neuron_type = args.neuron_type
 learning_rate = args.learning_rate
@@ -314,7 +351,6 @@ mode = "pure"
 tau_sys_extraction = True
 num_models = 10
 sparsity_level = 0.5
-seed = 5
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
 wiring = None
 factor = 0.2
@@ -326,13 +362,15 @@ elif training_method == "randfactor":
 elif training_method == "original":
     randomization_params = None
 
+if result_id == -1:
+    dirs = os.listdir('Master_Thesis_Code/LTC_A2C/training_results/')
+    if not any('a2c_result' in d for d in dirs):
+        result_id = 1
+    else:
+        results = [d for d in dirs if 'a2c_result' in d]
+        result_id = len(results) + 1
 
-dirs = os.listdir('Master_Thesis_Code/LTC_A2C/training_results/')
-if not any('a2c_result' in d for d in dirs):
-    result_id = 1
-else:
-    results = [d for d in dirs if 'a2c_result' in d]
-    result_id = len(results) + 1
+
 d = date.today()
 result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
 if neuron_type == "CfC":

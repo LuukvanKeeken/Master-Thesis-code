@@ -1,0 +1,12 @@
+0: 132.2 after 15820
+1: 160.3 after 520
+2: 118.5 after 5590
+3: 181.7 after 810
+4: 95.0 after 5700
+5: 200.0 after 780
+6: 189.6 after 440
+7: 103.1 after 17660
+8: 200.0 after 10640
+9: 200.0 after 1820
+Average training episodes: 5978.0, std dev: 6219.097683748021
+Mean average performance: 158.04000000000002, std dev: 40.082944003653225

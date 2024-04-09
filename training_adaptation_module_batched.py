@@ -429,8 +429,8 @@ parser.add_argument('--adapt_mod_type', type=str, default='StandardRNN', help='T
 parser.add_argument('--result_id', type=int, default=-1, help='ID of the result')
 parser.add_argument('--batch_size', type=int, default=50, help='Batch size for training the adaptation module')
 parser.add_argument('--num_parallel_envs', type=int, default=10, help='Number of parallel environments to train the adaptation module')
-parser.add_argument('--encoder_hidden_activation', type=str, default='relu', help='Activation function for the encoder hidden layers')
-parser.add_argument('--encoder_output_activation', type=str, default='relu', help='Activation function for the encoder output layer')
+parser.add_argument('--encoder_hidden_activation', type=str, default='tanh', help='Activation function for the encoder hidden layers')
+parser.add_argument('--encoder_output_activation', type=str, default='tanh', help='Activation function for the encoder output layer')
 
 
 args = parser.parse_args()
@@ -489,7 +489,7 @@ else:
     raise NotImplementedError
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-phase_1_dir = "BP_a2c_result_2169_202448_learningrate_0.0005_numneurons_32_encoutact_relu_neuromod_network_dims_3_192_96_32"
+phase_1_dir = "BP_a2c_result_2168_202448_learningrate_0.0005_numneurons_32_encoutact_tanh_neuromod_network_dims_3_192_96_32"
 
 if result_id == -1:
     dirs = os.listdir(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/')
@@ -502,7 +502,7 @@ if result_id == -1:
 d = date.today()
 
 
-results_dir = f"Master_Thesis_Code/{top_dir}/adaptation_module/training_results/adaptation_module_{adapt_mod_type}_result_{result_id}_{str(d.year) + str(d.month) + str(d.day)}_CfC_a2c_result_2072_202448_numneuronsadaptmod_{num_neurons_adaptation}_lradaptmod_{lr_adapt_mod}_wdadaptmod_{wd_adapt_mod}"
+results_dir = f"Master_Thesis_Code/{top_dir}/adaptation_module/training_results/adaptation_module_{adapt_mod_type}_result_{result_id}_{str(d.year) + str(d.month) + str(d.day)}_BP_a2c_result_2168_202448_numneuronsadaptmod_{num_neurons_adaptation}_lradaptmod_{lr_adapt_mod}_wdadaptmod_{wd_adapt_mod}"
 os.mkdir(results_dir)
 
 

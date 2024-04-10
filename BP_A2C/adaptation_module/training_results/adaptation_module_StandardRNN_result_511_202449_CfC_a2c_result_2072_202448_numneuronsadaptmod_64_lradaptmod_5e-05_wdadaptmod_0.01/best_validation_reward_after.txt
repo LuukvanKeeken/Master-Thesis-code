@@ -1,0 +1,12 @@
+0: 200.0 after 6250
+1: 185.2 after 9900
+2: 199.9 after 9900
+3: 200.0 after 6000
+4: 169.2 after 9900
+5: 199.5 after 7050
+6: 200.0 after 7250
+7: 200.0 after 10000
+8: 200.0 after 10000
+9: 200.0 after 9350
+Average training episodes: 8560.0
+Mean average reward: 195.38 +/- 9.769831114200496

@@ -218,6 +218,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                     eps_per_setting = 1
                     evaluation_performance = 0
                     total_eval_eps = 10
+                    current_np_seed = np.random.get_state()
                     for i in range(total_eval_eps):
                         np.random.seed(evaluation_seeds[i+eps_per_setting-1])
                         pole_length_mod = np.random.choice(pole_length_mods)
@@ -238,6 +239,8 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         print(f'Best {selection_method}: ', best_average, ' reached at episode ',
                         best_average_after, f'. Model saved in folder {result_dir}')
                         return smoothed_scores, scores, best_average, best_average_after
+                    
+                    np.random.set_state(current_np_seed)
 
                 elif ((selection_method == "true_range_eval_all_params") and (episode % evaluate_every == 0)):
                     validation_ranges = [[(0.55, 0.775), (5.75, 10.5)], [(2.0, 3.0)], [(0.6, 0.8), (2.25, 3.5)]]

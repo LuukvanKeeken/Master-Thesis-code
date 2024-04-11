@@ -245,8 +245,8 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                     eps_per_setting = 1
                     evaluation_performance = 0
                     total_eval_eps = 10
-                    # current_np_seed = np.random.get_state()
-                    # current_r_seed = random.getstate()
+                    current_np_seed = np.random.get_state()
+                    current_r_seed = random.getstate()
                     for i in range(total_eval_eps):
                         np.random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
                         random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
@@ -271,8 +271,8 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         best_average_after, f'. Model saved in folder {result_dir}')
                         return smoothed_scores, scores, best_average, best_average_after
 
-                    # np.random.set_state(current_np_seed)
-                    # random.setstate(current_r_seed)
+                    np.random.set_state(current_np_seed)
+                    random.setstate(current_r_seed)
 
                 elif (selection_method == "100 episode average"):
                     scores_window.append(score)
@@ -322,11 +322,11 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
 
 parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole environment')
-parser.add_argument('--num_neurons', type=int, default=64, help='Number of neurons in the hidden layer')
+parser.add_argument('--num_neurons', type=int, default=48, help='Number of neurons in the hidden layer')
 parser.add_argument('--neuron_type', type=str, default='CfC', help='Type of neuron, either "LTC" or "CfC"')
-parser.add_argument('--learning_rate', type=float, default=0.00005, help='Learning rate for the agent')
+parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
 parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
-parser.add_argument('--selection_method', type=str, default = "true_range_eval_all_params", help='Method to select the best model')
+parser.add_argument('--selection_method', type=str, default = "range_evaluation_all_params", help='Method to select the best model')
 parser.add_argument('--seed', type=int, default=5, help='Seed for the random number generator')
 parser.add_argument('--result_id', type=int, default=-1, help='ID for the result directory')
 

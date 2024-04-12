@@ -406,15 +406,15 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
 
 
 parser = argparse.ArgumentParser(description='Train adaptation module for neuromodulated CfC')
-parser.add_argument('--neuron_type', type=str, default='BP', help='Type of neuron to train')
+parser.add_argument('--neuron_type', type=str, default='CfC', help='Type of neuron to train')
 parser.add_argument('--device', type=str, default='cpu', help='Device to train on')
 parser.add_argument('--state_dims', type=int, default=4, help='Number of state dimensions')
 parser.add_argument('--action_dims', type=int, default=1, help='Number of action dimensions')
-parser.add_argument('--num_neurons_policy', type=int, default=32, help='Number of neurons in the policy network')
+parser.add_argument('--num_neurons_policy', type=int, default=64, help='Number of neurons in the policy network')
 parser.add_argument('--num_neurons_adaptation', type=int, default=64, help='Number of neurons in the adaptation module')
 parser.add_argument('--num_actions', type=int, default=2, help='Number of actions')
 parser.add_argument('--seed', type=int, default=5)
-parser.add_argument('--mode', type=str, default='neuromodulated', help='Mode of the CfC network')
+parser.add_argument('--mode', type=str, default='only_neuromodulated', help='Mode of the CfC network')
 parser.add_argument('--wiring', type=str, default='None', help='Wiring of the CfC network')
 parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 192, 96], help='Dimensions of the neuromodulation network, without output layer')
 parser.add_argument('--num_training_eps', type=int, default=20000, help="Number of episodes to train the adaptation module")
@@ -489,7 +489,7 @@ else:
     raise NotImplementedError
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-phase_1_dir = "BP_a2c_result_2169_202448_learningrate_0.0005_numneurons_32_encoutact_relu_neuromod_network_dims_3_192_96_32"
+phase_1_dir = "CfC_a2c_result_5015_2024411_learningrate_0.0001_numneurons_64_encoutact_relu_neuromod_network_dims_3_192_96_64"
 
 if result_id == -1:
     dirs = os.listdir(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/')

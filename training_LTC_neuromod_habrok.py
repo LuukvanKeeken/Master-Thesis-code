@@ -362,17 +362,17 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
 
 parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole environment')
-parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
+parser.add_argument('--num_neurons', type=int, default=64, help='Number of neurons in the hidden layer')
 parser.add_argument('--randomization_factor', type=float, default=0.5, help='Factor to randomize the environment parameters')
-parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
+parser.add_argument('--learning_rate', type=float, default=0.0001, help='Learning rate for the agent')
 parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
-parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 256, 128], help='Dimensions of the neuromodulation network, without output layer')
+parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 192, 96], help='Dimensions of the neuromodulation network, without output layer')
 parser.add_argument('--selection_method', type=str, default = "true_range_eval_all_params", help='Method to select the best model')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
 parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of episodes to train the agent')
 parser.add_argument('--encoder_output_activation', type=str, default="relu", help="Activation function of the encoder's output layer")
 parser.add_argument('--encoder_hidden_activation', type=str, default="relu", help="Activation function of the encoder's hidden layers")
-parser.add_argument('--result_id', type=int, default=-1, help='ID of the result folder')
+parser.add_argument('--result_id', type=int, default=29999, help='ID of the result folder')
 parser.add_argument('--mode', type=str, default="only_neuromodulated", help="The mode of the CfC network.")
 parser.add_argument('--schedule_start', type=float, default=0.00001, help="The starting value of the schedule factor")
 parser.add_argument('--schedule_end', type=float, default=1.0, help="The end value of the schedule factor")
@@ -473,7 +473,7 @@ best_average_after_all = []
 best_average_all = []
 for i in range(num_models):
     print(f"Run # {i}")
-    seed = int(training_seeds[i])
+    seed = int(training_seeds[i]+42)
 
     torch.manual_seed(seed)
     random.seed(seed)

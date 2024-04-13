@@ -122,7 +122,7 @@ class BP_RNetwork(nn.Module):
 
 class Standard_RNetwork(nn.Module):
     
-    def __init__(self, isize, hsize, num_actions, seed): 
+    def __init__(self, isize, hsize, num_actions, seed, continuous_actions = False): 
         super(Standard_RNetwork, self).__init__()
 
         # Is all of this really needed?
@@ -130,12 +130,17 @@ class Standard_RNetwork(nn.Module):
         np.random.seed(seed)
         torch.manual_seed(seed)
 
+        self.continuous_actions = continuous_actions
+
         self.hsize, self.isize  = hsize, isize 
 
         self.i2h = torch.nn.Linear(isize, hsize)    # Weights from input to recurrent layer
         self.w =  torch.nn.Parameter(.001 * torch.rand(hsize, hsize))   # Baseline (non-plastic) component of the plastic recurrent layer
         
         self.h2o = torch.nn.Linear(hsize, num_actions)    # From recurrent to outputs (action probabilities)
+        if continuous_actions:
+            self.h2std = torch.nn.Linear(hsize, num_actions)    
+        
         self.h2v = torch.nn.Linear(hsize, 1)            # From recurrent to value-prediction (used for A2C)
 
 
@@ -156,6 +161,9 @@ class Standard_RNetwork(nn.Module):
             # Each *column* of w, alpha and hebb contains the inputs weights to a single neuron
             hactiv = torch.tanh( self.i2h(inputs) + torch.matmul(hidden[0], self.w))  # Update the h-state
             activout = self.h2o(hactiv)  # Pure linear, raw scores - to be softmaxed later, outside the function
+            if self.continuous_actions:
+                std = F.softplus(self.h2std(hactiv)) + 1e-5
+                activout = (activout, std)
             valueout = self.h2v(hactiv)
 
         

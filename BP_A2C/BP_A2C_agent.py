@@ -510,7 +510,7 @@ class A2C_Agent:
             actor_loss = (-log_probs * advantage).mean()
             critic_loss = advantage.pow(2).mean()
             entropy_term = torch.stack(entropy_vals).sum()
-            ac_loss = actor_loss + (self.value_pred_coef*critic_loss) + (self.entropy_coef * entropy_term)
+            ac_loss = actor_loss + (self.value_pred_coef*critic_loss) - (self.entropy_coef * entropy_term)
             # print(actor_loss, self.value_pred_coef*critic_loss, self.entropy_coef * entropy_term)
             self.optimizer.zero_grad()
             ac_loss.backward()

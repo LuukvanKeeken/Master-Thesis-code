@@ -15,7 +15,7 @@ class A2C_Agent:
 
     def __init__(self, env_name, seed, agent_net, entropy_coef, value_pred_coef, gammaR, max_grad_norm, max_steps, batch_size,
                  num_training_episodes, optimizer, i_run, result_dir, best_model_selection_method,
-                 num_evaluation_episodes, evaluation_seeds, max_reward, evaluate_every, network_type):
+                 num_evaluation_episodes, evaluation_seeds, max_reward, evaluate_every, network_type, continuous_actions = False):
         
         if batch_size > 1:
             print("Batch size larger than 1 not implemented yet. Program will continue with batch size set to 1.")
@@ -30,7 +30,10 @@ class A2C_Agent:
         torch.manual_seed(seed)
         self.seed = seed
         self.num_inputs = self.env.observation_space.shape[0]
-        self.num_outputs = self.env.action_space.n
+        if hasattr(self.env.action_space, 'n'):     
+            self.num_outputs = self.env.action_space.n
+        else:
+            self.num_outputs = self.env.action_space.shape[0]
 
         self.env_name = env_name
         self.batch_size = 1 
@@ -51,6 +54,7 @@ class A2C_Agent:
         self.training_seed = seed
         self.evaluate_every = evaluate_every
         self.network_type = network_type
+        self.continuous_actions = continuous_actions
 
 
         # Initialize Hebbian traces
@@ -72,7 +76,7 @@ class A2C_Agent:
 
 
         for episode in range(1, self.num_training_episodes + 1):
-            
+            print(episode)
             if randomization_params and episode % randomize_every == 0:
                 env = gym.make(self.env_name)
                 env = randomize_env_params(env, randomization_params)
@@ -83,25 +87,42 @@ class A2C_Agent:
             score = 0
             
             log_probs = []
+            entropy_vals = []
             values = []
             rewards = []
 
             state = self.env.reset()
             for steps in range(self.max_steps):
+                print(steps)
                 # Feed the state into the network
                 state = torch.from_numpy(state)
                 state = state.unsqueeze(0)#.to(device) #This as well?
                 policy_output, value, (self.hidden_activations, self.hebbian_traces) = self.agent_net.forward(state.float(), [self.hidden_activations, self.hebbian_traces])
                 
-                # Get distribution over the action space
-                policy_dist = torch.softmax(policy_output, dim = 1)
-                value = value.detach().numpy()[0,0]
-                dist = policy_dist.detach().numpy() 
 
-                # Sample from distribution to select action
-                action = np.random.choice(self.num_outputs, p=np.squeeze(dist))
-                log_prob = torch.log(policy_dist.squeeze(0)[action])
-                entropy = -np.sum(np.mean(dist) * np.log(dist))
+                if self.continuous_actions:
+                    value = value.detach().numpy()[0,0]
+                    
+                    means, std_devs = policy_output
+                    dist = torch.distributions.Normal(means, std_devs)
+
+                    action = dist.sample()
+                    log_prob = dist.log_prob(action)
+                    entropy = dist.entropy().mean()
+
+                    action = action.detach().cpu().numpy()[0]
+
+                else:
+                    # Get distribution over the action space
+                    policy_dist = torch.softmax(policy_output, dim = 1)
+                    value = value.detach().numpy()[0,0]
+                    dist = policy_dist.detach().cpu().numpy() 
+
+                    # Sample from distribution to select action
+                    action = np.random.choice(self.num_outputs, p=np.squeeze(dist))
+                    log_prob = torch.log(policy_dist.squeeze(0)[action])
+                    # entropy = -np.sum(np.mean(policy_dist) * np.log(policy_dist))
+                    entropy = -(policy_dist * torch.log(policy_dist)).sum(1).mean()
                 
                 new_state, reward, done, _ = self.env.step(action)
 
@@ -110,7 +131,7 @@ class A2C_Agent:
                 rewards.append(reward)
                 values.append(value)
                 log_probs.append(log_prob)
-                entropy_term += entropy
+                entropy_vals.append(entropy)
                 state = new_state
                 
                 if done or steps == self.max_steps-1:
@@ -259,12 +280,16 @@ class A2C_Agent:
             #update actor critic
             values = torch.FloatTensor(values)
             Qvals = torch.FloatTensor(Qvals)
-            log_probs = torch.stack(log_probs)
+
+            if self.continuous_actions:
+                log_probs = torch.stack(log_probs).squeeze(1).sum(dim = -1)
+            else:   
+                log_probs = torch.stack(log_probs)
             
             advantage = Qvals - values
             actor_loss = (-log_probs * advantage).mean()
             critic_loss = 0.5 * advantage.pow(2).mean()
-            ac_loss = actor_loss + critic_loss + 0.001 * entropy_term
+            ac_loss = actor_loss + critic_loss + self.entropy_coef * torch.stack(entropy_vals).sum()
 
             self.optimizer.zero_grad()
             ac_loss.backward()
@@ -424,7 +449,7 @@ class A2C_Agent:
             advantage = Qvals - values
             actor_loss = (-log_probs * advantage).mean()
             critic_loss = 0.5 * advantage.pow(2).mean()
-            ac_loss = actor_loss + critic_loss + 0.001 * entropy_term
+            ac_loss = actor_loss + critic_loss + self.entropy_coef * entropy_term
 
             self.optimizer.zero_grad()
             ac_loss.backward()
@@ -520,7 +545,7 @@ class A2C_Agent:
             advantage = Qvals - values
             actor_loss = (-log_probs * advantage).mean()
             critic_loss = 0.5 * advantage.pow(2).mean()
-            ac_loss = actor_loss + critic_loss + 0.001 * entropy_term
+            ac_loss = actor_loss + critic_loss + self.entropy_coef * entropy_term
 
             self.optimizer.zero_grad()
             ac_loss.backward()

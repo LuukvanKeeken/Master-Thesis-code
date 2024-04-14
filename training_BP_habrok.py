@@ -10,7 +10,7 @@ from Master_Thesis_Code.BP_A2C.BP_A2C_agent import A2C_Agent
 
 parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole environment')
 parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
-parser.add_argument('--network_type', type=str, default='BP_RNN', help='Type of network to use')
+parser.add_argument('--network_type', type=str, default='Standard_RNN', help='Type of network to use')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
 parser.add_argument('--selection_method', type=str, default='true_range_eval_all_params', help='Method to use for selecting the best model')
@@ -103,7 +103,7 @@ for i_run in range(num_models):
                       i_run, result_dir, selection_method, num_evaluation_episodes, evaluation_seeds, max_reward, evaluate_every, network_type)
 
     if training_method == "original":
-        smoothed_scores, scores, best_average, best_average_after = agent.train_agent()
+        smoothed_scores, scores, best_average, best_average_after = agent.train_agent_new()
     elif training_method == "range":
         smoothed_scores, scores, best_average, best_average_after = agent.train_agent_on_range(range_min, range_max)
     elif training_method == "quarter_range":

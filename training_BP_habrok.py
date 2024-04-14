@@ -16,6 +16,8 @@ parser.add_argument('--num_models', type=int, default=10, help='Number of models
 parser.add_argument('--selection_method', type=str, default='true_range_eval_all_params', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
+parser.add_argument('--entropy_coef', type=float, default=0.0, help='Entropy coefficient for the agent')
+parser.add_argument('--value_pred_coef', type=float, default=0.1, help='Value prediction coefficient for the agent')
 
 args = parser.parse_args()
 learning_rate = args.learning_rate
@@ -25,13 +27,13 @@ num_models = args.num_models
 selection_method = args.selection_method
 training_method = args.training_method
 result_id = args.result_id
+entropy_coef = args.entropy_coef
+value_pred_coef = args.value_pred_coef
 
 
 device = "cpu"
 
 env_name = 'CartPole-v0'
-entropy_coef = 0.01 #THIS IS NOT ACTUALLY USED
-value_pred_coef = 0.1
 gammaR = 0.99
 max_grad_norm = 4.0
 max_steps = 200

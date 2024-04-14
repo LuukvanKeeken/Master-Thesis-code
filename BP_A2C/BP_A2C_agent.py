@@ -72,11 +72,8 @@ class A2C_Agent:
         smoothed_scores = []
         scores_window = deque(maxlen = 100)
 
-        entropy_term = 0
-
-
+        
         for episode in range(1, self.num_training_episodes + 1):
-            print(episode)
             if randomization_params and episode % randomize_every == 0:
                 env = gym.make(self.env_name)
                 env = randomize_env_params(env, randomization_params)
@@ -93,7 +90,6 @@ class A2C_Agent:
 
             state = self.env.reset()
             for steps in range(self.max_steps):
-                print(steps)
                 # Feed the state into the network
                 state = torch.from_numpy(state)
                 state = state.unsqueeze(0)#.to(device) #This as well?
@@ -101,7 +97,7 @@ class A2C_Agent:
                 
 
                 if self.continuous_actions:
-                    value = value.detach().numpy()[0,0]
+                    value_detached = value.detach().numpy()[0,0]
                     
                     means, std_devs = policy_output
                     dist = torch.distributions.Normal(means, std_devs)
@@ -115,7 +111,7 @@ class A2C_Agent:
                 else:
                     # Get distribution over the action space
                     policy_dist = torch.softmax(policy_output, dim = 1)
-                    value = value.detach().numpy()[0,0]
+                    value_detached = value.detach().numpy()[0,0]
                     dist = policy_dist.detach().cpu().numpy() 
 
                     # Sample from distribution to select action
@@ -272,7 +268,7 @@ class A2C_Agent:
                     # break
             
             # compute Q values
-            Qvals = np.zeros_like(values)
+            Qvals = torch.zeros_like(torch.stack(values))
             for t in reversed(range(len(rewards))):
                 Qval = rewards[t] + self.gammaR * Qval
                 Qvals[t] = Qval
@@ -288,7 +284,7 @@ class A2C_Agent:
             
             advantage = Qvals - values
             actor_loss = (-log_probs * advantage).mean()
-            critic_loss = 0.5 * advantage.pow(2).mean()
+            critic_loss = self.value_pred_coef * advantage.pow(2).mean()
             ac_loss = actor_loss + critic_loss + self.entropy_coef * torch.stack(entropy_vals).sum()
 
             self.optimizer.zero_grad()
@@ -448,7 +444,7 @@ class A2C_Agent:
             
             advantage = Qvals - values
             actor_loss = (-log_probs * advantage).mean()
-            critic_loss = 0.5 * advantage.pow(2).mean()
+            critic_loss = self.value_pred_coef * advantage.pow(2).mean()
             ac_loss = actor_loss + critic_loss + self.entropy_coef * entropy_term
 
             self.optimizer.zero_grad()
@@ -544,7 +540,7 @@ class A2C_Agent:
             
             advantage = Qvals - values
             actor_loss = (-log_probs * advantage).mean()
-            critic_loss = 0.5 * advantage.pow(2).mean()
+            critic_loss = self.value_pred_coef * advantage.pow(2).mean()
             ac_loss = actor_loss + critic_loss + self.entropy_coef * entropy_term
 
             self.optimizer.zero_grad()

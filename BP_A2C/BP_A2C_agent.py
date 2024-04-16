@@ -522,7 +522,7 @@ class A2C_Agent:
             actor_loss = (-log_probs * advantage).mean()
             critic_loss = advantage.pow(2).mean()
             # print(actor_loss, critic_loss, entropy_term)
-            ac_loss = actor_loss + self.value_pred_coef * critic_loss + self.entropy_coef * entropies
+            ac_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropies
             
             self.optimizer.zero_grad()
             ac_loss.backward()

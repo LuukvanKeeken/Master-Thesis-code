@@ -1,0 +1,12 @@
+0: 200.0 after 28050
+1: 200.0 after 28950
+2: 200.0 after 19700
+3: 200.0 after 11200
+4: 198.9 after 5150
+5: 200.0 after 29450
+6: 200.0 after 27550
+7: 200.0 after 30000
+8: 200.0 after 30000
+9: 200.0 after 29900
+Average training episodes: 23995.0
+Mean average reward: 199.89000000000001 +/- 0.32999999999999824

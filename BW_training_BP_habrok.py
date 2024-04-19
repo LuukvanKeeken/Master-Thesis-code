@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description='Train an A2C agent on the BipedalW
 parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
 parser.add_argument('--network_type', type=str, default='Standard_RNN', help='Type of network to use')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
-parser.add_argument('--num_models', type=int, default=3, help='Number of models to train')
+parser.add_argument('--num_models', type=int, default=1, help='Number of models to train')
 parser.add_argument('--selection_method', type=str, default='exp_BW_validation', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
@@ -23,6 +23,7 @@ parser.add_argument('--continuous_actions', type=bool, default=True, help='Wheth
 parser.add_argument('--entropy_coef', type=float, default=0.0, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.1, help='Value prediction coefficient for the agent')
 parser.add_argument('--num_training_episodes', type=int, default=40000, help='Number of training episodes to run')
+parser.add_argument('--magic_number', type=int, default=0, help='Magic number to use for the agent')
 
 args = parser.parse_args()
 learning_rate = args.learning_rate
@@ -39,6 +40,7 @@ continuous_actions = args.continuous_actions
 entropy_coef = args.entropy_coef
 value_pred_coef = args.value_pred_coef
 num_training_episodes = args.num_training_episodes
+magic_number = args.magic_number
 
 device = "cpu"
 
@@ -73,12 +75,14 @@ if result_id == -1:
 
 # Get today's date and add it to the results directory
 d = date.today()
-result_dir = f'Master_Thesis_Code/BP_A2C/bipedal_walker/training_results/{network_type}_a2c_result_' + str(result_id) + "_{}_entropycoef_{}_valuepredcoef_{}_\
-learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}_numneurons_{}".format(
-    str(d.year) + str(d.month) + str(d.day), entropy_coef, value_pred_coef,
-    learning_rate, num_training_episodes, selection_method, training_method, num_neurons)
-if training_method == "range":
-    result_dir += "_rangemin_{}_rangemax_{}".format(range_min, range_max)
+# result_dir = f'Master_Thesis_Code/BP_A2C/bipedal_walker/training_results/{network_type}_a2c_result_' + str(result_id) + "_{}_entropycoef_{}_valuepredcoef_{}_\
+# learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}_numneurons_{}".format(
+#     str(d.year) + str(d.month) + str(d.day), entropy_coef, value_pred_coef,
+#     learning_rate, num_training_episodes, selection_method, training_method, num_neurons)
+# if training_method == "range":
+#     result_dir += "_rangemin_{}_rangemax_{}".format(range_min, range_max)
+
+result_dir = f"Master_Thesis_Code/BP_A2C/bipedal_walker/training_results/INDIVIDMODEL_{magic_number}"
 
 
 os.mkdir(result_dir)
@@ -95,7 +99,7 @@ best_average_after_all = []
 best_average_all = []
 for i_run in range(num_models):
     print("Run # {}".format(i_run))
-    seed = int(training_seeds[i_run])
+    seed = int(training_seeds[i_run]+magic_number)
     
     torch.manual_seed(seed)
     random.seed(seed)

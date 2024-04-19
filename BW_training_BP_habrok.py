@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description='Train an A2C agent on the BipedalW
 parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
 parser.add_argument('--network_type', type=str, default='Standard_RNN', help='Type of network to use')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
-parser.add_argument('--num_models', type=int, default=5, help='Number of models to train')
+parser.add_argument('--num_models', type=int, default=3, help='Number of models to train')
 parser.add_argument('--selection_method', type=str, default='exp_BW_validation', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
@@ -22,7 +22,7 @@ parser.add_argument('--output_dims', type=int, default=4, help='Number of output
 parser.add_argument('--continuous_actions', type=bool, default=True, help='Whether the environment has continuous actions')
 parser.add_argument('--entropy_coef', type=float, default=0.0, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.1, help='Value prediction coefficient for the agent')
-parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of training episodes to run')
+parser.add_argument('--num_training_episodes', type=int, default=40000, help='Number of training episodes to run')
 
 args = parser.parse_args()
 learning_rate = args.learning_rate
@@ -129,16 +129,16 @@ for i_run in range(num_models):
     all_validation_losses.append(validation_losses)
     all_validation_total_rewards.append(validation_total_rewards)
 
-np.save(f"{result_dir}/all_training_losses.npy", all_training_losses)
-np.save(f"{result_dir}/all_training_total_rewards.npy", all_training_total_rewards)
-np.save(f"{result_dir}/all_validation_losses.npy", all_validation_losses)
-np.save(f"{result_dir}/all_validation_total_rewards.npy", all_validation_total_rewards)
+    np.save(f"{result_dir}/all_training_losses.npy", all_training_losses)
+    np.save(f"{result_dir}/all_training_total_rewards.npy", all_training_total_rewards)
+    np.save(f"{result_dir}/all_validation_losses.npy", all_validation_losses)
+    np.save(f"{result_dir}/all_validation_total_rewards.npy", all_validation_total_rewards)
 
 
 
-with open(f"{result_dir}/best_average_after.txt", 'w') as f:
-    for i, best_episode in enumerate(best_average_after_all):
-        f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
+    with open(f"{result_dir}/best_average_after.txt", 'w') as f:
+        for i, best_episode in enumerate(best_average_after_all):
+            f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
 
-    f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
-    f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
+        f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
+        f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")

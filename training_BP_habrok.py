@@ -10,14 +10,15 @@ from Master_Thesis_Code.BP_A2C.BP_A2C_agent import A2C_Agent
 
 parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole environment')
 parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
-parser.add_argument('--network_type', type=str, default='Standard_RNN', help='Type of network to use')
+parser.add_argument('--network_type', type=str, default='BP_RNN', help='Type of network to use')
 parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
 parser.add_argument('--selection_method', type=str, default='true_range_eval_all_params', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
-parser.add_argument('--entropy_coef', type=float, default=0.0, help='Entropy coefficient for the agent')
-parser.add_argument('--value_pred_coef', type=float, default=0.1, help='Value prediction coefficient for the agent')
+parser.add_argument('--entropy_coef', type=float, default=0.001, help='Entropy coefficient for the agent')
+parser.add_argument('--value_pred_coef', type=float, default=0.5, help='Value prediction coefficient for the agent')
+parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of training episodes to run')
 
 args = parser.parse_args()
 learning_rate = args.learning_rate
@@ -29,6 +30,7 @@ training_method = args.training_method
 result_id = args.result_id
 entropy_coef = args.entropy_coef
 value_pred_coef = args.value_pred_coef
+num_training_episodes = args.num_training_episodes
 
 
 device = "cpu"
@@ -38,7 +40,6 @@ gammaR = 0.99
 max_grad_norm = 4.0
 max_steps = 200
 batch_size = 1
-num_training_episodes = 20000
 evaluate_every = 10
 num_evaluation_episodes = 10
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
@@ -77,7 +78,10 @@ print('Created Directory {} to store the results in'.format(result_dir))
 
 
 
-
+all_training_losses = []
+all_training_total_rewards = []
+all_validation_losses = []
+all_validation_total_rewards = []
 best_average_after_all = []
 best_average_all = []
 for i_run in range(num_models):
@@ -103,7 +107,7 @@ for i_run in range(num_models):
                       i_run, result_dir, selection_method, num_evaluation_episodes, evaluation_seeds, max_reward, evaluate_every, network_type)
 
     if training_method == "original":
-        smoothed_scores, scores, best_average, best_average_after = agent.train_agent_new()
+        smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_discrete()
     elif training_method == "range":
         smoothed_scores, scores, best_average, best_average_after = agent.train_agent_on_range(range_min, range_max)
     elif training_method == "quarter_range":
@@ -111,12 +115,20 @@ for i_run in range(num_models):
 
     best_average_after_all.append(best_average_after)
     best_average_all.append(best_average)
+    all_training_losses.append(training_losses)
+    all_training_total_rewards.append(training_total_rewards)
+    all_validation_losses.append(validation_losses)
+    all_validation_total_rewards.append(validation_total_rewards)
+
+    np.save(f"{result_dir}/all_training_losses.npy", all_training_losses)
+    np.save(f"{result_dir}/all_training_total_rewards.npy", all_training_total_rewards)
+    np.save(f"{result_dir}/all_validation_losses.npy", all_validation_losses)
+    np.save(f"{result_dir}/all_validation_total_rewards.npy", all_validation_total_rewards)
 
 
+    with open(f"{result_dir}/best_average_after.txt", 'w') as f:
+        for i, best_episode in enumerate(best_average_after_all):
+            f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
 
-with open(f"{result_dir}/best_average_after.txt", 'w') as f:
-    for i, best_episode in enumerate(best_average_after_all):
-        f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
-
-    f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
-    f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
+        f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
+        f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")

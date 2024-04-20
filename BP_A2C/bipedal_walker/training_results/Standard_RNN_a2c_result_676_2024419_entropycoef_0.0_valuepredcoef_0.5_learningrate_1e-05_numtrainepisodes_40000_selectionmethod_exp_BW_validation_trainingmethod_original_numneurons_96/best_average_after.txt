@@ -1,0 +1,3 @@
+0: -14.226042130447007 after 1990
+Average training episodes: 1990.0, std dev: 0.0
+Mean average performance: -14.226042130447007, std dev: 0.0

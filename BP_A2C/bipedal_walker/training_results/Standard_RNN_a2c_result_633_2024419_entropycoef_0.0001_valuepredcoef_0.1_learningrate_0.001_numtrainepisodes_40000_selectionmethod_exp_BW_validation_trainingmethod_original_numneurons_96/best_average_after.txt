@@ -1,0 +1,3 @@
+0: -53.6826549192964 after 1960
+Average training episodes: 1960.0, std dev: 0.0
+Mean average performance: -53.6826549192964, std dev: 0.0

@@ -1,4 +1,5 @@
 import argparse
+import time
 import torch
 import numpy as np
 import random
@@ -9,21 +10,22 @@ from Master_Thesis_Code.BP_A2C.BP_A2C_agent import A2C_Agent
 
 
 parser = argparse.ArgumentParser(description='Train an A2C agent on the BipedalWalker environment')
-parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
+parser.add_argument('--num_neurons', type=int, default=96, help='Number of neurons in the hidden layer')
 parser.add_argument('--network_type', type=str, default='Standard_RNN', help='Type of network to use')
-parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
+parser.add_argument('--learning_rate', type=float, default=0.000001, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=1, help='Number of models to train')
 parser.add_argument('--selection_method', type=str, default='exp_BW_validation', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
-parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
+parser.add_argument('--result_id', type=int, default=9999999991, help='ID to use for the results directory')
 parser.add_argument('--env_name', type=str, default='BipedalWalker-v3', help='Name of the environment to use')
 parser.add_argument('--input_dims', type=int, default=24, help='Number of input dimensions to the network')
 parser.add_argument('--output_dims', type=int, default=4, help='Number of output dimensions to the network')
 parser.add_argument('--continuous_actions', type=bool, default=True, help='Whether the environment has continuous actions')
 parser.add_argument('--entropy_coef', type=float, default=0.0, help='Entropy coefficient for the agent')
-parser.add_argument('--value_pred_coef', type=float, default=0.1, help='Value prediction coefficient for the agent')
-parser.add_argument('--num_training_episodes', type=int, default=40000, help='Number of training episodes to run')
-parser.add_argument('--magic_number', type=int, default=0, help='Magic number to use for the agent')
+parser.add_argument('--value_pred_coef', type=float, default=0.01, help='Value prediction coefficient for the agent')
+parser.add_argument('--num_training_episodes', type=int, default=1000, help='Number of training episodes to run')
+parser.add_argument('--magic_number', type=int, default=0, help='Magic number to use for the results directory')
+parser.add_argument('--evaluate_every', type=int, default=10, help='How often to evaluate the agent')
 
 args = parser.parse_args()
 learning_rate = args.learning_rate
@@ -41,6 +43,7 @@ entropy_coef = args.entropy_coef
 value_pred_coef = args.value_pred_coef
 num_training_episodes = args.num_training_episodes
 magic_number = args.magic_number
+evaluate_every = args.evaluate_every
 
 device = "cpu"
 
@@ -51,7 +54,7 @@ max_grad_norm = 4.0
 max_steps = 1600
 batch_size = 1
 
-evaluate_every = 10
+
 num_evaluation_episodes = 10
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 training_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/training_seeds.npy')
@@ -75,16 +78,14 @@ if result_id == -1:
 
 # Get today's date and add it to the results directory
 d = date.today()
-# result_dir = f'Master_Thesis_Code/BP_A2C/bipedal_walker/training_results/{network_type}_a2c_result_' + str(result_id) + "_{}_entropycoef_{}_valuepredcoef_{}_\
-# learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}_numneurons_{}".format(
-#     str(d.year) + str(d.month) + str(d.day), entropy_coef, value_pred_coef,
-#     learning_rate, num_training_episodes, selection_method, training_method, num_neurons)
-# if training_method == "range":
-#     result_dir += "_rangemin_{}_rangemax_{}".format(range_min, range_max)
+result_dir = f'Master_Thesis_Code/BP_A2C/bipedal_walker/training_results/{network_type}_a2c_result_' + str(result_id) + "_{}_entropycoef_{}_valuepredcoef_{}_\
+learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}_numneurons_{}".format(
+    str(d.year) + str(d.month) + str(d.day), entropy_coef, value_pred_coef,
+    learning_rate, num_training_episodes, selection_method, training_method, num_neurons)
+if training_method == "range":
+    result_dir += "_rangemin_{}_rangemax_{}".format(range_min, range_max)
 
-result_dir = f"Master_Thesis_Code/BP_A2C/bipedal_walker/training_results/INDIVIDMODEL_{magic_number}"
-
-
+result_dir = f"Master_Thesis_Code/BP_A2C/bipedal_walker/training_results/{evaluate_every}_evaluation_interval_{result_id}"
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
 
@@ -97,6 +98,7 @@ all_validation_losses = []
 all_validation_total_rewards = []
 best_average_after_all = []
 best_average_all = []
+start_time = time.time()
 for i_run in range(num_models):
     print("Run # {}".format(i_run))
     seed = int(training_seeds[i_run]+magic_number)
@@ -146,3 +148,5 @@ for i_run in range(num_models):
 
         f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
         f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
+
+print(f"Training took {time.time() - start_time} seconds")

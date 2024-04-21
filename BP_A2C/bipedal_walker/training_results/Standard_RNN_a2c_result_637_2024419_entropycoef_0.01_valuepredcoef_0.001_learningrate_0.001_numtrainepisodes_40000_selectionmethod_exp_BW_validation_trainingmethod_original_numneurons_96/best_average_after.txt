@@ -1,3 +1,4 @@
 0: -70.13454922524835 after 20
-Average training episodes: 20.0, std dev: 0.0
-Mean average performance: -70.13454922524835, std dev: 0.0
+1: -55.82213735190353 after 10
+Average training episodes: 15.0, std dev: 5.0
+Mean average performance: -62.97834328857594, std dev: 7.156205936672411

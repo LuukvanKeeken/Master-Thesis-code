@@ -1,4 +1,5 @@
 0: -46.92173728854222 after 270
 1: -20.921630874061133 after 950
-Average training episodes: 610.0, std dev: 340.0
-Mean average performance: -33.92168408130168, std dev: 13.000053207240542
+2: -54.96062146628525 after 3940
+Average training episodes: 1720.0, std dev: 1594.1350841966519
+Mean average performance: -40.934663209629534, std dev: 14.526917822997222

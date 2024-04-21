@@ -159,7 +159,10 @@ for i_run in range(num_models):
 
         with open(f"{result_dir}/best_average_after.txt", 'w') as f:
             for i, best_episode in enumerate(best_average_after_all):
-                f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
+                if i == i_run:
+                    f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {(section+1)*training_eps_per_section})\n")
+                else:
+                    f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {num_training_episodes})\n")
 
             f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
             f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")

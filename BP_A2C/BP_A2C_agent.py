@@ -546,7 +546,7 @@ class A2C_Agent:
 
 
 
-    def train_agent_cont(self, randomization_params = None, randomize_every = 5):
+    def train_agent_cont(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5):
 
         best_average = -np.inf
         best_average_after = np.inf
@@ -559,7 +559,8 @@ class A2C_Agent:
         validation_total_rewards = []
         validation_losses = []
 
-        for episode in range(1, self.num_training_episodes + 1):
+        # for episode in range(1, self.num_training_episodes + 1):
+        for episode in range(1 + section*training_eps_per_section, (section+1)*training_eps_per_section + 1):
             
             if randomization_params and episode % randomize_every == 0:
                 env = gym.make(self.env_name)
@@ -724,7 +725,7 @@ class A2C_Agent:
                         np.random.set_state(current_np_seed)
                         random.setstate(current_r_seed)
                     elif (self.selection_method == "exp_BW_validation" and (episode % self.evaluate_every == 0)):
-                        evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, 10, self.evaluation_seeds))
+                        evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds))
                         print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
                         validation_total_rewards.append(evaluation_performance)
                         if evaluation_performance > best_average:
@@ -734,7 +735,7 @@ class A2C_Agent:
                                        self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
                             
                         if best_average == self.max_reward:
-                            print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                            print(f'Best section {self.selection_method}: ', best_average, ' reached at episode ',
                             best_average_after, '. Model saved in folder best.')
                             return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 

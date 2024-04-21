@@ -89,7 +89,7 @@ learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}_numneur
 if training_method == "range":
     result_dir += "_rangemin_{}_rangemax_{}".format(range_min, range_max)
 
-
+result_dir = f"Master_Thesis_Code/BP_A2C/bipedal_walker/training_results/INDIVID_MODEL_{magic_number}"
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
 

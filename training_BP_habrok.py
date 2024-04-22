@@ -18,7 +18,7 @@ parser.add_argument('--training_method', type=str, default = "original", help='M
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
 parser.add_argument('--entropy_coef', type=float, default=0.001, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.5, help='Value prediction coefficient for the agent')
-parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of training episodes to run')
+parser.add_argument('--num_training_episodes', type=int, default=40000, help='Number of training episodes to run')
 parser.add_argument('--num_evaluation_episodes', type=int, default=10, help='Number of evaluation episodes to run')
 parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
 parser.add_argument('--evaluate_every', type=int, default=10, help='How often to evaluate the agent')

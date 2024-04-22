@@ -286,7 +286,7 @@ class A2C_Agent:
         return smoothed_scores, scores, best_average, best_average_after
 
 
-    def train_agent_discrete(self, randomization_params = None, randomize_every = 5):
+    def train_agent_discrete(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5):
         best_average = -np.inf
         best_average_after = np.inf
         scores = []
@@ -298,7 +298,8 @@ class A2C_Agent:
         validation_total_rewards = []
         validation_losses = []
 
-        for episode in range(1, self.num_training_episodes + 1):
+        # for episode in range(1, self.num_training_episodes + 1):
+        for episode in range(1 + section*training_eps_per_section, (section+1)*training_eps_per_section + 1):
             
             if randomization_params and episode % randomize_every == 0:
                 env = gym.make(self.env_name)
@@ -438,10 +439,9 @@ class A2C_Agent:
 
                         eps_per_setting = 1
                         evaluation_performance = 0
-                        total_eval_eps = 10
                         current_np_seed = np.random.get_state()
                         current_r_seed = random.getstate()
-                        for i in range(total_eval_eps):
+                        for i in range(self.num_evaluation_episodes):
                             np.random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
                             random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
                             pole_length_range = random.choice(validation_ranges[0])
@@ -451,7 +451,7 @@ class A2C_Agent:
                             force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
                             evaluation_performance += np.mean(evaluate_BP_agent_all_params(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
 
-                        evaluation_performance /= total_eval_eps
+                        evaluation_performance /= self.num_evaluation_episodes
                         print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
                         validation_total_rewards.append(evaluation_performance)
                         if evaluation_performance >= best_average:
@@ -527,7 +527,7 @@ class A2C_Agent:
             critic_loss = advantage.pow(2).mean()
             # print(actor_loss, critic_loss, entropy_term)
             ac_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropies
-            training_losses.append(ac_loss)
+            
             self.optimizer.zero_grad()
             ac_loss.backward()
             # torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), 50)
@@ -537,9 +537,10 @@ class A2C_Agent:
             #     else:
             #         print(f"Gradient for {name}")
             self.optimizer.step()
+            training_losses.append(ac_loss.detach())
 
-        print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
-              best_average_after, '. Model saved in folder best.')
+        print(f'Best {self.selection_method} of this section: ', best_average, ' reached at episode ',
+              best_average_after, '.')
         
         return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
@@ -793,9 +794,10 @@ class A2C_Agent:
             #     else:
             #         print(f"Gradient for {name}")
             self.optimizer.step()
+            training_losses.append(ac_loss.detach())
 
-        print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
-              best_average_after, '. Model saved in folder best.')
+        print(f'Best {self.selection_method} of this section: ', best_average, ' reached at episode ',
+              best_average_after, '.')
         
         return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 

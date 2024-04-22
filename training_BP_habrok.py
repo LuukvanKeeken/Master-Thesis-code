@@ -11,14 +11,14 @@ from Master_Thesis_Code.BP_A2C.BP_A2C_agent import A2C_Agent
 parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole environment')
 parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
 parser.add_argument('--network_type', type=str, default='Standard_RNN', help='Type of network to use')
-parser.add_argument('--learning_rate', type=float, default=0.0005, help='Learning rate for the agent')
+parser.add_argument('--learning_rate', type=float, default=0.00005, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
 parser.add_argument('--selection_method', type=str, default='true_range_eval_all_params', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
 parser.add_argument('--entropy_coef', type=float, default=0.001, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.5, help='Value prediction coefficient for the agent')
-parser.add_argument('--num_training_episodes', type=int, default=40000, help='Number of training episodes to run')
+parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of training episodes to run')
 parser.add_argument('--num_evaluation_episodes', type=int, default=10, help='Number of evaluation episodes to run')
 parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
 parser.add_argument('--evaluate_every', type=int, default=10, help='How often to evaluate the agent')
@@ -150,3 +150,8 @@ for i_run in range(num_models):
 
             f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
             f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
+
+        if best_average_all[i_run] == max_reward:
+            break
+
+    print(f"Best average after {best_average_after_all[i_run]} episodes: {best_average_all[i_run]}")

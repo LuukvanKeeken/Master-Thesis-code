@@ -14,7 +14,7 @@ parser.add_argument('--network_type', type=str, default='BP_RNN', help='Type of 
 parser.add_argument('--learning_rate', type=float, default=0.00005, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
 parser.add_argument('--selection_method', type=str, default='true_range_eval_all_params', help='Method to use for selecting the best model')
-parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
+parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
 parser.add_argument('--entropy_coef', type=float, default=0.001, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.5, help='Value prediction coefficient for the agent')
@@ -117,7 +117,7 @@ for i_run in range(num_models):
         elif training_method == "range":
             smoothed_scores, scores, best_average, best_average_after = agent.train_agent_on_range(range_min, range_max)
         elif training_method == "quarter_range":
-            smoothed_scores, scores, best_average, best_average_after = agent.train_agent(randomization_params = randomization_params)
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_discrete(training_eps_per_section, section, randomization_params = randomization_params)
 
         if section == 0:
             best_average_after_all.append(best_average_after)

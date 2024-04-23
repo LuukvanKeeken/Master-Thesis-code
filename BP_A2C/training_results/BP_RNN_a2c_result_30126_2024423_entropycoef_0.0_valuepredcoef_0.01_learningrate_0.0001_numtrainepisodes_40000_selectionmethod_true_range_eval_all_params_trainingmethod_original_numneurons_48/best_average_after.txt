@@ -6,6 +6,7 @@
 5: 200.0 after 9540 (total trained: 9540)
 6: 143.4 after 1410 (total trained: 40000)
 7: 200.0 after 6360 (total trained: 6360)
-8: 124.2 after 2120 (total trained: 3000)
-Average training episodes: 5737.777777777777, std dev: 5227.1083524636315
-Mean average performance: 184.07777777777778, std dev: 27.339583747858576
+8: 200.0 after 12340 (total trained: 12340)
+9: 200.0 after 5600 (total trained: 5600)
+Average training episodes: 6746.0, std dev: 5160.027519306462
+Mean average performance: 193.25, std dev: 16.755491637072307

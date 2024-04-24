@@ -10,6 +10,8 @@ from collections import deque
 import torch
 from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
 from ncps_time_constant_extraction.ncps.wirings import AutoNCP
+from torch.distributions import Categorical
+
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -117,16 +119,25 @@ def randomize_env_params(env, randomization_params):
 
 
 
-def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5):
+def train_agent(env, num_training_episodes, max_steps, agent_net, evaluation_seeds, 
+                i_run, network_type, section, training_eps_per_section, 
+                selection_method = "100 episode average", gamma = 0.99, max_reward = 200, 
+                env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, 
+                randomize_every = 5, value_pred_coef = 0.5, entropy_coef = 0.01):
+    
     best_average = -np.inf
     best_average_after = np.inf
     scores = []
     smoothed_scores = []
     scores_window = deque(maxlen = 100)
 
-    entropy_term = 0
+    training_total_rewards = []
+    training_losses = []
+    validation_total_rewards = []
+    validation_losses = []
 
-    for episode in range(1, num_training_episodes + 1):
+    # for episode in range(1, num_training_episodes + 1):
+    for episode in range(1 + section*training_eps_per_section, (section+1)*training_eps_per_section + 1):
 
         if randomization_params and episode % randomize_every == 0:
             env = gym.make(env_name)
@@ -142,36 +153,27 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
         state = env.reset()
         for steps in range(max_steps):
-            # Feed the state into the network
-            state = torch.from_numpy(state)
-            state = state.unsqueeze(0).to(device)
-            policy_output, value, hidden_state = agent_net(state.float(), hidden_state)
+            state = torch.FloatTensor(state).unsqueeze(0)
+            policy_logits, value, hidden_state = agent_net(state, hidden_state)
+            dist = Categorical(logits=policy_logits)
+            action = dist.sample()
+            log_prob = dist.log_prob(action)
+            entropy = dist.entropy().mean()  # Calculate entropy
+            next_state, reward, done, _ = env.step(action.item())
 
-            # Get distribution over the action space
-            policy_dist = torch.softmax(policy_output, dim = 1)
-            value = value.detach().cpu().numpy()[0, 0]
-            dist = policy_dist.detach().cpu().numpy()
-
-            # Sample an action from the distribution
-            action = np.random.choice(num_outputs, p=np.squeeze(dist))
-            log_prob = torch.log(policy_dist.squeeze(0)[action])
-            entropy = -np.sum(np.mean(dist) * np.log(dist))
-
-            new_state, reward, done, _ = env.step(action)
-
-            score += reward
-
-            rewards.append(reward)
-            values.append(value)
             log_probs.append(log_prob)
-            entropy_term += entropy
-            state = new_state
+            values.append(value)
+            rewards.append(reward)
+            score += reward
+            state = next_state
+            
 
             if done or steps == max_steps - 1:
-                new_state = torch.from_numpy(new_state)
-                new_state = new_state.unsqueeze(0).to(device)
-                _, Qval, hidden_state = agent_net(new_state.float(), hidden_state)
-                Qval = Qval.detach().cpu().numpy()[0, 0]
+                training_total_rewards.append(score)
+                # new_state = torch.from_numpy(new_state)
+                # new_state = new_state.unsqueeze(0).to(device)
+                # _, Qval, hidden_state = agent_net(new_state.float(), hidden_state)
+                # Qval = Qval.detach().cpu().numpy()[0, 0]
 
                 if ((selection_method == "evaluation") and (episode % evaluate_every == 0)):
                     evaluation_performance = np.mean(evaluate_agent_pole_length(agent_net, env_name, num_evaluation_episodes, evaluation_seeds, 1.0))
@@ -181,7 +183,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         best_average = evaluation_performance
                         best_average_after = episode
                         torch.save(agent_net.state_dict(),
-                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                                       result_dir + f'/checkpoint_{network_type}_A2C_{i_run}.pt')
 
                     if best_average == max_reward:
                         print(f'Best {selection_method}: ', best_average, ' reached at episode ',
@@ -206,7 +208,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         best_average = evaluation_performance
                         best_average_after = episode
                         torch.save(agent_net.state_dict(),
-                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                                       result_dir + f'/checkpoint_{network_type}_A2C_{i_run}.pt')
                     
                     if best_average == max_reward:
                         print(f'Best {selection_method}: ', best_average, ' reached at episode ',
@@ -237,7 +239,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         best_average = evaluation_performance
                         best_average_after = episode
                         torch.save(agent_net.state_dict(),
-                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                                       result_dir + f'/checkpoint_{network_type}_A2C_{i_run}.pt')
                         
                     if best_average == max_reward:
                         print(f'Best {selection_method}: ', best_average, ' reached at episode ',
@@ -251,10 +253,9 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
 
                     eps_per_setting = 1
                     evaluation_performance = 0
-                    total_eval_eps = 10
                     current_np_seed = np.random.get_state()
                     current_r_seed = random.getstate()
-                    for i in range(total_eval_eps):
+                    for i in range(num_evaluation_episodes):
                         np.random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
                         random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
                         pole_length_range = random.choice(validation_ranges[0])
@@ -264,19 +265,19 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
                         evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
 
-                    evaluation_performance /= total_eval_eps
+                    evaluation_performance /= num_evaluation_episodes
                     print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
-
+                    validation_total_rewards.append(evaluation_performance)
                     if evaluation_performance >= best_average:
                         best_average = evaluation_performance
                         best_average_after = episode
                         torch.save(agent_net.state_dict(),
-                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                                       result_dir + f'/checkpoint_{network_type}_A2C_{i_run}.pt')
                         
                     if best_average == max_reward:
                         print(f'Best {selection_method}: ', best_average, ' reached at episode ',
                         best_average_after, f'. Model saved in folder {result_dir}')
-                        return smoothed_scores, scores, best_average, best_average_after
+                        return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
                     np.random.set_state(current_np_seed)
                     random.setstate(current_r_seed)
@@ -306,7 +307,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         best_average = evaluation_performance
                         best_average_after = episode
                         torch.save(agent_net.state_dict(),
-                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                                       result_dir + f'/checkpoint_{network_type}_A2C_{i_run}.pt')
                         
                     if best_average == max_reward:
                         print(f'Best {selection_method}: ', best_average, ' reached at episode ',
@@ -338,64 +339,80 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, e
                         
                 break
 
-        # Compute the Q-values
-        Qvals = np.zeros_like(values)
-        for t in reversed(range(len(rewards))):
-            Qval = rewards[t] + gamma * Qval
-            Qvals[t] = Qval
-
-        # Update actor critic
-        values = torch.FloatTensor(values)
-        Qvals = torch.FloatTensor(Qvals)
-        log_probs = torch.stack(log_probs)
-
-        advantage = Qvals - values
-        advantage = advantage.to(device)
-        actor_loss = (-log_probs * advantage).mean()
-        critic_loss = 0.5 * advantage.pow(2).mean()
-        # 0.001 IS A MAGIC NUMBER!!
-        ac_loss = actor_loss + critic_loss + 0.001 * entropy_term
-
-        optimizer.zero_grad()
-        ac_loss.backward()
+        returns = []
+        R = 0
+        for r in rewards[::-1]:
+            R = r + gamma * R
+            returns.insert(0, R)
+        
+        log_probs = torch.cat(log_probs)
+        values = torch.cat(values).squeeze()
+        returns = torch.FloatTensor(returns)
+        
+        advantage = returns - values
+        actor_loss = -(log_probs * advantage.detach()).mean()
+        critic_loss = advantage.pow(2).mean()
+        entropy_loss = entropy.mean()  # Entropy loss
+        total_loss = actor_loss + value_pred_coef * critic_loss - entropy_coef * entropy_loss
+        
+        total_loss.backward()
         optimizer.step()
+        training_losses.append(total_loss.detach())
     
-    print(f'Best {selection_method}: ', best_average, ' reached at episode ',
-              best_average_after, '. Model saved in folder best.')
+    print(f'Best {selection_method} in this section: ', best_average, ' reached at episode ',
+              best_average_after)
     
-    return smoothed_scores, scores, best_average, best_average_after
+    return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
 
 
 parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole environment')
 parser.add_argument('--num_neurons', type=int, default=64, help='Number of neurons in the hidden layer')
-parser.add_argument('--neuron_type', type=str, default='CfC', help='Type of neuron, either "LTC" or "CfC"')
+parser.add_argument('--network_type', type=str, default='CfC', help='Type of neuron, either "LTC" or "CfC"')
 parser.add_argument('--learning_rate', type=float, default=0.00005, help='Learning rate for the agent')
-parser.add_argument('--training_method', type=str, default = "testing_range", help='Method to train the agent')
-parser.add_argument('--selection_method', type=str, default = "testing_ranges_selection", help='Method to select the best model')
+parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
+parser.add_argument('--selection_method', type=str, default = "true_range_eval_all_params", help='Method to select the best model')
 parser.add_argument('--seed', type=int, default=5, help='Seed for the random number generator')
 parser.add_argument('--result_id', type=int, default=-1, help='ID for the result directory')
+parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
+parser.add_argument('--entropy_coef', type=float, default=0.001, help='Entropy coefficient for the agent')
+parser.add_argument('--value_pred_coef', type=float, default=0.5, help='Value prediction coefficient for the agent')
+parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
+parser.add_argument('--num_training_episodes', type=int, default=40000, help='Number of training episodes to run')
+parser.add_argument('--max_reward', type=int, default=200, help='Maximum number of steps to run in the environment')
+parser.add_argument('--num_evaluation_episodes', type=int, default=20, help='Number of evaluation episodes to run')
+parser.add_argument('--evaluate_every', type=int, default=10, help='How often to evaluate the agent')
 
 args = parser.parse_args()
 
 result_id = args.result_id
 num_neurons = args.num_neurons
-neuron_type = args.neuron_type
+network_type = args.network_type
 learning_rate = args.learning_rate
 training_method = args.training_method
 selection_method = args.selection_method
+num_models = args.num_models
+entropy_coef = args.entropy_coef
+value_pred_coef = args.value_pred_coef
+training_eps_per_section = args.training_episodes_per_section
+num_training_episodes = args.num_training_episodes
+max_reward = args.max_reward
+num_evaluation_episodes = args.num_evaluation_episodes
+evaluate_every = args.evaluate_every
+
+if num_training_episodes % training_eps_per_section != 0:
+    raise ValueError("Number of training episodes must be divisible by training episodes per section")
 
 
 # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
-print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, neuron type: {neuron_type}")
+print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, neuron type: {network_type}")
 device = "cpu"
-num_training_eps = 20000
+
 
 gamma = 0.99
 
 mode = "pure"
 tau_sys_extraction = True
-num_models = 10
 sparsity_level = 0.5
 # wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
 wiring = None
@@ -420,8 +437,8 @@ if result_id == -1:
 
 
 d = date.today()
-result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_trainingmethod_{training_method}_numneurons_{num_neurons}'
-if neuron_type == "CfC":
+result_dir = f'Master_Thesis_Code/LTC_A2C/training_results/{network_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_trainingmethod_{training_method}_numneurons_{num_neurons}'
+if network_type == "CfC":
     result_dir += "_mode_" + mode
 if wiring:
     result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
@@ -436,36 +453,70 @@ evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evalua
 training_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/training_seeds.npy')
 
 
+all_training_losses = []
+all_training_total_rewards = []
+all_validation_losses = []
+all_validation_total_rewards = []
 best_average_after_all = []
 best_average_all = []
-for i in range(num_models):
-    print(f"Run # {i}")
-    seed = int(training_seeds[i]+42)
+for i_run in range(num_models):
+    print(f"Run # {i_run}")
+    seed = int(training_seeds[i_run])
 
     torch.manual_seed(seed)
     random.seed(seed)
     
-    if neuron_type == "LTC":
+    if network_type == "LTC":
         agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
-    elif neuron_type == "CfC":
+    elif network_type == "CfC":
         agent_net = CfC_Network(4, num_neurons, 2, seed, mode = mode, wiring = wiring).to(device)
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
-    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_eps, 200, agent_net, 2, evaluation_seeds, i, neuron_type, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params)
-    best_average_after_all.append(best_average_after)
-    best_average_all.append(best_average)
+
+    for section in range(0, int(num_training_episodes/training_eps_per_section)):
+        print(f"Section {section+1} out of {int(num_training_episodes/training_eps_per_section)} sections")
+        smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = train_agent(env, num_training_episodes, max_reward, agent_net, evaluation_seeds, i_run, network_type, section, training_eps_per_section, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, value_pred_coef = value_pred_coef, entropy_coef = entropy_coef, num_evaluation_episodes=num_evaluation_episodes, evaluate_every=evaluate_every)
+    
+        if section == 0:
+            best_average_after_all.append(best_average_after)
+            best_average_all.append(best_average)
+            all_training_losses.append(training_losses)
+            all_training_total_rewards.append(training_total_rewards)
+            all_validation_losses.append(validation_losses)
+            all_validation_total_rewards.append(validation_total_rewards)
+        else:
+            if best_average > best_average_all[i_run]:
+                best_average_after_all[i_run] = best_average_after
+                best_average_all[i_run] = best_average
+            all_training_losses[i_run] = np.concatenate((all_training_losses[i_run], training_losses))
+            all_training_total_rewards[i_run] = np.concatenate((all_training_total_rewards[i_run], training_total_rewards))
+            all_validation_losses[i_run] = np.concatenate((all_validation_losses[i_run], validation_losses))
+            all_validation_total_rewards[i_run] = np.concatenate((all_validation_total_rewards[i_run], validation_total_rewards))
+
+        np.save(f"{result_dir}/all_training_losses_{i_run}.npy", all_training_losses[i_run])
+        np.save(f"{result_dir}/all_training_total_rewards_{i_run}.npy", all_training_total_rewards[i_run])
+        np.save(f"{result_dir}/all_validation_losses_{i_run}.npy", all_validation_losses[i_run])
+        np.save(f"{result_dir}/all_validation_total_rewards_{i_run}.npy", all_validation_total_rewards[i_run])
 
 
-with open(f"{result_dir}/best_average_after.txt", 'w') as f:
-    for i, best_episode in enumerate(best_average_after_all):
-        f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
+        with open(f"{result_dir}/best_average_after.txt", 'w') as f:
+            for i, best_episode in enumerate(best_average_after_all):
+                if best_average_all[i] == max_reward:
+                    f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {best_episode})\n")
+                else:
+                    if i == i_run:
+                        f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {(section+1)*training_eps_per_section})\n")
+                    else:
+                        f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {num_training_episodes})\n")
 
-    f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
-    f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
+            f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
+            f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
 
+        if best_average_all[i_run] == max_reward:
+            break
 
-
+    print(f"Best average after {best_average_after_all[i_run]} episodes: {best_average_all[i_run]}")
 
 
 

@@ -359,7 +359,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, evaluation_see
         optimizer.step()
         training_losses.append(total_loss.detach())
     
-    print(f'Best {selection_method} in this section: ', best_average, ' reached at episode ',
+    print(f'Current best {selection_method}: ', best_average, ' reached at episode ',
               best_average_after)
     
     return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses

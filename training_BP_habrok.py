@@ -54,8 +54,10 @@ range_max = 1.3
 
 if training_method == "quarter_range":
     randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
-else:
+elif training_method == "original":
     randomization_params = None
+else:
+    raise NotImplementedError("Training method not recognized")
 
 if result_id == -1:
     # Create Results Directory
@@ -112,12 +114,16 @@ for i_run in range(num_models):
 
     for section in range(0, int(num_training_episodes/training_eps_per_section)):
         print(f"Section {section+1} out of {int(num_training_episodes/training_eps_per_section)} sections")
-        if training_method == "original":
-            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_discrete(training_eps_per_section, section)
-        elif training_method == "range":
-            smoothed_scores, scores, best_average, best_average_after = agent.train_agent_on_range(range_min, range_max)
-        elif training_method == "quarter_range":
+
+        if section == 0:
             smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_discrete(training_eps_per_section, section, randomization_params = randomization_params)
+        else:
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_discrete(training_eps_per_section, section, randomization_params = randomization_params, best_average=best_average_all[i_run], best_average_after=best_average_after_all[i_run])
+
+        # if training_method == "original":
+        #     smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_discrete(training_eps_per_section, section)
+        # elif training_method == "quarter_range":
+        #     smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_discrete(training_eps_per_section, section, randomization_params = randomization_params)
 
         if section == 0:
             best_average_after_all.append(best_average_after)

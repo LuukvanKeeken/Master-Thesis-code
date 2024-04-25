@@ -295,9 +295,9 @@ class A2C_Agent:
         return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
 
-    def train_agent_discrete(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5):
-        best_average = -np.inf
-        best_average_after = np.inf
+    def train_agent_discrete(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf):
+        # best_average = -np.inf
+        # best_average_after = np.inf
         scores = []
         smoothed_scores = []
         scores_window = deque(maxlen = 100)
@@ -311,8 +311,8 @@ class A2C_Agent:
         for episode in range(1 + section*training_eps_per_section, (section+1)*training_eps_per_section + 1):
             
             if randomization_params and episode % randomize_every == 0:
-                env = gym.make(self.env_name)
-                env = randomize_env_params(env, randomization_params)
+                self.env = gym.make(self.env_name)
+                self.env = randomize_env_params(self.env, randomization_params)
             
             hidden_state = self.agent_net.initialZeroState(self.batch_size)
             hebb_traces = self.agent_net.initialZeroHebb(self.batch_size)
@@ -519,7 +519,7 @@ class A2C_Agent:
             self.optimizer.step()
             training_losses.append(total_loss.detach())
 
-        print(f'Best {self.selection_method} of this section: ', best_average, ' reached at episode ',
+        print(f'Current best {self.selection_method}: ', best_average, ' reached at episode ',
               best_average_after, '.')
         
         return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses

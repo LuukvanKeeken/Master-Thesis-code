@@ -123,10 +123,10 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, evaluation_see
                 i_run, network_type, section, training_eps_per_section, 
                 selection_method = "100 episode average", gamma = 0.99, max_reward = 200, 
                 env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, 
-                randomize_every = 5, value_pred_coef = 0.5, entropy_coef = 0.01):
+                randomize_every = 5, value_pred_coef = 0.5, entropy_coef = 0.01, best_average = -np.inf, best_average_after = np.inf):
     
-    best_average = -np.inf
-    best_average_after = np.inf
+    # best_average = -np.inf
+    # best_average_after = np.inf
     scores = []
     smoothed_scores = []
     scores_window = deque(maxlen = 100)
@@ -476,8 +476,15 @@ for i_run in range(num_models):
 
     for section in range(0, int(num_training_episodes/training_eps_per_section)):
         print(f"Section {section+1} out of {int(num_training_episodes/training_eps_per_section)} sections")
-        smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = train_agent(env, num_training_episodes, max_reward, agent_net, evaluation_seeds, i_run, network_type, section, training_eps_per_section, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, value_pred_coef = value_pred_coef, entropy_coef = entropy_coef, num_evaluation_episodes=num_evaluation_episodes, evaluate_every=evaluate_every)
-    
+        
+        # Make sure that the training takes into account the actual best average
+        # when deciding to save the model, and not just the best performance in
+        # the current section.
+        if section == 0:
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = train_agent(env, num_training_episodes, max_reward, agent_net, evaluation_seeds, i_run, network_type, section, training_eps_per_section, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, value_pred_coef = value_pred_coef, entropy_coef = entropy_coef, num_evaluation_episodes=num_evaluation_episodes, evaluate_every=evaluate_every)
+        else:
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = train_agent(env, num_training_episodes, max_reward, agent_net, evaluation_seeds, i_run, network_type, section, training_eps_per_section, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, value_pred_coef = value_pred_coef, entropy_coef = entropy_coef, num_evaluation_episodes=num_evaluation_episodes, evaluate_every=evaluate_every, best_average=best_average_all[i_run], best_average_after=best_average_after_all[i_run])
+
         if section == 0:
             best_average_after_all.append(best_average_after)
             best_average_all.append(best_average)

@@ -1,0 +1,12 @@
+0: 145.65 after 26980 (total trained: 40000)
+1: 158.85 after 25210 (total trained: 40000)
+2: 151.25 after 19400 (total trained: 40000)
+3: 155.25 after 15680 (total trained: 40000)
+4: 151.05 after 27020 (total trained: 40000)
+5: 144.05 after 14700 (total trained: 40000)
+6: 154.45 after 26310 (total trained: 40000)
+7: 142.05 after 24950 (total trained: 40000)
+8: 149.95 after 23010 (total trained: 40000)
+9: 119.55 after 29910 (total trained: 40000)
+Average training episodes: 23317.0, std dev: 4835.485601260746
+Mean average performance: 147.20999999999998, std dev: 10.465390580384469

@@ -11,6 +11,7 @@ from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
 from Master_Thesis_Code.Neuromodulated_Agent import NeuromodulatedAgent
 from Master_Thesis_Code.backpropamine_A2C import BP_RNetwork
 from ncps_time_constant_extraction.ncps.wirings import AutoNCP
+from torch.distributions import Categorical
 import argparse
 
 
@@ -55,39 +56,39 @@ def evaluate_agent_pole_length(agent_net, env_name, num_episodes, evaluation_see
 
 
 def evaluate_agent_all_params(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier, pole_mass_modifier, force_mag_modifier):
-    # with torch.no_grad():
-    eval_rewards = []
-    env = gym.make(env_name)
-    env.unwrapped.length *= pole_length_modifier
-    env.unwrapped.masspole *= pole_mass_modifier
-    env.unwrapped.force_mag *= force_mag_modifier
-        
-    for i_episode in range(num_episodes):
-        policy_hidden_state = None
-        
-        env.seed(int(evaluation_seeds[i_episode]))
-        
-        state = env.reset()
-        total_reward = 0
-        done = False
-
-        while not done:
-            state = torch.from_numpy(state)
-            state = state.unsqueeze(0).to(device) #This as well?
-            privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
-            policy_output, value, policy_hidden_state = agent_net(state.float(), privileged_info, policy_hidden_state)
+    with torch.no_grad():
+        eval_rewards = []
+        env = gym.make(env_name)
+        env.unwrapped.length *= pole_length_modifier
+        env.unwrapped.masspole *= pole_mass_modifier
+        env.unwrapped.force_mag *= force_mag_modifier
             
-            policy_dist = torch.softmax(policy_output, dim = 1)
+        for i_episode in range(num_episodes):
+            policy_hidden_state = None
             
-            action = torch.argmax(policy_dist)
+            env.seed(int(evaluation_seeds[i_episode]))
             
+            state = env.reset()
+            total_reward = 0
+            done = False
 
-            state, r, done, _ = env.step(action.item())
+            while not done:
+                state = torch.from_numpy(state)
+                state = state.unsqueeze(0).to(device) #This as well?
+                privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
+                policy_output, value, policy_hidden_state = agent_net(state.float(), privileged_info, policy_hidden_state)
+                
+                policy_dist = torch.softmax(policy_output, dim = 1)
+                
+                action = torch.argmax(policy_dist)
+                
 
-            total_reward += r
-        eval_rewards.append(total_reward)
+                state, r, done, _ = env.step(action.item())
 
-    return eval_rewards
+                total_reward += r
+            eval_rewards.append(total_reward)
+
+        return eval_rewards
 
 
 
@@ -147,9 +148,270 @@ def randomize_env_params(env, randomization_params, schedule_factor = None):
     return env
     
 
+def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, 
+                evaluation_seeds, seed, i_run, neuron_type, section, training_eps_per_section,
+                selection_method = "100 episode average", 
+                gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, 
+                evaluate_every = 10, randomization_params = None, randomize_every = 5, 
+                schedule_start = None, schedule_end = None, schedule_type = None, value_pred_coef = 0.5,
+                entropy_coef = 0.01, best_average = -np.inf, best_average_after = np.inf):
+    
+    # best_average = -np.inf
+    # best_average_after = np.inf
+    scores = []
+    smoothed_scores = []
+    scores_window = deque(maxlen = 100)
+
+    entropy_term = 0
+
+    training_total_rewards = []
+    training_losses = []
+    validation_total_rewards = []
+    validation_losses = []
+
+    # for episode in range(1, num_training_episodes + 1):
+    for episode in range(1 + section*training_eps_per_section, (section+1)*training_eps_per_section + 1):
+        
+        if randomization_params and episode % randomize_every == 0:
+            env = gym.make(env_name)
+            
+            if schedule_type == 'linear':
+                schedule_factor = (episode/num_training_episodes) * (schedule_end - schedule_start) + schedule_start
+                env = randomize_env_params(env, randomization_params, schedule_factor=schedule_factor)
+            else:
+                env = randomize_env_params(env, randomization_params)
+
+        policy_hidden_state = None
+
+        score = 0
+
+        log_probs = []
+        values = []
+        rewards = []
+
+        state = env.reset()
+        for steps in range(max_steps):
+            state = torch.FloatTensor(state).unsqueeze(0)
+            privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
+            policy_logits, value, policy_hidden_state = agent_net(state.float(), privileged_info, policy_hidden_state)
+            dist = Categorical(logits=policy_logits)
+            action = dist.sample()
+            log_prob = dist.log_prob(action)
+            entropy = dist.entropy().mean()
+            next_state, reward, done, _ = env.step(action.item())
+
+            log_probs.append(log_prob)
+            values.append(value)
+            rewards.append(reward)
+            score += reward
+            state = next_state
+            
+            
+            
+
+            if done or steps == max_steps - 1:
+                training_total_rewards.append(score)
+                # new_state = torch.from_numpy(new_state)
+                # new_state = new_state.unsqueeze(0).to(device)
+                # privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
+                # _, Qval, policy_hidden_state = agent_net(new_state.float(), privileged_info, policy_hidden_state)
+                # Qval = Qval.detach().cpu().numpy()[0, 0]
+
+                
+                if ((selection_method == "evaluation") and (episode % evaluate_every == 0)):
+                    evaluation_performance = np.mean(evaluate_agent_pole_length(agent_net, env_name, num_evaluation_episodes, evaluation_seeds, 1.0))
+                    print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                    if evaluation_performance >= best_average:
+                        best_average = evaluation_performance
+                        best_average_after = episode
+                        torch.save(agent_net.state_dict(),
+                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+
+                    if best_average == max_reward:
+                        print(f'Best {selection_method}: ', best_average, ' reached at episode ',
+                        best_average_after, f'. Model saved in folder {result_dir}')
+                        return smoothed_scores, scores, best_average, best_average_after
+
+                elif ((selection_method == "range_evaluation") and (episode % evaluate_every == 0)):
+                    pole_length_mods = [0.1, 0.5, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 17.0, 20.0]
+                    # pole_length_mods = [0.55, 10.5]
+                    eps_per_setting = 1
+                    evaluation_performance = 0
+                    for i, mod in enumerate(pole_length_mods):
+                        # Get performance over one episode with this pole length modifier, 
+                        # skip over the first i evaluation seeds so not all episodes have
+                        # the same seed.
+                        evaluation_performance += np.mean(evaluate_agent_pole_length(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], mod))
+
+                    evaluation_performance /= len(pole_length_mods)
+                    print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                    if evaluation_performance >= best_average:
+                        best_average = evaluation_performance
+                        best_average_after = episode
+                        torch.save(agent_net.state_dict(),
+                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                    
+                    if best_average == max_reward:
+                        print(f'Best {selection_method}: ', best_average, ' reached at episode ',
+                        best_average_after, f'. Model saved in folder {result_dir}')
+                        return smoothed_scores, scores, best_average, best_average_after
+
+                elif ((selection_method == "range_evaluation_all_params") and (episode % evaluate_every == 0)):
+                    pole_length_mods = [0.55, 10.5]
+                    pole_mass_mods = [3.0]
+                    force_mag_mods = [0.6, 3.5]
+
+                    eps_per_setting = 1
+                    evaluation_performance = 0
+                    total_eval_eps = 10
+                    for i in range(total_eval_eps):
+                        
+                        pole_length_mod = np.random.choice(pole_length_mods)
+                        pole_mass_mod = np.random.choice(pole_mass_mods)
+                        force_mag_mod = np.random.choice(force_mag_mods)
+                        evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                    evaluation_performance /= total_eval_eps
+                    print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                    if evaluation_performance >= best_average:
+                        best_average = evaluation_performance
+                        best_average_after = episode
+                        torch.save(agent_net.state_dict(),
+                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                        
+                    if best_average == max_reward:
+                        print(f'Best {selection_method}: ', best_average, ' reached at episode ',
+                        best_average_after, f'. Model saved in folder {result_dir}')
+                        return smoothed_scores, scores, best_average, best_average_after
+                    
+                elif ((selection_method == "true_range_eval_all_params") and (episode % evaluate_every == 0)):
+                    validation_ranges = [[(0.55, 0.775), (5.75, 10.5)], [(2.0, 3.0)], [(0.6, 0.8), (2.25, 3.5)]]
+
+                    eps_per_setting = 1
+                    evaluation_performance = 0
+                    current_np_seed = np.random.get_state()
+                    current_r_seed = random.getstate()
+                    for i in range(num_evaluation_episodes):
+                        np.random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
+                        random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
+                        pole_length_range = random.choice(validation_ranges[0])
+                        pole_length_mod = np.random.uniform(pole_length_range[0], pole_length_range[1])
+                        pole_mass_mod = np.random.uniform(validation_ranges[1][0][0], validation_ranges[1][0][1])
+                        force_mag_range = random.choice(validation_ranges[2])
+                        force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
+                        evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                    evaluation_performance /= num_evaluation_episodes
+                    print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+                    validation_total_rewards
+                    if evaluation_performance >= best_average:
+                        best_average = evaluation_performance
+                        best_average_after = episode
+                        torch.save(agent_net.state_dict(),
+                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                        
+                    if best_average == max_reward:
+                        print(f'Best {selection_method}: ', best_average, ' reached at episode ',
+                        best_average_after, f'. Model saved in folder {result_dir}')
+                        return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+                    np.random.set_state(current_np_seed)
+                    random.setstate(current_r_seed)
+                
+
+                elif ((selection_method == "testing_ranges_selection") and (episode % evaluate_every == 0)):
+                    validation_ranges = [[(0.1, 0.55), (10.5, 20.0)], [(5.0, 13.0)], [(0.2, 0.6), (3.5, 6.0)]]
+
+                    eps_per_setting = 1
+                    evaluation_performance = 0
+                    total_eval_eps = 10
+                    current_np_seed = np.random.get_state()
+                    current_r_seed = random.getstate()
+                    for i in range(total_eval_eps):
+                        np.random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
+                        random.seed((evaluation_seeds[i+eps_per_setting-1] + seed)%(2**32))
+                        pole_length_range = random.choice(validation_ranges[0])
+                        pole_length_mod = np.random.uniform(pole_length_range[0], pole_length_range[1])
+                        pole_mass_mod = np.random.uniform(validation_ranges[1][0][0], validation_ranges[1][0][1])
+                        force_mag_range = random.choice(validation_ranges[2])
+                        force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
+                        evaluation_performance += np.mean(evaluate_agent_all_params(agent_net, env_name, eps_per_setting, evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                    evaluation_performance /= total_eval_eps
+                    print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                    if evaluation_performance >= best_average:
+                        best_average = evaluation_performance
+                        best_average_after = episode
+                        torch.save(agent_net.state_dict(),
+                                       result_dir + f'/checkpoint_{neuron_type}_A2C_{i_run}.pt')
+                        
+                    if best_average == max_reward:
+                        print(f'Best {selection_method}: ', best_average, ' reached at episode ',
+                        best_average_after, f'. Model saved in folder {result_dir}')
+                        return smoothed_scores, scores, best_average, best_average_after
+
+                    np.random.set_state(current_np_seed)
+                    random.setstate(current_r_seed)
 
 
-def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, seed, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5, schedule_start = None, schedule_end = None, schedule_type = None):
+
+                elif (selection_method == "100 episode average"):
+                    scores_window.append(score)
+                    scores.append(score)
+                    smoothed_scores.append(np.mean(scores_window))
+
+                    if smoothed_scores[-1] >= best_average:
+                        best_average = smoothed_scores[-1]
+                        best_average_after = episode
+                        # SAVE MODEL HERE
+                    
+                    print("Episode {}\tAverage Score: {:.2f}".format(episode, np.mean(scores_window)), end='\r')
+
+                    if episode % 100 == 0:
+                        print("\rEpisode {}\tAverage Score: {:.2f}".
+                            format(episode, np.mean(scores_window)))
+                        
+                break
+
+        returns = []
+        R = 0
+        for r in rewards[::-1]:
+            R = r + gamma * R
+            returns.insert(0, R)
+        
+        log_probs = torch.cat(log_probs)
+        values = torch.cat(values).squeeze()
+        returns = torch.FloatTensor(returns)
+        
+        advantage = returns - values
+        actor_loss = -(log_probs * advantage.detach()).mean()
+        critic_loss = advantage.pow(2).mean()
+        entropy_loss = entropy.mean()  # Entropy loss
+        total_loss = actor_loss + value_pred_coef * critic_loss - entropy_coef * entropy_loss
+
+        optimizer.zero_grad()
+        total_loss.backward()
+        # torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), 50)
+        # for name, param in self.agent_net.named_parameters():
+        #     if param.grad is None:
+        #         print(f"None gradient for {name}")
+        #     else:
+        #         print(f"Gradient for {name}")
+        optimizer.step()
+        training_losses.append(total_loss.detach())
+    
+    print(f'Current best {selection_method}: ', best_average, ' reached at episode ',
+              best_average_after)
+    
+    return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+
+
+def train_agent_old(env, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, seed, i_run, neuron_type, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "CartPole-v0", num_evaluation_episodes = 10, evaluate_every = 10, randomization_params = None, randomize_every = 5, schedule_start = None, schedule_end = None, schedule_type = None):
     best_average = -np.inf
     best_average_after = np.inf
     scores = []
@@ -407,11 +669,12 @@ parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole
 parser.add_argument('--num_neurons', type=int, default=64, help='Number of neurons in the hidden layer')
 parser.add_argument('--randomization_factor', type=float, default=0.5, help='Factor to randomize the environment parameters')
 parser.add_argument('--learning_rate', type=float, default=0.0001, help='Learning rate for the agent')
-parser.add_argument('--training_method', type=str, default = "testing_range", help='Method to train the agent')
+parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
 parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [3, 192, 96], help='Dimensions of the neuromodulation network, without output layer')
-parser.add_argument('--selection_method', type=str, default = "testing_ranges_selection", help='Method to select the best model')
+parser.add_argument('--selection_method', type=str, default = "true_range_eval_all_params", help='Method to select the best model')
 parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
-parser.add_argument('--num_training_episodes', type=int, default=20000, help='Number of episodes to train the agent')
+parser.add_argument('--num_training_episodes', type=int, default=400, help='Number of episodes to train the agent')
+parser.add_argument('--training_episodes_per_section', type=int, default=100, help='Number of training episodes to run per section')
 parser.add_argument('--encoder_output_activation', type=str, default="relu", help="Activation function of the encoder's output layer")
 parser.add_argument('--encoder_hidden_activation', type=str, default="relu", help="Activation function of the encoder's hidden layers")
 parser.add_argument('--result_id', type=int, default=-1, help='ID of the result folder')
@@ -420,6 +683,11 @@ parser.add_argument('--schedule_start', type=float, default=0.00001, help="The s
 parser.add_argument('--schedule_end', type=float, default=1.0, help="The end value of the schedule factor")
 parser.add_argument('--schedule_type', type=str, default='None', help="The type of schedule to use for the schedule factor")
 parser.add_argument('--neuron_type', type=str, default='CfC', help="The type of neuron to use")
+parser.add_argument('--value_pred_coef', type=float, default=0.5, help="The coefficient for the value prediction loss")
+parser.add_argument('--entropy_coef', type=float, default=0.01, help="The coefficient for the entropy loss")
+parser.add_argument('--num_evaluation_episodes', type=int, default=20, help='Number of evaluation episodes to run')
+parser.add_argument('--evaluate_every', type=int, default=10, help='How often to evaluate the agent')
+parser.add_argument('--max_reward', type=int, default=200, help='Maximum number of steps to run in the environment')
 args = parser.parse_args()
 
 
@@ -438,6 +706,12 @@ schedule_start = args.schedule_start
 schedule_end = args.schedule_end
 schedule_type = args.schedule_type
 neuron_type = args.neuron_type
+value_pred_coef = args.value_pred_coef
+entropy_coef = args.entropy_coef
+num_evaluation_episodes = args.num_evaluation_episodes
+evaluate_every = args.evaluate_every
+training_eps_per_section = args.training_episodes_per_section
+max_reward = args.max_reward
 if args.encoder_output_activation == "identity":
     encoder_output_activation = torch.nn.Identity()
 elif args.encoder_output_activation == "relu":
@@ -454,7 +728,8 @@ elif args.encoder_hidden_activation == "tanh":
 else:
     raise NotImplementedError
 
-
+if num_training_episodes % training_eps_per_section != 0:
+    raise ValueError("Number of training episodes must be divisible by training episodes per section")
 
 # print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
 print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, rand factor: {factor}")
@@ -513,11 +788,15 @@ evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evalua
 training_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/training_seeds.npy')
 
 
+all_training_losses = []
+all_training_total_rewards = []
+all_validation_losses = []
+all_validation_total_rewards = []
 best_average_after_all = []
 best_average_all = []
-for i in range(num_models):
-    print(f"Run # {i}")
-    seed = int(training_seeds[i]+42)
+for i_run in range(num_models):
+    print(f"Run # {i_run}")
+    seed = int(training_seeds[i_run])
 
     torch.manual_seed(seed)
     random.seed(seed)
@@ -556,15 +835,54 @@ for i in range(num_models):
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
-    smoothed_scores, scores, best_average, best_average_after = train_agent(env, num_training_episodes, 200, agent_net, 2, evaluation_seeds, seed, i, neuron_type, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, schedule_start = schedule_start, schedule_end=schedule_end, schedule_type=schedule_type)
-    best_average_after_all.append(best_average_after)
-    best_average_all.append(best_average)
+    for section in range(0, int(num_training_episodes/training_eps_per_section)):
+        print(f"Section {section+1} out of {int(num_training_episodes/training_eps_per_section)} sections")
+
+        # Make sure that the training takes into account the actual best average
+        # when deciding to save the model, and not just the best performance in
+        # the current section.
+        if section == 0:
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = train_agent(env, num_training_episodes, 200, agent_net, 2, evaluation_seeds, seed, i_run, neuron_type, section, training_eps_per_section, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, schedule_start = schedule_start, schedule_end=schedule_end, schedule_type=schedule_type, value_pred_coef = value_pred_coef, entropy_coef = entropy_coef, num_evaluation_episodes=num_evaluation_episodes, evaluate_every=evaluate_every)
+            best_average_after_all.append(best_average_after)
+            best_average_all.append(best_average)
+            all_training_losses.append(training_losses)
+            all_training_total_rewards.append(training_total_rewards)
+            all_validation_losses.append(validation_losses)
+            all_validation_total_rewards.append(validation_total_rewards)
+        
+        else:
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = train_agent(env, num_training_episodes, 200, agent_net, 2, evaluation_seeds, seed, i_run, neuron_type, section, training_eps_per_section, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, schedule_start = schedule_start, schedule_end=schedule_end, schedule_type=schedule_type, value_pred_coef = value_pred_coef, entropy_coef = entropy_coef, num_evaluation_episodes=num_evaluation_episodes, evaluate_every=evaluate_every, best_average=best_average_all[i_run], best_average_after=best_average_after_all[i_run])
+            if best_average > best_average_all[i_run]:
+                best_average_after_all[i_run] = best_average_after
+                best_average_all[i_run] = best_average
+            all_training_losses[i_run] = np.concatenate((all_training_losses[i_run], training_losses))
+            all_training_total_rewards[i_run] = np.concatenate((all_training_total_rewards[i_run], training_total_rewards))
+            all_validation_losses[i_run] = np.concatenate((all_validation_losses[i_run], validation_losses))
+            all_validation_total_rewards[i_run] = np.concatenate((all_validation_total_rewards[i_run], validation_total_rewards))
+
+        np.save(f"{result_dir}/all_training_losses_{i_run}.npy", all_training_losses[i_run])
+        np.save(f"{result_dir}/all_training_total_rewards_{i_run}.npy", all_training_total_rewards[i_run])
+        np.save(f"{result_dir}/all_validation_losses_{i_run}.npy", all_validation_losses[i_run])
+        np.save(f"{result_dir}/all_validation_total_rewards_{i_run}.npy", all_validation_total_rewards[i_run])
+
+        with open(f"{result_dir}/best_average_after.txt", 'w') as f:
+            for i, best_episode in enumerate(best_average_after_all):
+                if best_average_all[i] == max_reward:
+                    f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {best_episode})\n")
+                else:
+                    if i == i_run:
+                        f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {(section+1)*training_eps_per_section})\n")
+                    else:
+                        f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {num_training_episodes})\n")
+
+            f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
+            f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
+
+        if best_average_all[i_run] == max_reward:
+            break
+
+    print(f"Best average after {best_average_after_all[i_run]} episodes: {best_average_all[i_run]}")
 
 
-with open(f"{result_dir}/best_average_after.txt", 'w') as f:
-    for i, best_episode in enumerate(best_average_after_all):
-        f.write(f"{i}: {best_average_all[i]} after {best_episode}\n")
 
-    f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
-    f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
 

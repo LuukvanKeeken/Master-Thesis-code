@@ -406,7 +406,7 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
 
 
 parser = argparse.ArgumentParser(description='Train adaptation module for neuromodulated CfC')
-parser.add_argument('--neuron_type', type=str, default='BP', help='Type of neuron to train')
+parser.add_argument('--neuron_type', type=str, default='CfC', help='Type of neuron to train')
 parser.add_argument('--device', type=str, default='cpu', help='Device to train on')
 parser.add_argument('--state_dims', type=int, default=4, help='Number of state dimensions')
 parser.add_argument('--action_dims', type=int, default=1, help='Number of action dimensions')

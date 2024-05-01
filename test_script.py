@@ -10,7 +10,7 @@ id = args.id
 group = args.group
 
 
-with open(f"Master_Thesis_Code/LTC_A2C/all_jobs{group}/job_{id}.txt", "w") as file:
+with open(f"Master_Thesis_Code/LTC_A2C/all_jobs_{group}/job_{id}.txt", "w") as file:
     file.write(f"This is text for job {id} in group {group}")
 
 

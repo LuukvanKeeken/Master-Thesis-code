@@ -1,4 +1,4 @@
-#!/bin/bash/
+#!/bin/bash
 
 chmod +x all_jobs_1.sh
 chmod +x status_checker_1.sh

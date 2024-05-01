@@ -6,6 +6,6 @@ module load Python/3.8.16-GCCcore-11.2.0
 
 source $HOME/venvs/LTC/bin/activate
 
-python3 -m Master_Thesis_Code.test_script --id 1
+python3 -m Master_Thesis_Code.test_script --id 1 --group 1
 
 deactivate

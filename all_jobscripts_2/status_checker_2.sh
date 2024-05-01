@@ -14,6 +14,7 @@ is_job_running() {
     [[ $status != "COMPLETED" && $status != "FAILED" && $status != "CANCELLED" && $status != "UNKNOWN" ]]
 }
 
+
 # Main loop
 while true; do
     # Assume all jobs are done until proven otherwise

@@ -11,9 +11,9 @@ value_coefs = [0.0001, 0.01, 0.5, 1.0]
 training_method = "quarter_range"
 num_models = 10
 all_results = []
-results_id = 30500
-date = 2024425
-num_train_eps = 40000
+results_id = 40000
+date = 202452
+num_train_eps = 25000
 missing_ids = []
 fine_ids = []
 for neuron_type in types:

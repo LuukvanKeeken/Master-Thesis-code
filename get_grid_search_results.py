@@ -45,7 +45,7 @@ for neuron_type in types:
 
 
                     try:
-                        with open(f"Master_Thesis_Code/{top_dir}/1_CfC_range_48/{results_dir}/best_average_after.txt", "r") as file:
+                        with open(f"Master_Thesis_Code/{top_dir}/2_BP_and_RNN_original_48/{results_dir}/best_average_after.txt", "r") as file:
                             for i in range(num_models):
                                 file.readline()
 

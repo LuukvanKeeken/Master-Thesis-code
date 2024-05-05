@@ -2,16 +2,17 @@ import os
 import numpy as np
 
 nums_neurons = [48]
-types = ["CfC"]
-learning_rates = [0.001, 0.0001, 0.00001,  0.000001]
+types = ["Standard_RNN", "BP_RNN"]
+learning_rates = [0.001, 0.00005, 0.000001]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
 value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
 
-training_method = "quarter_range"
+
+training_method = "original"
 num_models = 10
 all_results = []
-results_id = 40000
+results_id = 41000
 date = 202452
 num_train_eps = 25000
 missing_ids = []

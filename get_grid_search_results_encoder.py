@@ -31,8 +31,9 @@ for num_neurons in nums_neurons:
                             # results_dir = f'LTC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_{num_neurons}_tausysextraction_True'
                             results_dir = f'LTC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_selectiomethod_true_range_eval_all_params_trainingmethod_original_numneurons_{num_neurons}_tausysextraction_True'
                         elif neuron_type == "BP":
-                            # results_dir = f"BP_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{enc_func}_neuromod_network_dims_{'_'.join(map(str, neuromodnet))}_{num_neurons}"
-                            results_dir = f"BP_RNN_a2c_result_{results_id}_{date}_entropycoef_0.01_valuepredcoef_0.1_learningrate_{learning_rate}_numtrainepisodes_20000_selectionmethod_true_range_eval_all_params_trainingmethod_original_numneurons_{num_neurons}"
+                            # BP_a2c_result_42000_202452_learningrate_0.001_numneurons_48_encoutact_relu_neuromod_network_dims_3_256_128_48
+                            results_dir = f"BP_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{func}_neuromod_network_dims_{'_'.join(map(str, neuromodnet))}_{num_neurons}"
+
                         elif neuron_type == "StandardRNN":
                             results_dir = f"Standard_RNN_a2c_result_{results_id}_{date}_entropycoef_0.01_valuepredcoef_0.1_learningrate_{learning_rate}_numtrainepisodes_20000_selectionmethod_true_range_eval_all_params_trainingmethod_original_numneurons_{num_neurons}"
                         elif neuron_type == "StandardMLP":

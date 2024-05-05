@@ -34,12 +34,10 @@ for neuron_type in types:
                     elif neuron_type == "LTC":
                         # results_dir = f'LTC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_{num_neurons}_tausysextraction_True'
                         results_dir = f'LTC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_selectiomethod_true_range_eval_all_params_trainingmethod_original_numneurons_{num_neurons}_tausysextraction_True'
-                    elif neuron_type == "BP":
-                        results_dir = f'BP_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_quarter_range_numneurons_{num_neurons}'
-                    
-                    elif neuron_type == "StandardRNN":
-                        results_dir = f'Standard_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_quarter_range_numneurons_{num_neurons}'
-                    
+                    elif neuron_type == "BP_RNN":
+                        results_dir = f'BP_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_{training_method}_numneurons_{num_neurons}'
+                    elif neuron_type == "Standard_RNN":
+                        results_dir = f"Standard_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_original_numneurons_{num_neurons}"
                     elif neuron_type == "StandardMLP":
                         results_dir = f"Standard_MLP_a2c_result_{results_id}_{date}_entropycoef_0.01_valuepredcoef_0.1_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_original_numneurons_{num_neurons}"
 
@@ -56,7 +54,7 @@ for neuron_type in types:
                             all_results.append((results_id, neuron_type, num_neurons, learning_rate, entropy_coef, value_coef, float(last_line[3].strip(',')), float(last_line[6])))
                             fine_ids.append(results_id)
                     except:
-                        files = os.listdir(f"Master_Thesis_Code/{top_dir}/1_CfC_range_48/{results_dir}")
+                        files = os.listdir(f"Master_Thesis_Code/{top_dir}/2_BP_and_RNN_original_48/{results_dir}")
                         num_files = len(files)
                         if num_files <= 5:
                             print(f"Could not find {results_dir}, {num_files} models")

@@ -2,18 +2,18 @@ import os
 import numpy as np
 
 nums_neurons = [48]
-types = ["Standard_RNN", "BP_RNN"]
+types = ["Standard_MLP"]
 learning_rates = [0.001, 0.00005, 0.000001]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
 value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
 
 
-training_method = "original"
+training_method = "quarter_range"
 num_models = 10
 all_results = []
-results_id = 41000
-date = 202452
+results_id = 44000
+date = 202453
 num_train_eps = 25000
 missing_ids = []
 fine_ids = []
@@ -43,7 +43,7 @@ for neuron_type in types:
 
 
                     try:
-                        with open(f"Master_Thesis_Code/{top_dir}/2_BP_and_RNN_original_48/{results_dir}/best_average_after.txt", "r") as file:
+                        with open(f"Master_Thesis_Code/{top_dir}/5_MLP_range_48/{results_dir}/best_average_after.txt", "r") as file:
                             for i in range(num_models):
                                 file.readline()
 
@@ -54,7 +54,7 @@ for neuron_type in types:
                             all_results.append((results_id, neuron_type, num_neurons, learning_rate, entropy_coef, value_coef, float(last_line[3].strip(',')), float(last_line[6])))
                             fine_ids.append(results_id)
                     except:
-                        files = os.listdir(f"Master_Thesis_Code/{top_dir}/2_BP_and_RNN_original_48/{results_dir}")
+                        files = os.listdir(f"Master_Thesis_Code/{top_dir}/5_MLP_range_48/{results_dir}")
                         num_files = len(files)
                         if num_files <= 5:
                             print(f"Could not find {results_dir}, {num_files} models")

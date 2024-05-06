@@ -442,7 +442,7 @@ for neuron_type in types:
                         elif neuron_type == "StandardRNN":
                             agent_net = Standard_RNetwork(4, num_neurons, 2, seed).to(device)
                         elif neuron_type == "Standard_MLP":
-                            agent_net = Standard_FFNetwork(4, num_neurons, 2, seed).to(device)
+                            agent_net = Standard_FFNetwork(4, num_neurons, num_neurons, 2, seed).to(device)
 
 
 

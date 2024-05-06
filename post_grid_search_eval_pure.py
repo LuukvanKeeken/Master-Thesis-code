@@ -290,14 +290,17 @@ for neuron_type in types:
                     n_evaluations = 100
                     evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
+                    # Standard_MLP_a2c_result_44000_202453_entropycoef_0.0_valuepredcoef_0.0001_learningrate_0.001_numtrainepisodes_25000_selectionmethod_true_range_eval_all_params_trainingmethod_quarter_range_numneurons_48
                     result_dir = f'{model_signifier}_a2c_result_' + str(result_id) + f'_{str(d)}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_40000_selectionmethod_true_range_eval_all_params_trainingmethod_quarter_range_numneurons_{num_neurons}'
+                    
+                    # result_dir = f'{model_signifier}_a2c_result_' + str(result_id) + f'_{str(d)}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_40000_selectionmethod_true_range_eval_all_params_trainingmethod_quarter_range_numneurons_{num_neurons}'
                     
                     # result_dir  = f'{neuron_type}_' + str(result_id) + f'_{str(d)}_lr_{learning_rate}_nn_{num_neurons}_encoutact_relu_mode_neuromodulated_neuromod_network_dims_{"_".join(map(str, neuromod_network_dims[:-1]))}'
                     # result_dir = f'{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'
-                    if neuron_type == "CfC":
-                        result_dir += "_mode_" + mode
-                    if wiring:
-                        result_dir += "_wiring_" + "AutoNCP"
+                    # if neuron_type == "CfC":
+                    #     result_dir += "_mode_" + mode
+                    # if wiring:
+                    #     result_dir += "_wiring_" + "AutoNCP"
                     # if randomization_params:
                     #     result_dir += "_randomization_params_" + str(randomization_params)
 

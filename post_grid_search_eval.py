@@ -195,10 +195,10 @@ learning_rates = [0.001, 0.0001, 0.00001]
 neuromod_nets = [[3, 256, 128], [3, 192, 96], [3, 128, 80]]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
 value_coefs = [0.0001, 0.01, 0.5, 1.0]
-activation_functions = ["tanh"]
+activation_functions = ["relu"]
 
 
-result_id = 46000
+result_id = 49000
 
 
 all_results = []
@@ -215,10 +215,12 @@ for num_neurons in nums_neurons:
             for entropy_coef in entropy_coefs:
                 for value_coef in value_coefs:
                     for func in activation_functions:
-                        if result_id not in [46000, 46004, 46012, 46020, 46024, 46028, 46032, 46036, 46040, 46044, 46048, 46052, 46056, 46060, 46064, 46068, 46072, 46076, 46080, 46084, 46088, 46092]:
+                        if result_id not in [49012, 49044, 49048, 49052, 49056, 49060, 49064, 49068, 49072, 49076, 49080, 49084, 49088, 49092]:
                             result_id += 1
                             continue
                         
+                        if result_id >= 49048:
+                            d = 202454
                         
 
                         print(f"num_neurons: {num_neurons}, learning rate: {learning_rate}, neuromod network: {neuromod_network}")
@@ -228,7 +230,7 @@ for num_neurons in nums_neurons:
                         
                         # num_neurons = 32
                         neuron_type = "CfC"
-                        mode = "neuromodulated"
+                        mode = "only_neuromodulated"
                         neuromod_network_dims = neuromod_network.copy()
                         neuromod_network_dims.append(num_neurons)
                         # neuromod_network_dims = [3, 256, 128, num_neurons]
@@ -265,16 +267,16 @@ for num_neurons in nums_neurons:
 
                         
 
-                        weights_0 = torch.load(f'Master_Thesis_Code/LTC_A2C/7_NMCfC_tanh_48/{result_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
-                        weights_1 = torch.load(f'Master_Thesis_Code/LTC_A2C/7_NMCfC_tanh_48/{result_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
-                        weights_2 = torch.load(f'Master_Thesis_Code/LTC_A2C/7_NMCfC_tanh_48/{result_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
-                        weights_3 = torch.load(f'Master_Thesis_Code/LTC_A2C/7_NMCfC_tanh_48/{result_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
-                        weights_4 = torch.load(f'Master_Thesis_Code/LTC_A2C/7_NMCfC_tanh_48/{result_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
-                        weights_5 = torch.load(f'Master_Thesis_Code/LTC_A2C/7_NMCfC_tanh_48/{result_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
-                        weights_6 = torch.load(f'Master_Thesis_Code/LTC_A2C/7_NMCfC_tanh_48/{result_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
-                        weights_7 = torch.load(f'Master_Thesis_Code/LTC_A2C/7_NMCfC_tanh_48/{result_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
-                        weights_8 = torch.load(f'Master_Thesis_Code/LTC_A2C/7_NMCfC_tanh_48/{result_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
-                        weights_9 = torch.load(f'Master_Thesis_Code/LTC_A2C/7_NMCfC_tanh_48/{result_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
+                        weights_0 = torch.load(f'Master_Thesis_Code/LTC_A2C/10_ONMCfC_relu_48/{result_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
+                        weights_1 = torch.load(f'Master_Thesis_Code/LTC_A2C/10_ONMCfC_relu_48/{result_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
+                        weights_2 = torch.load(f'Master_Thesis_Code/LTC_A2C/10_ONMCfC_relu_48/{result_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
+                        weights_3 = torch.load(f'Master_Thesis_Code/LTC_A2C/10_ONMCfC_relu_48/{result_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
+                        weights_4 = torch.load(f'Master_Thesis_Code/LTC_A2C/10_ONMCfC_relu_48/{result_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
+                        weights_5 = torch.load(f'Master_Thesis_Code/LTC_A2C/10_ONMCfC_relu_48/{result_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
+                        weights_6 = torch.load(f'Master_Thesis_Code/LTC_A2C/10_ONMCfC_relu_48/{result_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
+                        weights_7 = torch.load(f'Master_Thesis_Code/LTC_A2C/10_ONMCfC_relu_48/{result_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
+                        weights_8 = torch.load(f'Master_Thesis_Code/LTC_A2C/10_ONMCfC_relu_48/{result_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
+                        weights_9 = torch.load(f'Master_Thesis_Code/LTC_A2C/10_ONMCfC_relu_48/{result_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
                         weights = [weights_0, weights_1, weights_2, weights_3, weights_4, weights_5, weights_6, weights_7, weights_8, weights_9]
 
 

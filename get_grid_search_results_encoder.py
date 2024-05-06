@@ -42,7 +42,7 @@ for num_neurons in nums_neurons:
 
 
                         try:
-                            with open(f"Master_Thesis_Code/BP_A2C/3_NMBP_relu_48/{results_dir}/best_average_after.txt", "r") as file:
+                            with open(f"Master_Thesis_Code/BP_A2C/7_NMCfC_tanh_48/{results_dir}/best_average_after.txt", "r") as file:
                                 for i in range(num_models):
                                     file.readline()
 

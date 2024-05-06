@@ -24,7 +24,7 @@ parser.add_argument('--continuous_actions', type=bool, default=True, help='Wheth
 parser.add_argument('--entropy_coef', type=float, default=0.001, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.01, help='Value prediction coefficient for the agent')
 parser.add_argument('--num_training_episodes', type=int, default=100000, help='Number of training episodes to run')
-parser.add_argument('--num_evaluation_episodes', type=int, default=20, help='Number of evaluation episodes to run')
+parser.add_argument('--num_evaluation_episodes', type=int, default=10, help='Number of evaluation episodes to run')
 parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
 parser.add_argument('--magic_number', type=int, default=2, help='Magic number to use for the results directory')
 parser.add_argument('--evaluate_every', type=int, default=100, help='How often to evaluate the agent')
@@ -67,6 +67,7 @@ range_min = 0.7
 range_max = 1.3
 
 if training_method == "quarter_range":
+    raise NotImplementedError("These values don't make sense for the BipedalWalker environment")
     randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
 else:
     randomization_params = None
@@ -104,7 +105,7 @@ best_average_all = []
 start_time = time.time()
 for i_run in range(num_models):
     print("Run # {}".format(i_run))
-    seed = int(training_seeds[i_run]+magic_number)
+    seed = int(training_seeds[i_run])
     
     torch.manual_seed(seed)
     random.seed(seed)

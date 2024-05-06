@@ -12,7 +12,7 @@ from Master_Thesis_Code.BP_A2C.BP_A2C_agent import A2C_Agent
 parser = argparse.ArgumentParser(description='Train an A2C agent on the BipedalWalker environment')
 parser.add_argument('--num_neurons', type=int, default=96, help='Number of neurons in the hidden layer')
 parser.add_argument('--network_type', type=str, default='Standard_RNN', help='Type of network to use')
-parser.add_argument('--learning_rate', type=float, default=0.000001, help='Learning rate for the agent')
+parser.add_argument('--learning_rate', type=float, default=0.00001, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=1, help='Number of models to train')
 parser.add_argument('--selection_method', type=str, default='exp_BW_validation', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
@@ -21,13 +21,13 @@ parser.add_argument('--env_name', type=str, default='BipedalWalker-v3', help='Na
 parser.add_argument('--input_dims', type=int, default=24, help='Number of input dimensions to the network')
 parser.add_argument('--output_dims', type=int, default=4, help='Number of output dimensions to the network')
 parser.add_argument('--continuous_actions', type=bool, default=True, help='Whether the environment has continuous actions')
-parser.add_argument('--entropy_coef', type=float, default=0.0, help='Entropy coefficient for the agent')
+parser.add_argument('--entropy_coef', type=float, default=0.001, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.01, help='Value prediction coefficient for the agent')
-parser.add_argument('--num_training_episodes', type=int, default=400000, help='Number of training episodes to run')
+parser.add_argument('--num_training_episodes', type=int, default=100000, help='Number of training episodes to run')
 parser.add_argument('--num_evaluation_episodes', type=int, default=20, help='Number of evaluation episodes to run')
-parser.add_argument('--training_episodes_per_section', type=int, default=5000, help='Number of training episodes to run per section')
+parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
 parser.add_argument('--magic_number', type=int, default=2, help='Magic number to use for the results directory')
-parser.add_argument('--evaluate_every', type=int, default=500, help='How often to evaluate the agent')
+parser.add_argument('--evaluate_every', type=int, default=100, help='How often to evaluate the agent')
 
 args = parser.parse_args()
 learning_rate = args.learning_rate
@@ -89,7 +89,6 @@ learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}_numneur
 if training_method == "range":
     result_dir += "_rangemin_{}_rangemax_{}".format(range_min, range_max)
 
-result_dir = f"Master_Thesis_Code/BP_A2C/bipedal_walker/training_results/INDIVID_MODEL_{magic_number}"
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
 
@@ -127,13 +126,20 @@ for i_run in range(num_models):
 
     for section in range(0, int(num_training_episodes/training_eps_per_section)):
         print(f"Section {section+1} out of {int(num_training_episodes/training_eps_per_section)} sections")
-        if training_method == "original":
-            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_cont(training_eps_per_section, section)
-        elif training_method == "range":
-            smoothed_scores, scores, best_average, best_average_after = agent.train_agent_on_range(range_min, range_max)
-        elif training_method == "quarter_range":
-            smoothed_scores, scores, best_average, best_average_after = agent.train_agent(randomization_params = randomization_params)
-
+        # if training_method == "original":
+        #     smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_cont(training_eps_per_section, section)
+        # elif training_method == "range":
+        #     smoothed_scores, scores, best_average, best_average_after = agent.train_agent_on_range(range_min, range_max)
+        # elif training_method == "quarter_range":
+        #     smoothed_scores, scores, best_average, best_average_after = agent.train_agent(randomization_params = randomization_params)
+        if section == 0:
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous(training_eps_per_section, section, randomization_params = randomization_params)
+        else:
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous(training_eps_per_section, section, randomization_params = randomization_params, best_average=best_average_all[i_run], best_average_after=best_average_after_all[i_run])
+        
+        
+        
+        
         if section == 0:
             best_average_after_all.append(best_average_after)
             best_average_all.append(best_average)
@@ -159,12 +165,19 @@ for i_run in range(num_models):
 
         with open(f"{result_dir}/best_average_after.txt", 'w') as f:
             for i, best_episode in enumerate(best_average_after_all):
-                if i == i_run:
-                    f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {(section+1)*training_eps_per_section})\n")
+                if best_average_all[i] == max_reward:
+                    f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {best_episode})\n")
                 else:
-                    f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {num_training_episodes})\n")
+                    if i == i_run:
+                        f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {(section+1)*training_eps_per_section})\n")
+                    else:
+                        f.write(f"{i}: {best_average_all[i]} after {best_episode} (total trained: {num_training_episodes})\n")
 
             f.write(f"Average training episodes: {np.mean(best_average_after_all)}, std dev: {np.std(best_average_after_all)}\n")
             f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
 
+        if best_average_all[i_run] == max_reward:
+            break
+
+    print(f"Best average after {best_average_after_all[i_run]} episodes: {best_average_all[i_run]}")
 print(f"Training took {time.time() - start_time} seconds")

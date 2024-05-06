@@ -9,10 +9,10 @@ value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
 
 
-training_method = "quarter_range"
+training_method = "original"
 num_models = 10
 all_results = []
-results_id = 44000
+results_id = 45000
 date = 202453
 num_train_eps = 25000
 missing_ids = []

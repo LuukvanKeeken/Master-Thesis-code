@@ -14,7 +14,7 @@ activation_functions = ["tanh"]
 neuron_type = "CfC"
 num_models = 10
 all_results = []
-results_id = 50000
+results_id = 49000
 date = 202454
 
 # for neuron_type in types:

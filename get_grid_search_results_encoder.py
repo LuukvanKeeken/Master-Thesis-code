@@ -6,7 +6,7 @@ learning_rates = [0.001, 0.0001, 0.00001]
 neuromod_nets = [[3, 256, 128], [3, 192, 96], [3, 128, 80]]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
 value_coefs = [0.0001, 0.01, 0.5, 1.0]
-activation_functions = ["tanh"]
+activation_functions = ["relu"]
 
 
 # types = ["BP", "StandardRNN", "StandardMLP"]
@@ -14,7 +14,7 @@ activation_functions = ["tanh"]
 neuron_type = "CfC"
 num_models = 10
 all_results = []
-results_id = 46000
+results_id = 49000
 date = 202453
 
 # for neuron_type in types:
@@ -24,7 +24,8 @@ for num_neurons in nums_neurons:
             for entropy_coef in entropy_coefs:
                 for value_coef in value_coefs:
                     for func in activation_functions:
-                        
+                        if results_id == 49048:
+                            date = 202454
 
                         if neuron_type == "CfC":
                             results_dir = f"CfC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{func}_neuromod_network_dims_{'_'.join(map(str, neuromodnet))}_{num_neurons}"
@@ -42,7 +43,7 @@ for num_neurons in nums_neurons:
 
 
                         try:
-                            with open(f"Master_Thesis_Code/LTC_A2C/7_NMCfC_tanh_48/{results_dir}/best_average_after.txt", "r") as file:
+                            with open(f"Master_Thesis_Code/LTC_A2C/10_ONMCfC_relu_48/{results_dir}/best_average_after.txt", "r") as file:
                                 for i in range(num_models):
                                     file.readline()
 

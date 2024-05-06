@@ -38,9 +38,8 @@ for neuron_type in types:
                         results_dir = f'BP_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_{training_method}_numneurons_{num_neurons}'
                     elif neuron_type == "Standard_RNN":
                         results_dir = f"Standard_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_original_numneurons_{num_neurons}"
-                    elif neuron_type == "StandardMLP":
-                        results_dir = f"Standard_MLP_a2c_result_{results_id}_{date}_entropycoef_0.01_valuepredcoef_0.1_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_original_numneurons_{num_neurons}"
-
+                    elif neuron_type == "Standard_MLP":
+                        results_dir = f"Standard_MLP_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_{training_method}_numneurons_{num_neurons}"
 
                     try:
                         with open(f"Master_Thesis_Code/{top_dir}/5_MLP_range_48/{results_dir}/best_average_after.txt", "r") as file:

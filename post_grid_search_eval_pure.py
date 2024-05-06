@@ -257,6 +257,7 @@ for neuron_type in types:
                         model_signifier = "Standard_RNN"
                         top_dir = "BP_A2C"
                     elif neuron_type == "Standard_MLP":
+                        model_signifier = "Standard_MLP"
                         top_dir = "BP_A2C"
                     elif neuron_type == "BP":
                         model_signifier = "BP_RNN"

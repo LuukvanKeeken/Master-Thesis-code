@@ -231,7 +231,8 @@ learning_rates = [0.001, 0.00005, 0.000001]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
 value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
-result_id = 25000
+result_id = 44000
+num_train_episodes = 25000
 flag = False
 
 all_results = []
@@ -290,7 +291,7 @@ for neuron_type in types:
                     n_evaluations = 100
                     evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-                    result_dir = f'{model_signifier}_a2c_result_' + str(result_id) + f'_{str(d)}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_40000_selectionmethod_true_range_eval_all_params_trainingmethod_quarter_range_numneurons_{num_neurons}'
+                    result_dir = f'{model_signifier}_a2c_result_' + str(result_id) + f'_{str(d)}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_episodes}_selectionmethod_true_range_eval_all_params_trainingmethod_quarter_range_numneurons_{num_neurons}'
                     
                     # result_dir  = f'{neuron_type}_' + str(result_id) + f'_{str(d)}_lr_{learning_rate}_nn_{num_neurons}_encoutact_relu_mode_neuromodulated_neuromod_network_dims_{"_".join(map(str, neuromod_network_dims[:-1]))}'
                     # result_dir = f'{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_gamma_{gamma}_trainingmethod_{training_method}_numneurons_{num_neurons}_tausysextraction_{tau_sys_extraction}'

@@ -6,15 +6,16 @@ learning_rates = [0.001, 0.0001, 0.00001]
 neuromod_nets = [[3, 256, 128], [3, 192, 96], [3, 128, 80]]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
 value_coefs = [0.0001, 0.01, 0.5, 1.0]
-activation_functions = ["relu"]
+activation_functions = ["tanh"]
+
 
 # types = ["BP", "StandardRNN", "StandardMLP"]
 
-neuron_type = "BP"
+neuron_type = "CfC"
 num_models = 10
 all_results = []
-results_id = 42000
-date = 202452
+results_id = 46000
+date = 202453
 
 # for neuron_type in types:
 for num_neurons in nums_neurons:
@@ -23,8 +24,7 @@ for num_neurons in nums_neurons:
             for entropy_coef in entropy_coefs:
                 for value_coef in value_coefs:
                     for func in activation_functions:
-                        if results_id == 42105:
-                            date = 202453
+                        
 
                         if neuron_type == "CfC":
                             results_dir = f"CfC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{func}_neuromod_network_dims_{'_'.join(map(str, neuromodnet))}_{num_neurons}"

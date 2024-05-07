@@ -24,6 +24,16 @@ chmod +x 22_LTC_range_32and64/all_jobs_22_LTC_range_32and64.sh
 chmod +x 22_LTC_range_32and64/status_checker_22_LTC_range_32and64.sh
 chmod +x 23_ONMCfC_reluandtanh_32and64/all_jobs_23_ONMCfC_reluandtanh_32and64.sh
 chmod +x 23_ONMCfC_reluandtanh_32and64/status_checker_23_ONMCfC_reluandtanh_32and64.sh
+chmod +x 24_adaptmod_CfC_tanh_48/all_jobs_24_adaptmod_CfC_tanh_48.sh
+chmod +x 24_adaptmod_CfC_tanh_48/status_checker_24_adaptmod_CfC_tanh_48.sh
+chmod +x 25_adaptmod_ONMCfC_relu_48/all_jobs_25_adaptmod_ONMCfC_relu_48.sh
+chmod +x 25_adaptmod_ONMCfC_relu_48/status_checker_25_adaptmod_ONMCfC_relu_48.sh
+chmod +x 26_adaptmod_ONMCfC_tanh_48/all_jobs_26_adaptmod_ONMCfC_tanh_48.sh
+chmod +x 26_adaptmod_ONMCfC_tanh_48/status_checker_26_adaptmod_ONMCfC_tanh_48.sh
+chmod +x 27_adaptmod_BP_tanh_48/all_jobs_27_adaptmod_BP_tanh_48.sh
+chmod +x 27_adaptmod_BP_tanh_48/status_checker_27_adaptmod_BP_tanh_48.sh
+chmod +x 28_adaptmod_BP_relu_48/all_jobs_28_adaptmod_BP_relu_48.sh
+chmod +x 28_adaptmod_BP_relu_48/status_checker_28_adaptmod_BP_relu_48.sh
 
 
 ./12_CfC_range_32and48and64/all_jobs_12_CfC_range_32and48and64.sh
@@ -61,3 +71,18 @@ chmod +x 23_ONMCfC_reluandtanh_32and64/status_checker_23_ONMCfC_reluandtanh_32an
 
 ./23_ONMCfC_reluandtanh_32and64/all_jobs_23_ONMCfC_reluandtanh_32and64.sh
 ./23_ONMCfC_reluandtanh_32and64/status_checker_23_ONMCfC_reluandtanh_32and64.sh &
+
+./24_adaptmod_CfC_tanh_48/all_jobs_24_adaptmod_CfC_tanh_48.sh
+./24_adaptmod_CfC_tanh_48/status_checker_24_adaptmod_CfC_tanh_48.sh &
+
+./25_adaptmod_ONMCfC_relu_48/all_jobs_25_adaptmod_ONMCfC_relu_48.sh
+./25_adaptmod_ONMCfC_relu_48/status_checker_25_adaptmod_ONMCfC_relu_48.sh &
+
+./26_adaptmod_ONMCfC_tanh_48/all_jobs_26_adaptmod_ONMCfC_tanh_48.sh
+./26_adaptmod_ONMCfC_tanh_48/status_checker_26_adaptmod_ONMCfC_tanh_48.sh &
+
+./27_adaptmod_BP_tanh_48/all_jobs_27_adaptmod_BP_tanh_48.sh
+./27_adaptmod_BP_tanh_48/status_checker_27_adaptmod_BP_tanh_48.sh &
+
+./28_adaptmod_BP_relu_48/all_jobs_28_adaptmod_BP_relu_48.sh
+./28_adaptmod_BP_relu_48/status_checker_28_adaptmod_BP_relu_48.sh &

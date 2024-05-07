@@ -23,7 +23,7 @@ import numpy as np
 
 class BP_RNetwork(nn.Module):
     
-    def __init__(self, isize, hsize, num_actions, seed, external_neuromodulation = False): 
+    def __init__(self, isize, hsize, num_actions, seed, external_neuromodulation = False, continuous_actions = False): 
         super(BP_RNetwork, self).__init__()
 
         # Is all of this really needed?
@@ -31,6 +31,7 @@ class BP_RNetwork(nn.Module):
         np.random.seed(seed)
         torch.manual_seed(seed)
 
+        self.continuous_actions = continuous_actions
         self.external_neuromodulation = external_neuromodulation
 
         self.hsize, self.isize  = hsize, isize 
@@ -45,6 +46,9 @@ class BP_RNetwork(nn.Module):
             self.modfanout = torch.nn.Linear(1, hsize)  # The modulator output is passed through a different 'weight' for each neuron (it 'fans out' over neurons)
         
         self.h2o = torch.nn.Linear(hsize, num_actions)    # From recurrent to outputs (action probabilities)
+        if continuous_actions:
+            self.h2std = torch.nn.Linear(hsize, num_actions)
+        
         self.h2v = torch.nn.Linear(hsize, 1)            # From recurrent to value-prediction (used for A2C)
 
 
@@ -63,6 +67,9 @@ class BP_RNetwork(nn.Module):
         # Each *column* of w, alpha and hebb contains the inputs weights to a single neuron
         hactiv = torch.tanh( self.i2h(inputs) + hidden[0].unsqueeze(1).bmm(self.w + torch.mul(self.alpha, hebb)).squeeze(1)  )  # Update the h-state
         activout = self.h2o(hactiv)  # Pure linear, raw scores - to be softmaxed later, outside the function
+        if self.continuous_actions:
+            std = F.softplus(self.h2std(hactiv)) + 1e-5
+            activout = (activout, std)
         valueout = self.h2v(hactiv)
 
         # Now computing the Hebbian updates...

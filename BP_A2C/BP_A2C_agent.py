@@ -566,12 +566,6 @@ class A2C_Agent:
                     entropy = dist.entropy().mean()  # Calculate entropy
                     next_state, reward, done, _ = self.env.step(action.squeeze().numpy())
                     
-                    
-                    # dist = Categorical(logits=policy_logits)
-                    # action = dist.sample()
-                    # log_prob = dist.log_prob(action)
-                    # entropy = dist.entropy().mean()  # Calculate entropy
-                    # next_state, reward, done, _ = self.env.step(action.item())
 
                     log_probs.append(log_prob)
                     values.append(value)

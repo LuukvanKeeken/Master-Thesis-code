@@ -34,6 +34,8 @@ chmod +x 27_adaptmod_BP_tanh_48/all_jobs_27_adaptmod_BP_tanh_48.sh
 chmod +x 27_adaptmod_BP_tanh_48/status_checker_27_adaptmod_BP_tanh_48.sh
 chmod +x 28_adaptmod_BP_relu_48/all_jobs_28_adaptmod_BP_relu_48.sh
 chmod +x 28_adaptmod_BP_relu_48/status_checker_28_adaptmod_BP_relu_48.sh
+chmod +x 29_BW_BPandRNN_original_96/all_jobs_29_BW_BPandRNN_original_96.sh
+chmod +x 29_BW_BPandRNN_original_96/status_checker_29_BW_BPandRNN_original_96.sh
 
 
 ./12_CfC_range_32and48and64/all_jobs_12_CfC_range_32and48and64.sh
@@ -86,3 +88,6 @@ chmod +x 28_adaptmod_BP_relu_48/status_checker_28_adaptmod_BP_relu_48.sh
 
 ./28_adaptmod_BP_relu_48/all_jobs_28_adaptmod_BP_relu_48.sh
 ./28_adaptmod_BP_relu_48/status_checker_28_adaptmod_BP_relu_48.sh &
+
+./29_BW_BPandRNN_original_96/all_jobs_29_BW_BPandRNN_original_96.sh
+./29_BW_BPandRNN_original_96/status_checker_29_BW_BPandRNN_original_96.sh &

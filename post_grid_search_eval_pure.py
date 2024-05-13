@@ -225,13 +225,14 @@ def get_privileged_info(env):
     return torch.tensor(privileged_info, dtype=torch.float32)
 
 
-nums_neurons = [48]
-types = ["Standard_MLP"]
-learning_rates = [0.001, 0.00005, 0.000001]
+nums_neurons = [32, 64]
+types = ["Standard_RNN", "BP_RNN"]
+learning_rates = [0.001]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
 value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
-result_id = 44000
+
+result_id = 54000
 num_train_episodes = 25000
 flag = False
 
@@ -240,7 +241,7 @@ all_pole_length_adapt_results = []
 all_pole_mass_adapt_results = []
 all_force_mag_adapt_results = []
 all_mixed_adaptation_eval_rewards = []
-d = 202453
+d = 202458
 
 
 for neuron_type in types:
@@ -248,7 +249,7 @@ for neuron_type in types:
         for learning_rate in learning_rates:
             for entropy_coef in entropy_coefs:
                 for value_coef in value_coefs:
-                    if result_id not in [44000, 44001, 44002, 44003, 44004, 44005, 44006, 44008, 44009, 44010, 44011, 44012, 44016, 44017, 44020, 44021, 44024, 44025, 44028, 44029]:
+                    if result_id not in [54000, 54001, 54004, 54005, 54008, 54009, 54010, 54011, 54012, 54013, 54014, 54015, 54017, 54019, 54022, 54023, 54024, 54025, 54026, 54027, 54028, 54029, 54030]:
                         result_id += 1
                         continue
 

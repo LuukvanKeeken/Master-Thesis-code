@@ -2,19 +2,19 @@ import os
 import numpy as np
 
 nums_neurons = [32, 64]
-types = ["Standard_MLP"]
-learning_rates = [0.001, 0.00005]
+learning_rates = [0.0001, 0.00001]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
-value_coefs = [0.0001, 0.01, 0.5, 1.0]
+value_coefs = [0.0001, 0.01]
+types = ["LTC"]
 
 
 
 
-directory = "18_MLP_original_32and64"
+directory = "21_LTC_original_32and64"
 training_method = "original"
 num_models = 10
 all_results = []
-results_id = 57000
+results_id = 60000
 date = 202458
 num_train_eps = 25000
 missing_ids = []

@@ -226,7 +226,7 @@ def get_privileged_info(env):
 
 
 nums_neurons = [32, 64]
-types = ["Standard_RNN", "BP_RNN"]
+types = ["StandardRNN", "BPRNN"]
 learning_rates = [0.001]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
 value_coefs = [0.0001, 0.01, 0.5, 1.0]

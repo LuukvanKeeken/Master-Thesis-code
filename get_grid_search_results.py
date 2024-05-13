@@ -1,18 +1,18 @@
 import os
 import numpy as np
 
-nums_neurons = [32, 64]
-types = ["Standard_RNN", "BP_RNN"]
-learning_rates = [0.001]
+nums_neurons = [32, 48]
+learning_rates = [0.00001,  0.000001]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
-value_coefs = [0.0001, 0.01, 0.5, 1.0]
+value_coefs = [0.0001, 0.01]
+types = ["CfC"]
 
 
-directory = "15_BP_and_RNN_range_32and64"
-training_method = "quarter_range"
+directory = "16_CfC_original_32and48"
+training_method = "original"
 num_models = 10
 all_results = []
-results_id = 54000
+results_id = 55000
 date = 202458
 num_train_eps = 25000
 missing_ids = []
@@ -48,7 +48,6 @@ for neuron_type in types:
                             file.readline()
                             last_line = file.readline()
                             last_line = last_line.split(" ")
-                            # all_results.append((results_id, neuron_type, num_neurons, learning_rate, float(last_line[3].strip(',')), float(last_line[6])))
                             all_results.append((results_id, neuron_type, num_neurons, learning_rate, entropy_coef, value_coef, float(last_line[3].strip(',')), float(last_line[6])))
                             fine_ids.append(results_id)
                     except:

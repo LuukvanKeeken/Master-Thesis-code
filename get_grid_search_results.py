@@ -37,8 +37,6 @@ for neuron_type in types:
                     elif neuron_type == "BP_RNN":
                         results_dir = f'BP_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_{training_method}_numneurons_{num_neurons}'
                     elif neuron_type == "Standard_RNN":
-                        Standard_RNN_a2c_result_52000_202457_entropycoef_0.0_valuepredcoef_0.0001_learningrate_0.001_numtrainepisodes_25000_selectionmethod_true_range_eval_all_params_trainingmethod_original_numneurons_32
-                        Standard_RNN_a2c_result_57000_202457_entropycoef_0.0_valuepredcoef_0.0001_learningrate_0.001_numtrainepisodes_25000_selectionmethod_true_range_eval_all_params_trainingmethod_original_numneurons_32
                         results_dir = f'Standard_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_{training_method}_numneurons_{num_neurons}'
                     elif neuron_type == "Standard_MLP":
                         results_dir = f"Standard_MLP_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_{training_method}_numneurons_{num_neurons}"

@@ -226,13 +226,14 @@ def get_privileged_info(env):
 
 
 nums_neurons = [32, 64]
-types = ["StandardRNN", "BPRNN"]
-learning_rates = [0.001]
+types = ["Standard_MLP"]
+learning_rates = [0.001, 0.00005]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
 value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
 
-result_id = 54000
+
+result_id = 56000
 num_train_episodes = 25000
 flag = False
 
@@ -249,7 +250,7 @@ for neuron_type in types:
         for learning_rate in learning_rates:
             for entropy_coef in entropy_coefs:
                 for value_coef in value_coefs:
-                    if result_id not in [54000, 54001, 54004, 54005, 54008, 54009, 54010, 54011, 54012, 54013, 54014, 54015, 54017, 54019, 54022, 54023, 54024, 54025, 54026, 54027, 54028, 54029, 54030]:
+                    if result_id not in [56000, 56001, 56002, 56003, 56004, 56005, 56006, 56007, 56008, 56009, 56010, 56011, 56012, 56016, 56017, 56020, 56021, 56024, 56025, 56028, 56032, 56033, 56034, 56035, 56036, 56037, 56038, 56039, 56040, 56041, 56042, 56043, 56044, 56048, 56049, 56052, 56053, 56056, 56057, 56060, 56061]:
                         result_id += 1
                         continue
 
@@ -271,7 +272,7 @@ for neuron_type in types:
                     factor = 0.1
                     selection_method = "range_evaluation_all_params"
                     gamma = 0.99
-                    training_method = "original"
+                    training_method = "quarter_range"
                     # num_neurons = 32
                     mode = "pure"
                     
@@ -304,16 +305,16 @@ for neuron_type in types:
                     #     result_dir += "_randomization_params_" + str(randomization_params)
 
 
-                    weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/15_BP_and_RNN_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_0.pt', map_location=torch.device(device))
-                    weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/15_BP_and_RNN_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_1.pt', map_location=torch.device(device))
-                    weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/15_BP_and_RNN_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_2.pt', map_location=torch.device(device))
-                    weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/15_BP_and_RNN_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_3.pt', map_location=torch.device(device))
-                    weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/15_BP_and_RNN_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_4.pt', map_location=torch.device(device))
-                    weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/15_BP_and_RNN_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_5.pt', map_location=torch.device(device))
-                    weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/15_BP_and_RNN_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_6.pt', map_location=torch.device(device))
-                    weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/15_BP_and_RNN_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_7.pt', map_location=torch.device(device))
-                    weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/15_BP_and_RNN_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_8.pt', map_location=torch.device(device))
-                    weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/15_BP_and_RNN_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_9.pt', map_location=torch.device(device))
+                    weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/17_MLP_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_0.pt', map_location=torch.device(device))
+                    weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/17_MLP_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_1.pt', map_location=torch.device(device))
+                    weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/17_MLP_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_2.pt', map_location=torch.device(device))
+                    weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/17_MLP_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_3.pt', map_location=torch.device(device))
+                    weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/17_MLP_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_4.pt', map_location=torch.device(device))
+                    weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/17_MLP_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_5.pt', map_location=torch.device(device))
+                    weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/17_MLP_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_6.pt', map_location=torch.device(device))
+                    weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/17_MLP_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_7.pt', map_location=torch.device(device))
+                    weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/17_MLP_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_8.pt', map_location=torch.device(device))
+                    weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/17_MLP_range_32and64/{result_dir}/checkpoint_{model_signifier}_A2C_9.pt', map_location=torch.device(device))
                     weights = [weights_0, weights_1, weights_2, weights_3, weights_4, weights_5, weights_6, weights_7, weights_8, weights_9]
 
 

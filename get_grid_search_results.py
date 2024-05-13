@@ -8,7 +8,7 @@ value_coefs = [0.01]
 types = ["CfC"]
 
 
-
+directory = "12_CfC_range_32and48and64"
 training_method = "quarter_range"
 num_models = 10
 all_results = []
@@ -41,7 +41,7 @@ for neuron_type in types:
                         results_dir = f"Standard_MLP_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_{training_method}_numneurons_{num_neurons}"
 
                     try:
-                        with open(f"Master_Thesis_Code/{top_dir}/9_LTC_range_48/{results_dir}/best_average_after.txt", "r") as file:
+                        with open(f"Master_Thesis_Code/{top_dir}/{directory}/{results_dir}/best_average_after.txt", "r") as file:
                             for i in range(num_models):
                                 file.readline()
 
@@ -52,7 +52,7 @@ for neuron_type in types:
                             all_results.append((results_id, neuron_type, num_neurons, learning_rate, entropy_coef, value_coef, float(last_line[3].strip(',')), float(last_line[6])))
                             fine_ids.append(results_id)
                     except:
-                        files = os.listdir(f"Master_Thesis_Code/{top_dir}/9_LTC_range_48/{results_dir}")
+                        files = os.listdir(f"Master_Thesis_Code/{top_dir}/{directory}/{results_dir}")
                         num_files = len(files)
                         if num_files <= 5:
                             print(f"Could not find {results_dir}, {num_files} models")

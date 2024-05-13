@@ -5,9 +5,8 @@ nums_neurons = [32, 64]
 learning_rates = [0.001, 0.0001]
 neuromod_nets = [[3, 256, 128], [3, 192, 96], [3, 128, 80]]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
-value_coefs = [0.0001, 0.001, 0.01]
+value_coefs = [0.0001]
 activation_functions = ["tanh"]
-
 
 
 

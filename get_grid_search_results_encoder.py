@@ -15,6 +15,10 @@ activation_functions = ["relu"]
 # types = ["BP", "StandardRNN", "StandardMLP"]
 directory = "19_NMCfC_relu_32and64"
 neuron_type = "CfC"
+if neuron_type == "CfC":
+    top_dir = "LTC_A2C"
+else:
+    top_dir = "BP_A2C"
 num_models = 10
 all_results = []
 results_id = 58000
@@ -45,7 +49,7 @@ for num_neurons in nums_neurons:
 
 
                         try:
-                            with open(f"Master_Thesis_Code/BP_A2C/{directory}/{results_dir}/best_average_after.txt", "r") as file:
+                            with open(f"Master_Thesis_Code/{top_dir}/{directory}/{results_dir}/best_average_after.txt", "r") as file:
                                 for i in range(num_models):
                                     file.readline()
 

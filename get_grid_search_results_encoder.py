@@ -6,14 +6,14 @@ learning_rates = [0.001, 0.0001]
 neuromod_nets = [[3, 256, 128], [3, 192, 96], [3, 128, 80]]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
 value_coefs = [0.0001, 0.001, 0.01]
-activation_functions = ["relu"]
+activation_functions = ["tanh"]
 
 
 
 
 
 # types = ["BP", "StandardRNN", "StandardMLP"]
-directory = "19_NMCfC_relu_32and64"
+directory = "20_NMCfC_tanh_32and64"
 neuron_type = "CfC"
 if neuron_type == "CfC":
     top_dir = "LTC_A2C"
@@ -21,7 +21,7 @@ else:
     top_dir = "BP_A2C"
 num_models = 10
 all_results = []
-results_id = 58000
+results_id = 59000
 date = 202458
 fine_ids = []
 not_fine_ids = []

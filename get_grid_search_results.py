@@ -1,20 +1,21 @@
 import os
 import numpy as np
 
-nums_neurons = [32, 48, 64]
-learning_rates = [0.00001]
+nums_neurons = [32, 64]
+types = ["Standard_RNN", "BP_RNN"]
+learning_rates = [0.001]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
-value_coefs = [0.01]
-types = ["CfC"]
+value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
 
-directory = "12_CfC_range_32and48and64"
-training_method = "quarter_range"
+
+directory = "13_BP_and_RNN_original_32and64"
+training_method = "original"
 num_models = 10
 all_results = []
-results_id = 51000
+results_id = 52000
 date = 202457
-num_train_eps = 40000
+num_train_eps = 25000
 missing_ids = []
 fine_ids = []
 for neuron_type in types:

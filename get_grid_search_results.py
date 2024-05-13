@@ -1,18 +1,19 @@
 import os
 import numpy as np
 
-nums_neurons = [32, 48]
-learning_rates = [0.00001,  0.000001]
+nums_neurons = [32, 64]
+types = ["Standard_MLP"]
+learning_rates = [0.001, 0.00005]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
-value_coefs = [0.0001, 0.01]
-types = ["CfC"]
+value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
 
-directory = "16_CfC_original_32and48"
-training_method = "original"
+
+directory = "17_MLP_range_32and64"
+training_method = "quarter_range"
 num_models = 10
 all_results = []
-results_id = 55000
+results_id = 56000
 date = 202458
 num_train_eps = 25000
 missing_ids = []

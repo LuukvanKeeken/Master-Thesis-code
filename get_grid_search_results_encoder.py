@@ -5,19 +5,20 @@ nums_neurons = [32, 64]
 learning_rates = [0.001, 0.0001]
 neuromod_nets = [[3, 256, 128], [3, 192, 96], [3, 128, 80]]
 entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
-value_coefs = [0.0001]
-activation_functions = ["relu", "tanh"]
+value_coefs = [0.0001, 0.001, 0.01]
+activation_functions = ["relu"]
+
 
 
 
 
 # types = ["BP", "StandardRNN", "StandardMLP"]
-directory = "14_NMBP_reluandtanh_32and64"
-neuron_type = "BP"
+directory = "19_NMCfC_relu_32and64"
+neuron_type = "CfC"
 num_models = 10
 all_results = []
-results_id = 53000
-date = 202457
+results_id = 58000
+date = 202458
 fine_ids = []
 not_fine_ids = []
 
@@ -28,16 +29,13 @@ for num_neurons in nums_neurons:
             for entropy_coef in entropy_coefs:
                 for value_coef in value_coefs:
                     for func in activation_functions:
-                        if results_id == 53043:
-                            date = 202458
+                        
 
                         if neuron_type == "CfC":
                             results_dir = f"CfC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{func}_neuromod_network_dims_{'_'.join(map(str, neuromodnet))}_{num_neurons}"
                         elif neuron_type == "LTC":
-                            # results_dir = f'LTC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_selectiomethod_range_evaluation_all_params_gamma_0.99_trainingmethod_standard_numneurons_{num_neurons}_tausysextraction_True'
                             results_dir = f'LTC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_selectiomethod_true_range_eval_all_params_trainingmethod_original_numneurons_{num_neurons}_tausysextraction_True'
                         elif neuron_type == "BP":
-                            # BP_a2c_result_42000_202452_learningrate_0.001_numneurons_48_encoutact_relu_neuromod_network_dims_3_256_128_48
                             results_dir = f"BP_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{func}_neuromod_network_dims_{'_'.join(map(str, neuromodnet))}_{num_neurons}"
 
                         elif neuron_type == "StandardRNN":

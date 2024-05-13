@@ -8,13 +8,12 @@ entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
 value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
 
-
-directory = "13_BP_and_RNN_original_32and64"
-training_method = "original"
+directory = "15_BP_and_RNN_range_32and64"
+training_method = "quarter_range"
 num_models = 10
 all_results = []
-results_id = 57000
-date = 202457
+results_id = 54000
+date = 202458
 num_train_eps = 25000
 missing_ids = []
 fine_ids = []

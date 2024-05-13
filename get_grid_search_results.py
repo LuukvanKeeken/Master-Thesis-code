@@ -10,11 +10,11 @@ types = ["LTC"]
 
 
 
-directory = "21_LTC_original_32and64"
-training_method = "original"
+directory = "22_LTC_range_32and64"
+training_method = "quarter_range"
 num_models = 10
 all_results = []
-results_id = 60000
+results_id = 61000
 date = 202458
 num_train_eps = 25000
 missing_ids = []

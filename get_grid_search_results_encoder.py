@@ -12,7 +12,7 @@ activation_functions = ["relu", "tanh"]
 
 # types = ["BP", "StandardRNN", "StandardMLP"]
 directory = "14_NMBP_reluandtanh_32and64"
-neuron_type = "CfC"
+neuron_type = "BP"
 if neuron_type == "CfC":
     top_dir = "LTC_A2C"
 else:

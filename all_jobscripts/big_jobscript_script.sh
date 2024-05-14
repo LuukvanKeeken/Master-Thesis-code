@@ -1,93 +1,16 @@
 #!/bin/bash
 
-chmod +x 12_CfC_range_32and48and64/all_jobs_12_CfC_range_32and48and64.sh
-chmod +x 12_CfC_range_32and48and64/status_checker_12_CfC_range_32and48and64.sh
-chmod +x 13_BP_and_RNN_original_32and64/all_jobs_13_BP_and_RNN_original_32and64.sh
-chmod +x 13_BP_and_RNN_original_32and64/status_checker_13_BP_and_RNN_original_32and64.sh
-chmod +x 14_NMBP_reluandtanh_32and64/all_jobs_14_NMBP_reluandtanh_32and64.sh
-chmod +x 14_NMBP_reluandtanh_32and64/status_checker_14_NMBP_reluandtanh_32and64.sh
-chmod +x 15_BP_and_RNN_range_32and64/all_jobs_15_BP_and_RNN_range_32and64.sh
-chmod +x 15_BP_and_RNN_range_32and64/status_checker_15_BP_and_RNN_range_32and64.sh
-chmod +x 16_CfC_original_32and48/all_jobs_16_CfC_original_32and48.sh
-chmod +x 16_CfC_original_32and48/status_checker_16_CfC_original_32and48.sh
-chmod +x 17_MLP_range_32and64/all_jobs_17_MLP_range_32and64.sh
-chmod +x 17_MLP_range_32and64/status_checker_17_MLP_range_32and64.sh
-chmod +x 18_MLP_original_32and64/all_jobs_18_MLP_original_32and64.sh
-chmod +x 18_MLP_original_32and64/status_checker_18_MLP_original_32and64.sh
-chmod +x 19_NMCfC_relu_32and64/all_jobs_19_NMCfC_relu_32and64.sh
-chmod +x 19_NMCfC_relu_32and64/status_checker_19_NMCfC_relu_32and64.sh
-chmod +x 20_NMCfC_tanh_32and64/all_jobs_20_NMCfC_tanh_32and64.sh
-chmod +x 20_NMCfC_tanh_32and64/status_checker_20_NMCfC_tanh_32and64.sh
-chmod +x 21_LTC_original_32and64/all_jobs_21_LTC_original_32and64.sh
-chmod +x 21_LTC_original_32and64/status_checker_21_LTC_original_32and64.sh
-chmod +x 22_LTC_range_32and64/all_jobs_22_LTC_range_32and64.sh
-chmod +x 22_LTC_range_32and64/status_checker_22_LTC_range_32and64.sh
-chmod +x 23_ONMCfC_reluandtanh_32and64/all_jobs_23_ONMCfC_reluandtanh_32and64.sh
-chmod +x 23_ONMCfC_reluandtanh_32and64/status_checker_23_ONMCfC_reluandtanh_32and64.sh
-chmod +x 24_adaptmod_CfC_tanh_48/all_jobs_24_adaptmod_CfC_tanh_48.sh
-chmod +x 24_adaptmod_CfC_tanh_48/status_checker_24_adaptmod_CfC_tanh_48.sh
-chmod +x 25_adaptmod_ONMCfC_relu_48/all_jobs_25_adaptmod_ONMCfC_relu_48.sh
-chmod +x 25_adaptmod_ONMCfC_relu_48/status_checker_25_adaptmod_ONMCfC_relu_48.sh
-chmod +x 26_adaptmod_ONMCfC_tanh_48/all_jobs_26_adaptmod_ONMCfC_tanh_48.sh
-chmod +x 26_adaptmod_ONMCfC_tanh_48/status_checker_26_adaptmod_ONMCfC_tanh_48.sh
-chmod +x 27_adaptmod_BP_tanh_48/all_jobs_27_adaptmod_BP_tanh_48.sh
-chmod +x 27_adaptmod_BP_tanh_48/status_checker_27_adaptmod_BP_tanh_48.sh
-chmod +x 28_adaptmod_BP_relu_48/all_jobs_28_adaptmod_BP_relu_48.sh
-chmod +x 28_adaptmod_BP_relu_48/status_checker_28_adaptmod_BP_relu_48.sh
-chmod +x 29_BW_BPandRNN_original_96/all_jobs_29_BW_BPandRNN_original_96.sh
-chmod +x 29_BW_BPandRNN_original_96/status_checker_29_BW_BPandRNN_original_96.sh
+chmod +x 30_adaptmod_CfC_relu_64/all_jobs_30_adaptmod_CfC_relu_64.sh
+chmod +x 30_adaptmod_CfC_relu_64/status_checker_30_adaptmod_CfC_relu_64.sh
+chmod +x 31_adaptmod_CfC_tanh_32/all_jobs_31_adaptmod_CfC_tanh_32.sh
+chmod +x 31_adaptmod_CfC_tanh_32/status_checker_31_adaptmod_CfC_tanh_32.sh
+chmod +x 32_adaptmod_ONMCfC_tanh_64/all_jobs_32_adaptmod_ONMCfC_tanh_64.sh
+chmod +x 32_adaptmod_ONMCfC_tanh_64/status_checker_32_adaptmod_ONMCfC_tanh_64.sh
 
 
-./12_CfC_range_32and48and64/all_jobs_12_CfC_range_32and48and64.sh
-./12_CfC_range_32and48and64/status_checker_12_CfC_range_32and48and64.sh &
-
-./13_BP_and_RNN_original_32and64/all_jobs_13_BP_and_RNN_original_32and64.sh
-./13_BP_and_RNN_original_32and64/status_checker_13_BP_and_RNN_original_32and64.sh &
-
-./14_NMBP_reluandtanh_32and64/all_jobs_14_NMBP_reluandtanh_32and64.sh
-./14_NMBP_reluandtanh_32and64/status_checker_14_NMBP_reluandtanh_32and64.sh &
-
-./15_BP_and_RNN_range_32and64/all_jobs_15_BP_and_RNN_range_32and64.sh
-./15_BP_and_RNN_range_32and64/status_checker_15_BP_and_RNN_range_32and64.sh &
-
-./16_CfC_original_32and48/all_jobs_16_CfC_original_32and48.sh
-./16_CfC_original_32and48/status_checker_16_CfC_original_32and48.sh &
-
-./17_MLP_range_32and64/all_jobs_17_MLP_range_32and64.sh
-./17_MLP_range_32and64/status_checker_17_MLP_range_32and64.sh &
-
-./18_MLP_original_32and64/all_jobs_18_MLP_original_32and64.sh
-./18_MLP_original_32and64/status_checker_18_MLP_original_32and64.sh &
-
-./19_NMCfC_relu_32and64/all_jobs_19_NMCfC_relu_32and64.sh
-./19_NMCfC_relu_32and64/status_checker_19_NMCfC_relu_32and64.sh &
-
-./20_NMCfC_tanh_32and64/all_jobs_20_NMCfC_tanh_32and64.sh
-./20_NMCfC_tanh_32and64/status_checker_20_NMCfC_tanh_32and64.sh &
-
-./21_LTC_original_32and64/all_jobs_21_LTC_original_32and64.sh
-./21_LTC_original_32and64/status_checker_21_LTC_original_32and64.sh &
-
-./22_LTC_range_32and64/all_jobs_22_LTC_range_32and64.sh
-./22_LTC_range_32and64/status_checker_22_LTC_range_32and64.sh &
-
-./23_ONMCfC_reluandtanh_32and64/all_jobs_23_ONMCfC_reluandtanh_32and64.sh
-./23_ONMCfC_reluandtanh_32and64/status_checker_23_ONMCfC_reluandtanh_32and64.sh &
-
-./24_adaptmod_CfC_tanh_48/all_jobs_24_adaptmod_CfC_tanh_48.sh
-./24_adaptmod_CfC_tanh_48/status_checker_24_adaptmod_CfC_tanh_48.sh &
-
-./25_adaptmod_ONMCfC_relu_48/all_jobs_25_adaptmod_ONMCfC_relu_48.sh
-./25_adaptmod_ONMCfC_relu_48/status_checker_25_adaptmod_ONMCfC_relu_48.sh &
-
-./26_adaptmod_ONMCfC_tanh_48/all_jobs_26_adaptmod_ONMCfC_tanh_48.sh
-./26_adaptmod_ONMCfC_tanh_48/status_checker_26_adaptmod_ONMCfC_tanh_48.sh &
-
-./27_adaptmod_BP_tanh_48/all_jobs_27_adaptmod_BP_tanh_48.sh
-./27_adaptmod_BP_tanh_48/status_checker_27_adaptmod_BP_tanh_48.sh &
-
-./28_adaptmod_BP_relu_48/all_jobs_28_adaptmod_BP_relu_48.sh
-./28_adaptmod_BP_relu_48/status_checker_28_adaptmod_BP_relu_48.sh &
-
-./29_BW_BPandRNN_original_96/all_jobs_29_BW_BPandRNN_original_96.sh
-./29_BW_BPandRNN_original_96/status_checker_29_BW_BPandRNN_original_96.sh &
+./30_adaptmod_CfC_relu_64/all_jobs_30_adaptmod_CfC_relu_64.sh
+./30_adaptmod_CfC_relu_64/status_checker_30_adaptmod_CfC_relu_64.sh &
+./31_adaptmod_CfC_tanh_32/all_jobs_31_adaptmod_CfC_tanh_32.sh
+./31_adaptmod_CfC_tanh_32/status_checker_31_adaptmod_CfC_tanh_32.sh &
+./32_adaptmod_ONMCfC_tanh_64/all_jobs_32_adaptmod_ONMCfC_tanh_64.sh
+./32_adaptmod_ONMCfC_tanh_64/status_checker_32_adaptmod_ONMCfC_tanh_64.sh &

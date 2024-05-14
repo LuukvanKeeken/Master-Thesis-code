@@ -10,11 +10,8 @@ value_coefs = [0.0001]
 activation_functions = ["relu", "tanh"]
 
 
-
-
-
 # types = ["BP", "StandardRNN", "StandardMLP"]
-directory = "23_ONMCfC_reluandtanh_32and64"
+directory = "14_NMBP_reluandtanh_32and64"
 neuron_type = "CfC"
 if neuron_type == "CfC":
     top_dir = "LTC_A2C"
@@ -22,8 +19,8 @@ else:
     top_dir = "BP_A2C"
 num_models = 10
 all_results = []
-results_id = 62000
-date = 202458
+results_id = 53000
+date = 2024513
 fine_ids = []
 not_fine_ids = []
 

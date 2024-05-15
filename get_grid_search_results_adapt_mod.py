@@ -14,7 +14,7 @@ else:
 
 num_models = 10
 all_results = []
-results_id = 70000
+results_id = 69000
 date = 2024514
 failed_idx = []
 
@@ -29,7 +29,7 @@ for num_neurons in nums_neurons:
                 results_dir = f'adaptation_module_StandardRNN_result_{results_id}_{date}_BP_a2c_result_2169_202448_numneuronsadaptmod_{num_neurons}_lradaptmod_{learning_rate}_wdadaptmod_{wd}'
             
             try:
-                with open(f"Master_Thesis_Code/{top_dir}/30_adaptmod_CfC_relu_64/{results_dir}/best_validation_loss_after.txt", "r") as file:
+                with open(f"Master_Thesis_Code/{top_dir}/31_adaptmod_CfC_tanh_32/{results_dir}/best_validation_loss_after.txt", "r") as file:
                     for i in range(num_models):
                         file.readline()
 
@@ -39,7 +39,7 @@ for num_neurons in nums_neurons:
                     all_results.append((results_id, num_neurons, learning_rate, wd, float(last_line[3].strip(',')), float(last_line[5])))#, float(last_line[6])))
                     
                 
-                with open(f"Master_Thesis_Code/{top_dir}/30_adaptmod_CfC_relu_64/{results_dir}/best_validation_reward_after.txt", "r") as file:
+                with open(f"Master_Thesis_Code/{top_dir}/31_adaptmod_CfC_tanh_32/{results_dir}/best_validation_reward_after.txt", "r") as file:
                     for i in range(num_models):
                         file.readline()
 
@@ -48,7 +48,7 @@ for num_neurons in nums_neurons:
                     last_line = last_line.split(" ")
                     all_results[-1] = all_results[-1] + (float(last_line[3].strip(',')), float(last_line[5]))
             except:
-                num_files = len(os.listdir(f"Master_Thesis_Code/{top_dir}/30_adaptmod_CfC_relu_64/{results_dir}"))
+                num_files = len(os.listdir(f"Master_Thesis_Code/{top_dir}/31_adaptmod_CfC_tanh_32/{results_dir}"))
                 print(f"lr: {learning_rate}, wd: {wd}, num_neurons: {num_neurons} not found. {results_id} Models trained: {num_files/2}")
                 failed_idx.append(results_id)
             

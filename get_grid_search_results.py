@@ -13,6 +13,7 @@ value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
 directory = "29_BW_BPandRNN_original_96"
 training_method = "original"
+selection_method = "exp_BW_validation"
 num_models = 1
 all_results = []
 results_id = 68000
@@ -37,9 +38,9 @@ for neuron_type in types:
                     elif neuron_type == "LTC":
                         results_dir = f'LTC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_selectiomethod_true_range_eval_all_params_trainingmethod_{training_method}_numneurons_{num_neurons}'
                     elif neuron_type == "BP_RNN":
-                        results_dir = f'BP_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_{training_method}_numneurons_{num_neurons}'
+                        results_dir = f'BP_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_{selection_method}_trainingmethod_{training_method}_numneurons_{num_neurons}'
                     elif neuron_type == "Standard_RNN":
-                        results_dir = f'Standard_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_{training_method}_numneurons_{num_neurons}'
+                        results_dir = f'Standard_RNN_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_{selection_method}_trainingmethod_{training_method}_numneurons_{num_neurons}'
                     elif neuron_type == "Standard_MLP":
                         results_dir = f"Standard_MLP_a2c_result_{results_id}_{date}_entropycoef_{entropy_coef}_valuepredcoef_{value_coef}_learningrate_{learning_rate}_numtrainepisodes_{num_train_eps}_selectionmethod_true_range_eval_all_params_trainingmethod_{training_method}_numneurons_{num_neurons}"
 

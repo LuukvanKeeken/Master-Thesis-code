@@ -1,22 +1,23 @@
 import os
 import numpy as np
 
-nums_neurons = [32, 64]
-learning_rates = [0.0001, 0.00001]
-entropy_coefs = [0.0, 0.0001, 0.01, 1.0]
-value_coefs = [0.0001, 0.01]
-types = ["LTC"]
+nums_neurons = [96]
+types = ["Standard_RNN", "BP_RNN"]
+learning_rates = [0.01, 0.0005, 0.00001, 0.000005]
+entropy_coefs = [0.0001, 0.01, 1.0]
+value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
 
 
 
-directory = "22_LTC_range_32and64"
-training_method = "quarter_range"
-num_models = 10
+
+directory = "29_BW_BPandRNN_original_96"
+training_method = "original"
+num_models = 1
 all_results = []
-results_id = 61000
-date = 202458
-num_train_eps = 25000
+results_id = 68000
+date = 202459
+num_train_eps = 1000000
 missing_ids = []
 fine_ids = []
 for neuron_type in types:

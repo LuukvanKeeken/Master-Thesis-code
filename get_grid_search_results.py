@@ -49,13 +49,10 @@ for neuron_type in types:
                             for i in range(num_models):
                                 file.readline()
 
-                            num_eps_line = file.readline()
-                            num_eps_line = num_eps_line.split(" ")
-                            num_eps = float(num_eps_line[3])
-                            print(num_eps)
+                            file.readline()
                             last_line = file.readline()
                             last_line = last_line.split(" ")
-                            all_results.append((results_id, neuron_type, num_neurons, learning_rate, entropy_coef, value_coef, float(last_line[3].strip(',')), float(last_line[6]), num_eps))
+                            all_results.append((results_id, neuron_type, num_neurons, learning_rate, entropy_coef, value_coef, float(last_line[3].strip(',')), float(last_line[6])))
                             fine_ids.append(results_id)
                     except:
                         files = os.listdir(f"Master_Thesis_Code/{top_dir}/{directory}/{results_dir}")

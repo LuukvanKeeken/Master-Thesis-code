@@ -49,7 +49,9 @@ for neuron_type in types:
                             for i in range(num_models):
                                 file.readline()
 
-                            file.readline()
+                            num_eps_line = file.readline()
+                            num_eps_line = num_eps_line.split(" ")
+                            num_eps = float(num_eps_line[3])
                             last_line = file.readline()
                             last_line = last_line.split(" ")
                             all_results.append((results_id, neuron_type, num_neurons, learning_rate, entropy_coef, value_coef, float(last_line[3].strip(',')), float(last_line[6])))

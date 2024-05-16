@@ -510,7 +510,7 @@ class A2C_Agent:
 
             self.optimizer.zero_grad()
             total_loss.backward()
-            # torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), 50)
+            torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
             # for name, param in self.agent_net.named_parameters():
             #     if param.grad is None:
             #         print(f"None gradient for {name}")
@@ -744,7 +744,8 @@ class A2C_Agent:
 
                 self.optimizer.zero_grad()
                 total_loss.backward()
-                # torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), 50)
+                
+                torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
                 # for name, param in self.agent_net.named_parameters():
                 #     if param.grad is None:
                 #         print(f"None gradient for {name}")

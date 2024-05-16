@@ -13,7 +13,7 @@ import cProfile, pstats
 parser = argparse.ArgumentParser(description='Train an A2C agent on the BipedalWalker environment')
 parser.add_argument('--num_neurons', type=int, default=96, help='Number of neurons in the hidden layer')
 parser.add_argument('--network_type', type=str, default='BP_RNN', help='Type of network to use')
-parser.add_argument('--learning_rate', type=float, default=0.00001, help='Learning rate for the agent')
+parser.add_argument('--learning_rate', type=float, default=0.01, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=1, help='Number of models to train')
 parser.add_argument('--selection_method', type=str, default='exp_BW_validation', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
@@ -22,7 +22,7 @@ parser.add_argument('--env_name', type=str, default='BipedalWalker-v3', help='Na
 parser.add_argument('--input_dims', type=int, default=24, help='Number of input dimensions to the network')
 parser.add_argument('--output_dims', type=int, default=4, help='Number of output dimensions to the network')
 parser.add_argument('--continuous_actions', type=bool, default=True, help='Whether the environment has continuous actions')
-parser.add_argument('--entropy_coef', type=float, default=0.001, help='Entropy coefficient for the agent')
+parser.add_argument('--entropy_coef', type=float, default=0.01, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.01, help='Value prediction coefficient for the agent')
 parser.add_argument('--num_training_episodes', type=int, default=1000000, help='Number of training episodes to run')
 parser.add_argument('--num_evaluation_episodes', type=int, default=10, help='Number of evaluation episodes to run')
@@ -55,7 +55,7 @@ device = "cpu"
 
 
 gammaR = 0.99
-max_grad_norm = 4.0
+max_grad_norm = 1000
 max_steps = 1600
 batch_size = 1
 

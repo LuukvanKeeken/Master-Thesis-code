@@ -158,7 +158,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, evaluation_see
             dist = Categorical(logits=policy_logits)
             action = dist.sample()
             log_prob = dist.log_prob(action)
-            entropy = dist.entropy().mean()  # Calculate entropy
+            entropy = dist.entropy()  # Calculate entropy
             next_state, reward, done, _ = env.step(action.item())
 
             log_probs.append(log_prob)

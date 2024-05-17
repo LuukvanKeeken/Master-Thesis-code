@@ -197,7 +197,7 @@ def train_agent(env, num_training_episodes, max_steps, agent_net, num_outputs,
             dist = Categorical(logits=policy_logits)
             action = dist.sample()
             log_prob = dist.log_prob(action)
-            entropy = dist.entropy().mean()
+            entropy = dist.entropy()
             next_state, reward, done, _ = env.step(action.item())
 
             log_probs.append(log_prob)
@@ -686,7 +686,7 @@ parser.add_argument('--neuron_type', type=str, default='CfC', help="The type of 
 parser.add_argument('--value_pred_coef', type=float, default=0.5, help="The coefficient for the value prediction loss")
 parser.add_argument('--entropy_coef', type=float, default=0.01, help="The coefficient for the entropy loss")
 parser.add_argument('--num_evaluation_episodes', type=int, default=20, help='Number of evaluation episodes to run')
-parser.add_argument('--evaluate_every', type=int, default=10, help='How often to evaluate the agent')
+parser.add_argument('--evaluate_every', type=int, default=20, help='How often to evaluate the agent')
 parser.add_argument('--max_reward', type=int, default=200, help='Maximum number of steps to run in the environment')
 args = parser.parse_args()
 

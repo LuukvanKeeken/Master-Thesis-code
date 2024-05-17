@@ -1,16 +1,9 @@
 #!/bin/bash
 
-chmod +x 30_adaptmod_CfC_relu_64/all_jobs_30_adaptmod_CfC_relu_64.sh
-chmod +x 30_adaptmod_CfC_relu_64/status_checker_30_adaptmod_CfC_relu_64.sh
-chmod +x 31_adaptmod_CfC_tanh_32/all_jobs_31_adaptmod_CfC_tanh_32.sh
-chmod +x 31_adaptmod_CfC_tanh_32/status_checker_31_adaptmod_CfC_tanh_32.sh
-chmod +x 32_adaptmod_ONMCfC_tanh_64/all_jobs_32_adaptmod_ONMCfC_tanh_64.sh
-chmod +x 32_adaptmod_ONMCfC_tanh_64/status_checker_32_adaptmod_ONMCfC_tanh_64.sh
+
+chmod +x 33_CfC_range_32and48and64_correctEntropies/all_jobs_33_CfC_range_32and48and64_correctEntropies.sh
+chmod +x 33_CfC_range_32and48and64_correctEntropies/status_checker_33_CfC_range_32and48and64_correctEntropies.sh
 
 
-./30_adaptmod_CfC_relu_64/all_jobs_30_adaptmod_CfC_relu_64.sh
-./30_adaptmod_CfC_relu_64/status_checker_30_adaptmod_CfC_relu_64.sh &
-./31_adaptmod_CfC_tanh_32/all_jobs_31_adaptmod_CfC_tanh_32.sh
-./31_adaptmod_CfC_tanh_32/status_checker_31_adaptmod_CfC_tanh_32.sh &
-./32_adaptmod_ONMCfC_tanh_64/all_jobs_32_adaptmod_ONMCfC_tanh_64.sh
-./32_adaptmod_ONMCfC_tanh_64/status_checker_32_adaptmod_ONMCfC_tanh_64.sh &
+./33_CfC_range_32and48and64_correctEntropies/all_jobs_33_CfC_range_32and48and64_correctEntropies.sh
+./33_CfC_range_32and48and64_correctEntropies/status_checker_33_CfC_range_32and48and64_correctEntropies.sh &

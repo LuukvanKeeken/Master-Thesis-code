@@ -30,6 +30,7 @@ parser.add_argument('--training_episodes_per_section', type=int, default=500, he
 parser.add_argument('--magic_number', type=int, default=2, help='Magic number to use for the results directory')
 parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
 parser.add_argument('--batch_size', type=int, default=10, help='Batch size to use for training')
+parser.add_argument('--num_parallel_envs', type=int, default=10, help='Number of parallel environments to use')
 
 args = parser.parse_args()
 learning_rate = args.learning_rate
@@ -51,6 +52,7 @@ evaluate_every = args.evaluate_every
 training_eps_per_section = args.training_episodes_per_section
 num_evaluation_episodes = args.num_evaluation_episodes
 batch_size = args.batch_size
+num_parallel_envs = args.num_parallel_envs
 
 device = "cpu"
 
@@ -137,9 +139,9 @@ for i_run in range(num_models):
         # elif training_method == "quarter_range":
         #     smoothed_scores, scores, best_average, best_average_after = agent.train_agent(randomization_params = randomization_params)
         if section == 0:
-            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous_vectorized_v3(training_eps_per_section, section, randomization_params = randomization_params)
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous_vectorized_v3(training_eps_per_section, section, randomization_params = randomization_params, num_parallel_envs=num_parallel_envs)
         else:
-            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous_vectorized_v3(training_eps_per_section, section, randomization_params = randomization_params, best_average=best_average_all[i_run], best_average_after=best_average_after_all[i_run])
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous_vectorized_v3(training_eps_per_section, section, randomization_params = randomization_params, best_average=best_average_all[i_run], best_average_after=best_average_after_all[i_run], num_parallel_envs=num_parallel_envs)
         
         
         

@@ -8,6 +8,7 @@ from collections import deque
 from torch.distributions import Categorical
 
 from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVectorEnv
+torch.autograd.set_detect_anomaly(True)
 
 
 use_cuda = torch.cuda.is_available()
@@ -21,7 +22,7 @@ class A2C_Agent:
                  num_evaluation_episodes, evaluation_seeds, max_reward, evaluate_every, network_type, continuous_actions = False):
         
         if batch_size > 1:
-            print("Batch size larger than 1 not implemented yet. Program will continue with batch size set to 1.")
+            print("WARNING: Batch size larger than 1 not implemented yet for all training algorithms.")
             
 
         self.env = gym.make(env_name)
@@ -39,7 +40,8 @@ class A2C_Agent:
             self.num_outputs = self.env.action_space.shape[0]
 
         self.env_name = env_name
-        self.batch_size = 1 
+        # self.batch_size = 1
+        self.batch_size = batch_size
         self.agent_net = agent_net
         self.entropy_coef = entropy_coef # coefficient for the entropy reward (really Simpson index concentration measure)
         self.value_pred_coef = value_pred_coef # coefficient for value prediction loss
@@ -526,6 +528,126 @@ class A2C_Agent:
         
         return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
+    def train_agent_continuous_v2(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf):
+        # best_average = -np.inf
+        # best_average_after = np.inf
+        scores = []
+        smoothed_scores = []
+        scores_window = deque(maxlen = 100)
+
+        training_total_rewards = []
+        training_losses = []
+        validation_total_rewards = []
+        validation_losses = []
+
+        batch_losses = []
+
+        # for episode in range(1, self.num_training_episodes + 1):
+        for episode in range(1 + section*training_eps_per_section, (section+1)*training_eps_per_section + 1):
+            
+            if randomization_params and episode % randomize_every == 0:
+                self.env = gym.make(self.env_name)
+                self.env = randomize_env_params(self.env, randomization_params)
+            
+            hidden_state = self.agent_net.initialZeroState(self.batch_size)
+            hebb_traces = self.agent_net.initialZeroHebb(self.batch_size)
+            
+            score = 0
+            
+            log_probs = []
+            values = []
+            rewards = []
+
+            state = self.env.reset()
+            for steps in range(self.max_steps):
+                state = torch.FloatTensor(state).unsqueeze(0)
+                policy_output, value, (hidden_state, hebb_traces) = self.agent_net(state, [hidden_state, hebb_traces])
+                mus, sigmas = policy_output[0], policy_output[1]
+                sigmas = torch.diag_embed(sigmas)
+                dist = torch.distributions.MultivariateNormal(mus, sigmas)
+                action = dist.sample()
+                log_prob = dist.log_prob(action)
+                entropy = dist.entropy()  # Calculate entropy
+                next_state, reward, done, _ = self.env.step(action.squeeze().numpy())
+                
+
+                log_probs.append(log_prob)
+                values.append(value)
+                rewards.append(reward)
+                score += reward
+                state = next_state
+                
+                if done or steps == self.max_steps-1:
+                    training_total_rewards.append(score)
+                    
+
+                    
+                    if (self.selection_method == "exp_BW_validation" and (episode % self.evaluate_every == 0)):
+                        evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, 10, self.evaluation_seeds))
+                        print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+                        validation_total_rewards.append(evaluation_performance)
+                        if evaluation_performance > best_average:
+                            best_average = evaluation_performance
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                    self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                            
+                        if best_average == self.max_reward:
+                            print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                            best_average_after, '. Model saved in folder best.')
+                            return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+                    
+                        
+                    break
+
+                    # all_rewards.append(np.sum(rewards))
+                    # all_lengths.append(steps)
+                    # average_lengths.append(np.mean(all_lengths[-10:]))
+                    # if episode % 10 == 0:                    
+                    #     sys.stdout.write("episode: {}, reward: {}, total length: {}, average length: {} \n".format(episode, np.sum(rewards), steps, average_lengths[-1]))
+                    # break
+            
+
+            returns = []
+            R = 0
+            for r in rewards[::-1]:
+                R = r + self.gammaR * R
+                returns.insert(0, R)
+            
+            log_probs = torch.cat(log_probs)
+            values = torch.cat(values).squeeze()
+            returns = torch.FloatTensor(returns)
+            
+            advantage = returns - values
+            actor_loss = -(log_probs * advantage.detach()).mean()
+            critic_loss = advantage.pow(2).mean()
+            entropy_loss = entropy.mean()  # Entropy loss
+            total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
+
+            if episode % 10 != 0:
+                batch_losses.append(total_loss)
+            else:
+                self.optimizer.zero_grad()
+                avg_loss = torch.stack(batch_losses).mean()
+                avg_loss.backward()
+                
+                torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
+                # for name, param in self.agent_net.named_parameters():
+                #     if param.grad is None:
+                #         print(f"None gradient for {name}")
+                #     else:
+                #         print(f"Gradient for {name}")
+                self.optimizer.step()
+                training_losses.append(total_loss.detach())
+                batch_losses = []
+
+        print(f'Current best {self.selection_method}: ', best_average, ' reached at episode ',
+            best_average_after, '.')
+        
+        return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+
 
 
     def train_agent_continuous(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf):
@@ -762,6 +884,146 @@ class A2C_Agent:
             return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
 
+
+
+
+
+
+
+    def train_agent_continuous_vectorized_v3(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
+        scores = []
+        smoothed_scores = []
+        training_total_rewards = []
+        training_losses = []
+        validation_total_rewards = []
+        validation_losses = []
+
+        eps_trained = 1 + section*training_eps_per_section
+        end_of_section = (section+1)*training_eps_per_section
+
+        vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(self.env_name) for _ in range(num_parallel_envs)])
+
+        while eps_trained <= end_of_section:
+            log_probs_batch = []
+            values_batch = []
+            rewards_batch = []
+            entropies_batch = []
+
+            running_log_probs = [[] for _ in range(num_parallel_envs)]
+            running_values = [[] for _ in range(num_parallel_envs)]
+            running_rewards = [[] for _ in range(num_parallel_envs)]
+            running_entropies = [[] for _ in range(num_parallel_envs)]
+
+            hidden_states = self.agent_net.initialZeroState(num_parallel_envs)
+            hebb_traces = self.agent_net.initialZeroHebb(num_parallel_envs)
+
+            # SET ENV PARAMETERS HERE
+
+            states = vec_env.reset()
+            while len(log_probs_batch) < self.batch_size:
+                states = torch.from_numpy(states)
+                policy_outputs, values, (hidden_states, hebb_traces) = self.agent_net(states, [hidden_states, hebb_traces])
+                mus, sigmas = policy_outputs[0], policy_outputs[1]
+                sigmas = torch.diag_embed(sigmas)
+                dists = torch.distributions.MultivariateNormal(mus, sigmas)
+                actions = dists.sample()
+                log_probs = dists.log_prob(actions)
+                entropies = dists.entropy()
+                states, rewards, dones, _ = vec_env.step(actions) #.cpu().numpy()?
+
+                for i, (state, reward, done, log_prob, value, entropy) in enumerate(zip(states, rewards, dones, log_probs, values, entropies)):
+                    running_log_probs[i].append(log_prob.unsqueeze(0))
+                    running_values[i].append(value)
+                    running_rewards[i].append(reward)
+                    running_entropies[i].append(entropy.unsqueeze(0))
+
+                    if done:
+                        log_probs_batch.append(running_log_probs[i])
+                        values_batch.append(running_values[i])
+                        rewards_batch.append(running_rewards[i])
+                        entropies_batch.append(running_entropies[i])
+
+                        running_log_probs[i] = []
+                        running_values[i] = []
+                        running_rewards[i] = []
+                        running_entropies[i] = []
+
+                        # hidden_states[i] = torch.zeros_like(hidden_states[i]).detach()
+                        # hebb_traces[i] = torch.zeros_like(hebb_traces[i]).detach()
+
+                        hidden_states_new = hidden_states.clone()
+                        hidden_states_new[i] = torch.zeros_like(hidden_states[i])
+                        hidden_states = hidden_states_new
+
+                        hebb_traces_new = hebb_traces.clone()
+                        hebb_traces_new[i] = torch.zeros_like(hebb_traces[i])
+                        hebb_traces = hebb_traces_new
+
+                        # SET ENV PARAMETERS HERE
+
+                        if len(log_probs_batch) == self.batch_size:
+                            break
+
+            eps_trained += self.batch_size
+
+            summed_loss = 0
+            for rewards_history, log_probs_history, values_history, entropies_history in zip(rewards_batch, log_probs_batch, values_batch, entropies_batch):
+                returns = []
+                R = 0
+                for r in rewards_history[::-1]:
+                    R = r + self.gammaR * R
+                    returns.insert(0, R)
+                
+                log_probs_history = torch.cat(log_probs_history)
+                values_history = torch.cat(values_history).squeeze()
+                entropies_history = torch.cat(entropies_history)
+                returns = torch.FloatTensor(returns)
+
+                advantage_history = returns - values_history
+                actor_loss = -(log_probs_history * advantage_history.detach()).mean()
+                critic_loss = advantage_history.pow(2).mean()
+                entropy_loss = entropies_history.mean()
+                total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
+
+                summed_loss += total_loss
+
+            average_total_loss = summed_loss / self.batch_size
+            self.optimizer.zero_grad()
+            average_total_loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
+            self.optimizer.step()
+            training_losses.append(average_total_loss.detach())
+
+            if (eps_trained-1) % self.evaluate_every == 0:
+                evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds))
+                print(f"Episode {eps_trained-1}\tAverage evaluation: {evaluation_performance}")
+                validation_total_rewards.append(evaluation_performance)
+                if evaluation_performance > best_average:
+                    best_average = evaluation_performance
+                    best_average_after = eps_trained-1
+                    torch.save(self.agent_net.state_dict(),
+                            self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                    
+                if best_average == self.max_reward:
+                    print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                    best_average_after, '. Model saved in folder best.')
+                    return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+            
+        print(f'Current best {self.selection_method}: ', best_average, ' reached at episode ', best_average_after, '.')
+        return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+
+
+
+
+
+
+
+
+
+
+
+
     def train_agent_continuous_vectorized(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
             # best_average = -np.inf
             # best_average_after = np.inf
@@ -805,14 +1067,14 @@ class A2C_Agent:
                     dists = torch.distributions.MultivariateNormal(mus, sigmas)
                     actions = dists.sample()
                     log_probs = dists.log_prob(actions)
-                    entropies = dists.entropy().mean(dim=1)
+                    entropies = dists.entropy()
                     states, rewards, dones, _ = vec_env.step(actions.cpu().numpy())
 
                     for i, (state, reward, done, log_prob, value, entropy) in enumerate(zip(states, rewards, dones, log_probs, values, entropies)):
-                        running_log_probs[i].append(log_prob)
+                        running_log_probs[i].append(log_prob.unsqueeze(0))
                         running_values[i].append(value)
                         running_rewards[i].append(reward)
-                        running_entropies[i].append(entropy)
+                        running_entropies[i].append(entropy.unsqueeze(0))
                         running_total_training_rewards[i] += reward
 
                         if done:
@@ -822,14 +1084,15 @@ class A2C_Agent:
                                 R = r + self.gammaR * R
                                 returns.insert(0, R)
 
-                            log_prob = torch.cat(log_prob)
-                            value = torch.cat(value).squeeze() # Is this squeeze necessary?
+                            log_probs_history = torch.cat(running_log_probs[i])
+                            values_history = torch.cat(running_values[i]).squeeze() # Is this squeeze necessary?
                             returns = torch.FloatTensor(returns)
+                            entropies_history = torch.cat(running_entropies[i])
 
-                            advantage = returns - value
-                            actor_loss = -(log_prob * advantage.detach()).mean()
+                            advantage = returns - values_history
+                            actor_loss = -(log_probs_history * advantage.detach()).mean()
                             critic_loss = advantage.pow(2).mean()
-                            entropy_loss = entropy.mean()  # Entropy loss
+                            entropy_loss = entropies_history.mean()  # Entropy loss
                             total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
 
                             batch_losses.append(total_loss)
@@ -977,6 +1240,250 @@ class A2C_Agent:
             
             return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
+    def train_agent_continuous_vectorized_v2(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
+            # best_average = -np.inf
+            # best_average_after = np.inf
+            scores = []
+            smoothed_scores = []
+            scores_window = deque(maxlen = 100)
+
+            training_total_rewards = []
+            training_losses = []
+            validation_total_rewards = []
+            validation_losses = []
+
+
+            eps_trained = 1 + section*training_eps_per_section
+            end_of_section = (section+1)*training_eps_per_section
+
+            vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(self.env_name) for _ in range(num_parallel_envs)])
+
+            while eps_trained <= end_of_section:
+                
+
+                running_log_probs = [[] for _ in range(num_parallel_envs)]
+                log_probs_batch = []
+                running_total_training_rewards = [0 for _ in range(num_parallel_envs)]
+                running_values = [[] for _ in range(num_parallel_envs)]
+                values_batch = []
+                running_rewards = [[] for _ in range(num_parallel_envs)]
+                rewards_batch = []
+                running_entropies = [[] for _ in range(num_parallel_envs)]
+                entropies_batch = []
+
+                total_training_rewards_batch = []
+
+                hidden_states = self.agent_net.initialZeroState(num_parallel_envs)
+                hebb_traces = self.agent_net.initialZeroHebb(num_parallel_envs)
+
+                # SET ENV PARAMETERS HERE
+
+                states = vec_env.reset()
+                while len(log_probs_batch) < self.batch_size:
+                    states = torch.FloatTensor(states)
+                    policy_output, values, (hidden_states, hebb_traces) = self.agent_net(states, [hidden_states, hebb_traces])
+                    mus, sigmas = policy_output[0], policy_output[1]
+                    sigmas = torch.diag_embed(sigmas)
+                    dists = torch.distributions.MultivariateNormal(mus, sigmas)
+                    actions = dists.sample()
+                    log_probs = dists.log_prob(actions)
+                    entropies = dists.entropy()
+                    states, rewards, dones, _ = vec_env.step(actions.cpu().numpy())
+
+                    for i, (state, reward, done, log_prob, value, entropy) in enumerate(zip(states, rewards, dones, log_probs, values, entropies)):
+                        running_log_probs[i].append(log_prob.unsqueeze(0))
+                        running_values[i].append(value)
+                        running_rewards[i].append(reward)
+                        running_entropies[i].append(entropy.unsqueeze(0))
+                        running_total_training_rewards[i] += reward
+
+                        if done:
+                            log_probs_batch.append(torch.cat(running_log_probs[i]))
+                            values_batch.append(torch.cat(running_values[i]).squeeze())
+                            rewards_batch.append(running_rewards[i])
+                            entropies_batch.append(torch.cat(running_entropies[i]))
+                            
+                            
+                            # returns = []
+                            # R = 0
+                            # for r in running_rewards[i][::-1]:
+                            #     R = r + self.gammaR * R
+                            #     returns.insert(0, R)
+
+                            # log_probs_history = torch.cat(running_log_probs[i])
+                            # values_history = torch.cat(running_values[i]).squeeze() # Is this squeeze necessary?
+                            # returns = torch.FloatTensor(returns)
+                            # entropies_history = torch.cat(running_entropies[i])
+
+                            # advantage = returns - values_history
+                            # actor_loss = -(log_probs_history * advantage.detach()).mean()
+                            # critic_loss = advantage.pow(2).mean()
+                            # entropy_loss = entropies_history.mean()  # Entropy loss
+                            # total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
+
+                            # batch_losses.append(total_loss)
+
+
+                            total_training_rewards_batch.append(running_total_training_rewards[i])
+                            running_log_probs[i] = []
+                            running_values[i] = []
+                            running_rewards[i] = []
+                            running_entropies[i] = []
+                            running_total_training_rewards[i] = 0
+
+                            hidden_states[i] = torch.zeros_like(hidden_states[i])
+                            hebb_traces[i] = torch.zeros_like(hebb_traces[i])
+
+                            # SET ENV PARAMETERS HERE
+
+                batch_losses = []
+                for log_probs, values, entropies, rewards in zip(log_probs_batch, values_batch, entropies_batch, rewards_batch):
+                    returns = []
+                    R = 0
+                    for r in rewards[::-1]:
+                        R = r + self.gammaR * R
+                        returns.insert(0, R)
+
+                    returns = torch.FloatTensor(returns)
+                    advantage = returns - values
+                    actor_loss = -(log_probs * advantage.detach()).mean()
+                    critic_loss = advantage.pow(2).mean()
+                    entropy_loss = entropies.mean()
+
+                    total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
+                    batch_losses.append(total_loss)
+
+
+
+                eps_trained += self.batch_size
+                average_total_loss = torch.stack(batch_losses).mean()
+
+                self.optimizer.zero_grad()
+                average_total_loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
+                self.optimizer.step()
+                training_losses.append(average_total_loss.detach())
+
+                evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds))
+                print(f"Episode {eps_trained}\tAverage evaluation: {evaluation_performance}")
+                validation_total_rewards.append(evaluation_performance)
+                if evaluation_performance > best_average:
+                    best_average = evaluation_performance
+                    best_average_after = eps_trained
+                    torch.save(self.agent_net.state_dict(),
+                            self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                    
+                if best_average == self.max_reward:
+                    print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                    best_average_after, '. Model saved in folder best.')
+                    return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+
+            # region
+            # for episode in range(1, self.num_training_episodes + 1):
+            # for episode in range(1 + section*training_eps_per_section, (section+1)*training_eps_per_section + 1):
+                
+            #     if randomization_params and episode % randomize_every == 0:
+            #         self.env = gym.make(self.env_name)
+            #         self.env = randomize_env_params(self.env, randomization_params)
+                
+            #     hidden_state = self.agent_net.initialZeroState(self.batch_size)
+            #     hebb_traces = self.agent_net.initialZeroHebb(self.batch_size)
+                
+            #     score = 0
+                
+            #     log_probs = []
+            #     values = []
+            #     rewards = []
+
+            #     state = self.env.reset()
+            #     for steps in range(self.max_steps):
+            #         state = torch.FloatTensor(state).unsqueeze(0)
+            #         policy_output, value, (hidden_state, hebb_traces) = self.agent_net(state, [hidden_state, hebb_traces])
+            #         mus, sigmas = policy_output[0], policy_output[1]
+            #         sigmas = torch.diag_embed(sigmas)
+            #         dist = torch.distributions.MultivariateNormal(mus, sigmas)
+            #         action = dist.sample()
+            #         log_prob = dist.log_prob(action)
+            #         entropy = dist.entropy().mean()  # Calculate entropy
+            #         next_state, reward, done, _ = self.env.step(action.squeeze().numpy())
+                    
+
+            #         log_probs.append(log_prob)
+            #         values.append(value)
+            #         rewards.append(reward)
+            #         score += reward
+            #         state = next_state
+                    
+            #         if done or steps == self.max_steps-1:
+            #             training_total_rewards.append(score)
+            #             # new_state = torch.from_numpy(new_state)
+            #             # new_state = new_state.unsqueeze(0)#.to(device) #This as well?
+            #             # _, Qval, (hidden_state, hebb_traces) = self.agent_net.forward(new_state.float(), [hidden_state, hebb_traces])
+            #             # Qval = Qval.detach().numpy()[0,0]
+
+                        
+            #             if (self.selection_method == "exp_BW_validation" and (episode % self.evaluate_every == 0)):
+            #                 evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, 10, self.evaluation_seeds))
+            #                 print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+            #                 validation_total_rewards.append(evaluation_performance)
+            #                 if evaluation_performance > best_average:
+            #                     best_average = evaluation_performance
+            #                     best_average_after = episode
+            #                     torch.save(self.agent_net.state_dict(),
+            #                             self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                                
+            #                 if best_average == self.max_reward:
+            #                     print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+            #                     best_average_after, '. Model saved in folder best.')
+            #                     return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+                        
+                            
+            #             break
+
+            #             # all_rewards.append(np.sum(rewards))
+            #             # all_lengths.append(steps)
+            #             # average_lengths.append(np.mean(all_lengths[-10:]))
+            #             # if episode % 10 == 0:                    
+            #             #     sys.stdout.write("episode: {}, reward: {}, total length: {}, average length: {} \n".format(episode, np.sum(rewards), steps, average_lengths[-1]))
+            #             # break
+                
+
+            #     returns = []
+            #     R = 0
+            #     for r in rewards[::-1]:
+            #         R = r + self.gammaR * R
+            #         returns.insert(0, R)
+                
+            #     log_probs = torch.cat(log_probs)
+            #     values = torch.cat(values).squeeze()
+            #     returns = torch.FloatTensor(returns)
+                
+            #     advantage = returns - values
+            #     actor_loss = -(log_probs * advantage.detach()).mean()
+            #     critic_loss = advantage.pow(2).mean()
+            #     entropy_loss = entropy.mean()  # Entropy loss
+            #     total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
+
+            #     self.optimizer.zero_grad()
+            #     total_loss.backward()
+                
+            #     torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
+            #     # for name, param in self.agent_net.named_parameters():
+            #     #     if param.grad is None:
+            #     #         print(f"None gradient for {name}")
+            #     #     else:
+            #     #         print(f"Gradient for {name}")
+            #     self.optimizer.step()
+            #     training_losses.append(total_loss.detach())
+            # endregion
+            
+            
+            print(f'Current best {self.selection_method}: ', best_average, ' reached at episode ',
+                best_average_after, '.')
+            
+            return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
 
     def train_agent_discrete_old(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5):

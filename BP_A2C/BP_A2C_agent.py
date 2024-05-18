@@ -923,6 +923,10 @@ class A2C_Agent:
         vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(self.env_name) for _ in range(num_parallel_envs)])
 
         while eps_trained <= end_of_section:
+            memory_usage_before_initialization = self.get_current_memory_usage()
+            increase = memory_usage_before_initialization - latest_usage
+            latest_usage = memory_usage_before_initialization
+            print(f"Memory usage before initialization: {memory_usage_before_initialization} MiB (Increase: {increase} MiB)")
             log_probs_batch = []
             values_batch = []
             rewards_batch = []
@@ -935,6 +939,11 @@ class A2C_Agent:
 
             hidden_states = self.agent_net.initialZeroState(num_parallel_envs)
             hebb_traces = self.agent_net.initialZeroHebb(num_parallel_envs)
+
+            memory_usage_after_initialization = self.get_current_memory_usage()
+            increase = memory_usage_after_initialization - latest_usage
+            latest_usage = memory_usage_after_initialization
+            print(f"Memory usage after initialization: {memory_usage_after_initialization} MiB (Increase: {increase} MiB)")
 
             # SET ENV PARAMETERS HERE
 

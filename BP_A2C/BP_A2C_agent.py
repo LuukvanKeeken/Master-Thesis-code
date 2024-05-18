@@ -963,7 +963,7 @@ class A2C_Agent:
                 for i, (state, reward, done, log_prob, value, entropy) in enumerate(zip(states, rewards, dones, log_probs, values, entropies)):
                     running_log_probs[i].append(log_prob.unsqueeze(0))
                     running_values[i].append(value)
-                    running_rewards[i].append(torch.tensor(reward))
+                    running_rewards[i].append(reward)
                     running_entropies[i].append(entropy.unsqueeze(0))
 
                     if done:
@@ -978,7 +978,7 @@ class A2C_Agent:
                         print(f"Memory usage at done (index {i}, length {len(running_rewards[i])}, since_prev {steps_since_previous_episode_end}): {done_memory_usage} MiB (Increase: {increase} MiB)")
                         log_probs_batch.append(torch.stack(running_log_probs[i]))
                         values_batch.append(torch.stack(running_values[i]))
-                        rewards_batch.append(torch.stack(running_rewards[i]))
+                        rewards_batch.append(running_rewards[i])
                         entropies_batch.append(torch.stack(running_entropies[i]))
                         steps_since_previous_episode_end = 0
                         running_log_probs[i] = []

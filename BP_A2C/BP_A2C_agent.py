@@ -7,7 +7,7 @@ import random
 import time
 from collections import deque
 from torch.distributions import Categorical
-from memory_profiler import profile
+# from memory_profiler import profile
 
 from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVectorEnv
 torch.autograd.set_detect_anomaly(True)

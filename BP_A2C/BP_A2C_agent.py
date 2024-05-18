@@ -8,6 +8,7 @@ import time
 from collections import deque
 from torch.distributions import Categorical
 # from memory_profiler import profile
+import gc
 
 from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVectorEnv
 torch.autograd.set_detect_anomaly(True)
@@ -1027,6 +1028,17 @@ class A2C_Agent:
             torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
             self.optimizer.step()
             training_losses.append(average_total_loss.detach())
+
+            memory_usage_before_collect = self.get_current_memory_usage()
+            increase = memory_usage_before_collect - latest_usage
+            latest_usage = memory_usage_before_collect
+            print(f"Memory usage before collect: {memory_usage_before_collect} MiB (Increase: {increase} MiB)")
+            gc.collect()
+            memory_usage_after_collect = self.get_current_memory_usage()
+            increase = memory_usage_after_collect - latest_usage
+            latest_usage = memory_usage_after_collect
+            print(f"Memory usage after collect: {memory_usage_after_collect} MiB (Increase: {increase} MiB)")
+
 
             if (eps_trained-1) % self.evaluate_every == 0:
                 evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds))

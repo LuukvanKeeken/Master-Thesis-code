@@ -976,10 +976,10 @@ class A2C_Agent:
                         increase = done_memory_usage - latest_usage
                         latest_usage = done_memory_usage
                         print(f"Memory usage at done (index {i}, length {len(running_rewards[i])}, since_prev {steps_since_previous_episode_end}): {done_memory_usage} MiB (Increase: {increase} MiB)")
-                        log_probs_batch.append(running_log_probs[i])
-                        values_batch.append(running_values[i])
-                        rewards_batch.append(running_rewards[i])
-                        entropies_batch.append(running_entropies[i])
+                        log_probs_batch.append(torch.stack(running_log_probs[i]))
+                        values_batch.append(torch.stack(running_values[i]))
+                        rewards_batch.append(torch.stack(running_rewards[i]))
+                        entropies_batch.append(torch.stack(running_entropies[i]))
                         steps_since_previous_episode_end = 0
                         running_log_probs[i] = []
                         running_values[i] = []

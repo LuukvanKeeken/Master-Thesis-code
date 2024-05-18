@@ -9,13 +9,13 @@ value_coefs = [0.0001, 0.01, 0.5, 1.0]
 
 
 
-directory = "33_CfC_range_32and48and64_correctEntropies"
-training_method = "original"
+directory = "34_CfC_range_32and48and64_correctEntropies"
+training_method = "quarter_range"
 selection_method = "true_range_eval_all_params"
 num_models = 10
 all_results = []
-results_id = 72000
-date = 2024517
+results_id = 73000
+date = 2024518
 num_train_eps = 40000
 missing_ids = []
 fine_ids = []

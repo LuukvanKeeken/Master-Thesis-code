@@ -973,7 +973,7 @@ class A2C_Agent:
                         done_memory_usage = self.get_current_memory_usage()
                         increase = done_memory_usage - latest_usage
                         latest_usage = done_memory_usage
-                        print(f"Memory usage at done (index {i}): {done_memory_usage} MiB (Increase: {increase} MiB)")
+                        print(f"Memory usage at done (index {i}, length {len(running_rewards[i])}): {done_memory_usage} MiB (Increase: {increase} MiB)")
                         log_probs_batch.append(running_log_probs[i])
                         values_batch.append(running_values[i])
                         rewards_batch.append(running_rewards[i])

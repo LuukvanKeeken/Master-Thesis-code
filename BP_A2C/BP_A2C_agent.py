@@ -908,6 +908,7 @@ class A2C_Agent:
         
         start_memory_usage = self.get_current_memory_usage()
         print(f"Memory usage at start: {start_memory_usage} MiB")
+        latest_usage = start_memory_usage
         scores = []
         smoothed_scores = []
         training_total_rewards = []
@@ -956,7 +957,9 @@ class A2C_Agent:
 
                     if done:
                         done_memory_usage = self.get_current_memory_usage()
-                        print(f"Memory usage at done: {done_memory_usage} MiB")
+                        increase = done_memory_usage - latest_usage
+                        latest_usage = done_memory_usage
+                        print(f"Memory usage at done: {done_memory_usage} MiB (Increase: {increase} MiB)")
                         log_probs_batch.append(running_log_probs[i])
                         values_batch.append(running_values[i])
                         rewards_batch.append(running_rewards[i])
@@ -970,7 +973,9 @@ class A2C_Agent:
                         # hidden_states[i] = torch.zeros_like(hidden_states[i]).detach()
                         # hebb_traces[i] = torch.zeros_like(hebb_traces[i]).detach()
                         memory_usage_before_reset = self.get_current_memory_usage()
-                        print(f"Memory usage before reset: {memory_usage_before_reset} MiB")
+                        increase = memory_usage_before_reset - latest_usage
+                        latest_usage = memory_usage_before_reset
+                        print(f"Memory usage before reset: {memory_usage_before_reset} MiB (Increase: {increase} MiB)")
                         hidden_states_new = hidden_states.clone()
                         hidden_states_new[i] = torch.zeros_like(hidden_states[i])
                         hidden_states = hidden_states_new
@@ -980,7 +985,9 @@ class A2C_Agent:
                         hebb_traces = hebb_traces_new
 
                         memory_usage_after_reset = self.get_current_memory_usage()
-                        print(f"Memory usage after reset: {memory_usage_after_reset} MiB")
+                        increase = memory_usage_after_reset - latest_usage
+                        latest_usage = memory_usage_after_reset
+                        print(f"Memory usage after reset: {memory_usage_after_reset} MiB (Increase: {increase} MiB)")
 
                         # SET ENV PARAMETERS HERE
 
@@ -990,7 +997,9 @@ class A2C_Agent:
             eps_trained += self.batch_size
             print(f"Training episode {eps_trained-1}")
             middle_memory_usage = self.get_current_memory_usage()
-            print(f"Memory usage at middle: {middle_memory_usage} MiB")
+            increase = middle_memory_usage - latest_usage
+            latest_usage = middle_memory_usage
+            print(f"Memory usage at middle: {middle_memory_usage} MiB (Increase: {increase} MiB)")
             summed_loss = 0
             for rewards_history, log_probs_history, values_history, entropies_history in zip(rewards_batch, log_probs_batch, values_batch, entropies_batch):
                 returns = []
@@ -1036,7 +1045,9 @@ class A2C_Agent:
             
         print(f'Current best {self.selection_method}: ', best_average, ' reached at episode ', best_average_after, '.')
         end_memory_usage = self.get_current_memory_usage()
-        print(f"Memory usage at end: {end_memory_usage} MiB")
+        increase = end_memory_usage - latest_usage
+        latest_usage = end_memory_usage
+        print(f"Memory usage at end: {end_memory_usage} MiB (Increase: {increase} MiB)")
         print(f"Memory used by function: {end_memory_usage - start_memory_usage} MiB")
         
         

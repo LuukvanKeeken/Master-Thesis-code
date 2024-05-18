@@ -993,10 +993,12 @@ class A2C_Agent:
                         hidden_states_new = hidden_states.clone()
                         hidden_states_new[i] = torch.zeros_like(hidden_states[i])
                         hidden_states = hidden_states_new
+                        del hidden_states_new
 
                         hebb_traces_new = hebb_traces.clone()
                         hebb_traces_new[i] = torch.zeros_like(hebb_traces[i])
                         hebb_traces = hebb_traces_new
+                        del hebb_traces_new
 
                         memory_usage_after_reset = self.get_current_memory_usage()
                         increase = memory_usage_after_reset - latest_usage

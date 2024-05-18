@@ -963,7 +963,7 @@ class A2C_Agent:
                 for i, (state, reward, done, log_prob, value, entropy) in enumerate(zip(states, rewards, dones, log_probs, values, entropies)):
                     running_log_probs[i].append(log_prob.unsqueeze(0))
                     running_values[i].append(value)
-                    running_rewards[i].append(reward)
+                    running_rewards[i].append(torch.tensor(reward))
                     running_entropies[i].append(entropy.unsqueeze(0))
 
                     if done:

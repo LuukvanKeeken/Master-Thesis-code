@@ -1,4 +1,5 @@
 from copy import deepcopy
+import resource
 import torch
 import numpy as np
 import gym
@@ -6,6 +7,7 @@ import random
 import time
 from collections import deque
 from torch.distributions import Categorical
+from memory_profiler import profile
 
 from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVectorEnv
 torch.autograd.set_detect_anomaly(True)
@@ -884,13 +886,20 @@ class A2C_Agent:
             return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
 
+    def get_current_memory_usage(self):
+        rusage_denom = 1024.
+        if hasattr(resource, 'getrusage'):
+            return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / rusage_denom
+        else:
+            return "Resource module not available in your system"
 
 
 
 
-
-
+    # @profile
     def train_agent_continuous_vectorized_v3(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
+        start_memory_usage = self.get_current_memory_usage()
+        print(f"Memory usage at start: {start_memory_usage} MiB")
         scores = []
         smoothed_scores = []
         training_total_rewards = []
@@ -965,7 +974,9 @@ class A2C_Agent:
                             break
 
             eps_trained += self.batch_size
-
+            print(f"Training episode {eps_trained-1}")
+            middle_memory_usage = self.get_current_memory_usage()
+            print(f"Memory usage at middle: {middle_memory_usage} MiB")
             summed_loss = 0
             for rewards_history, log_probs_history, values_history, entropies_history in zip(rewards_batch, log_probs_batch, values_batch, entropies_batch):
                 returns = []
@@ -1010,6 +1021,11 @@ class A2C_Agent:
                     return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
             
         print(f'Current best {self.selection_method}: ', best_average, ' reached at episode ', best_average_after, '.')
+        end_memory_usage = self.get_current_memory_usage()
+        print(f"Memory usage at end: {end_memory_usage} MiB")
+        print(f"Memory used by function: {end_memory_usage - start_memory_usage} MiB")
+        
+        
         return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
 

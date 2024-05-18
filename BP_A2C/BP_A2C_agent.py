@@ -980,7 +980,7 @@ class A2C_Agent:
                         values_batch.append(running_values[i])
                         rewards_batch.append(running_rewards[i])
                         entropies_batch.append(running_entropies[i])
-
+                        steps_since_previous_episode_end = 0
                         running_log_probs[i] = []
                         running_values[i] = []
                         running_rewards[i] = []

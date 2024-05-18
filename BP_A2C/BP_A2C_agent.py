@@ -1028,9 +1028,9 @@ class A2C_Agent:
                     R = r + self.gammaR * R
                     returns.insert(0, R)
                 
-                log_probs_history = torch.cat(log_probs_history)
-                values_history = torch.cat(values_history).squeeze()
-                entropies_history = torch.cat(entropies_history)
+                # log_probs_history = torch.cat(log_probs_history)
+                # values_history = torch.cat(values_history).squeeze()
+                # entropies_history = torch.cat(entropies_history)
                 returns = torch.FloatTensor(returns)
 
                 advantage_history = returns - values_history

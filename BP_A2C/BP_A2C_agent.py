@@ -966,6 +966,7 @@ class A2C_Agent:
                     running_entropies[i].append(entropy.unsqueeze(0))
 
                     if done:
+                        print(f"Current lengths of episodes: {[len(running_rewards[i]) for i in range(num_parallel_envs)]}")
                         done_memory_usage = self.get_current_memory_usage()
                         increase = done_memory_usage - latest_usage
                         latest_usage = done_memory_usage

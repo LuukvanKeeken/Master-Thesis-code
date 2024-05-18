@@ -9,6 +9,7 @@ from collections import deque
 from torch.distributions import Categorical
 # from memory_profiler import profile
 import gc
+import tracemalloc
 
 from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVectorEnv
 torch.autograd.set_detect_anomaly(True)
@@ -906,6 +907,9 @@ class A2C_Agent:
         else:
             print("GPU is not available")
         
+        
+
+
         longest_episode_len = 0
         steps_since_previous_episode_end = 0
         start_memory_usage = self.get_current_memory_usage()
@@ -924,6 +928,8 @@ class A2C_Agent:
         vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(self.env_name) for _ in range(num_parallel_envs)])
 
         while eps_trained <= end_of_section:
+            tracemalloc.start()
+            snapshot1 = tracemalloc.take_snapshot()
             memory_usage_before_initialization = self.get_current_memory_usage()
             increase = memory_usage_before_initialization - latest_usage
             latest_usage = memory_usage_before_initialization
@@ -1047,8 +1053,15 @@ class A2C_Agent:
             average_total_loss.backward()
             torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
             self.optimizer.step()
-            torch.cuda.empty_cache()
+            # torch.cuda.empty_cache()
             training_losses.append(average_total_loss.detach())
+            snapshot2 = tracemalloc.take_snapshot()
+            tracemalloc.stop()
+
+            top_stats = snapshot2.compare_to(snapshot1, 'lineno')
+            print("[ Top 10 differences ]")
+            for stat in top_stats[:10]:
+                print(stat)
 
             memory_usage_before_collect = self.get_current_memory_usage()
             increase = memory_usage_before_collect - latest_usage

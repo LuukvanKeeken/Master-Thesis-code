@@ -982,12 +982,10 @@ class A2C_Agent:
                         entropies_batch.append(running_entropies[i])
                         steps_since_previous_episode_end = 0
                         
-                        running_log_probs[i].clear()
-                        running_values[i].clear()
-                        running_rewards[i].clear()
-                        running_entropies[i].clear()
-
-                        gc.collect()
+                        running_log_probs[i] = []
+                        running_values[i] = []
+                        running_rewards[i] = []
+                        running_entropies[i] = []
 
                         # hidden_states[i] = torch.zeros_like(hidden_states[i]).detach()
                         # hebb_traces[i] = torch.zeros_like(hebb_traces[i]).detach()
@@ -1049,6 +1047,7 @@ class A2C_Agent:
             average_total_loss.backward()
             torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
             self.optimizer.step()
+            torch.cuda.empty_cache()
             training_losses.append(average_total_loss.detach())
 
             memory_usage_before_collect = self.get_current_memory_usage()

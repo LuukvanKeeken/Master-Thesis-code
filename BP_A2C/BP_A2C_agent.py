@@ -906,7 +906,7 @@ class A2C_Agent:
         else:
             print("GPU is not available")
         
-        
+        longest_episode_len = 0
         start_memory_usage = self.get_current_memory_usage()
         print(f"Memory usage at start: {start_memory_usage} MiB")
         latest_usage = start_memory_usage
@@ -967,6 +967,9 @@ class A2C_Agent:
 
                     if done:
                         print(f"Current lengths of episodes: {[len(running_rewards[i]) for i in range(num_parallel_envs)]}")
+                        if len(running_rewards[i]) > longest_episode_len:
+                            longest_episode_len = len(running_rewards[i])
+                            print(f"New longest episode length: {longest_episode_len}")
                         done_memory_usage = self.get_current_memory_usage()
                         increase = done_memory_usage - latest_usage
                         latest_usage = done_memory_usage

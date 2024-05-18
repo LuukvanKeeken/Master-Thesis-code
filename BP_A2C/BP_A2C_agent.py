@@ -947,6 +947,8 @@ class A2C_Agent:
                     running_entropies[i].append(entropy.unsqueeze(0))
 
                     if done:
+                        done_memory_usage = self.get_current_memory_usage()
+                        print(f"Memory usage at done: {done_memory_usage} MiB")
                         log_probs_batch.append(running_log_probs[i])
                         values_batch.append(running_values[i])
                         rewards_batch.append(running_rewards[i])

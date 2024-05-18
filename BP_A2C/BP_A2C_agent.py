@@ -907,6 +907,7 @@ class A2C_Agent:
             print("GPU is not available")
         
         longest_episode_len = 0
+        steps_since_previous_episode_end = 0
         start_memory_usage = self.get_current_memory_usage()
         print(f"Memory usage at start: {start_memory_usage} MiB")
         latest_usage = start_memory_usage
@@ -974,7 +975,7 @@ class A2C_Agent:
                         done_memory_usage = self.get_current_memory_usage()
                         increase = done_memory_usage - latest_usage
                         latest_usage = done_memory_usage
-                        print(f"Memory usage at done (index {i}, length {len(running_rewards[i])}): {done_memory_usage} MiB (Increase: {increase} MiB)")
+                        print(f"Memory usage at done (index {i}, length {len(running_rewards[i])}, since_prev {steps_since_previous_episode_end}): {done_memory_usage} MiB (Increase: {increase} MiB)")
                         log_probs_batch.append(running_log_probs[i])
                         values_batch.append(running_values[i])
                         rewards_batch.append(running_rewards[i])
@@ -1010,6 +1011,8 @@ class A2C_Agent:
 
                         if len(log_probs_batch) == self.batch_size:
                             break
+
+                steps_since_previous_episode_end += 1
 
             eps_trained += self.batch_size
             print(f"Training episode {eps_trained-1}")

@@ -898,6 +898,14 @@ class A2C_Agent:
 
     # @profile
     def train_agent_continuous_vectorized_v3(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
+        if torch.cuda.is_available():
+            print("GPU is available")
+            print("Number of GPUs available:", torch.cuda.device_count())
+            print("GPU device name:", torch.cuda.get_device_name(0))
+        else:
+            print("GPU is not available")
+        
+        
         start_memory_usage = self.get_current_memory_usage()
         print(f"Memory usage at start: {start_memory_usage} MiB")
         scores = []
@@ -961,7 +969,8 @@ class A2C_Agent:
 
                         # hidden_states[i] = torch.zeros_like(hidden_states[i]).detach()
                         # hebb_traces[i] = torch.zeros_like(hebb_traces[i]).detach()
-
+                        memory_usage_before_reset = self.get_current_memory_usage()
+                        print(f"Memory usage before reset: {memory_usage_before_reset} MiB")
                         hidden_states_new = hidden_states.clone()
                         hidden_states_new[i] = torch.zeros_like(hidden_states[i])
                         hidden_states = hidden_states_new
@@ -969,6 +978,9 @@ class A2C_Agent:
                         hebb_traces_new = hebb_traces.clone()
                         hebb_traces_new[i] = torch.zeros_like(hebb_traces[i])
                         hebb_traces = hebb_traces_new
+
+                        memory_usage_after_reset = self.get_current_memory_usage()
+                        print(f"Memory usage after reset: {memory_usage_after_reset} MiB")
 
                         # SET ENV PARAMETERS HERE
 

@@ -9,7 +9,7 @@ from collections import deque
 from torch.distributions import Categorical
 # from memory_profiler import profile
 import gc
-import tracemalloc
+
 
 from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVectorEnv
 torch.autograd.set_detect_anomaly(True)
@@ -665,10 +665,17 @@ class A2C_Agent:
             training_losses = []
             validation_total_rewards = []
             validation_losses = []
-
+            memory_usage_start = self.get_current_memory_usage()
+            print(f"Memory usage at start of training: {memory_usage_start}")
+            
+            
+            
             # for episode in range(1, self.num_training_episodes + 1):
             for episode in range(1 + section*training_eps_per_section, (section+1)*training_eps_per_section + 1):
-                
+                if episode % 10 == 0:
+                    memory_usage = self.get_current_memory_usage()
+                    print(f"Memory usage at episode {episode}: {memory_usage}")
+
                 if randomization_params and episode % randomize_every == 0:
                     self.env = gym.make(self.env_name)
                     self.env = randomize_env_params(self.env, randomization_params)
@@ -887,6 +894,261 @@ class A2C_Agent:
             
             return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
+    def train_agent_continuous_vidk(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf):
+            # best_average = -np.inf
+            # best_average_after = np.inf
+            scores = []
+            smoothed_scores = []
+            scores_window = deque(maxlen = 100)
+
+            training_total_rewards = []
+            training_losses = []
+            validation_total_rewards = []
+            validation_losses = []
+            memory_usage_start = self.get_current_memory_usage()
+            print(f"Memory usage at start of training: {memory_usage_start}")
+            
+            
+            longest_episode = 0
+            # for episode in range(1, self.num_training_episodes + 1):
+            for episode in range(1 + section*training_eps_per_section, (section+1)*training_eps_per_section + 1):
+                if episode % 10 == 0:
+                    memory_usage = self.get_current_memory_usage()
+                    print(f"Memory usage at episode {episode}: {memory_usage}")
+
+                if randomization_params and episode % randomize_every == 0:
+                    self.env = gym.make(self.env_name)
+                    self.env = randomize_env_params(self.env, randomization_params)
+                
+                hidden_state = self.agent_net.initialZeroState(self.batch_size)
+                hebb_traces = self.agent_net.initialZeroHebb(self.batch_size)
+                
+                score = 0
+                
+                log_probs = []
+                values = []
+                rewards = []
+
+                state = self.env.reset()
+                interaction_model_sum = 0
+                interaction_inside_model_sum = 0
+                for steps in range(self.max_steps):
+                    before_interacting = self.get_current_memory_usage()
+                    state = torch.FloatTensor(state).unsqueeze(0)
+                    policy_output, value, (hidden_state, hebb_traces), usage = self.agent_net(state, [hidden_state, hebb_traces])
+                    interaction_inside_model_sum += usage
+                    interaction_model_sum += self.get_current_memory_usage() - before_interacting
+                    mus, sigmas = policy_output[0], policy_output[1]
+                    sigmas = torch.diag_embed(sigmas)
+                    dist = torch.distributions.MultivariateNormal(mus, sigmas)
+                    action = dist.sample()
+                    log_prob = dist.log_prob(action)
+                    entropy = dist.entropy()  # Calculate entropy
+                    next_state, reward, done, _ = self.env.step(action.squeeze().numpy())
+                    
+
+                    log_probs.append(log_prob)
+                    values.append(value)
+                    rewards.append(reward)
+                    score += reward
+                    state = next_state
+                    
+                    if done or steps == self.max_steps-1:
+                        print(f"Interaction inside model: {interaction_inside_model_sum}, average: {interaction_inside_model_sum/steps}")
+                        print(f"Interaction model: {interaction_model_sum}, average: {interaction_model_sum/steps}")
+                        print(f"Difference: {interaction_model_sum - interaction_inside_model_sum}")
+                        print(f"Cuirrent memory usage: {self.get_current_memory_usage()}")
+                        if steps > longest_episode:
+                            print(f"New longest episode: {steps}, longer by {steps - longest_episode}")
+                            longest_episode = steps
+                        else:
+                            print(f"Epsiode length: {steps}")
+                        training_total_rewards.append(score)
+                        # new_state = torch.from_numpy(new_state)
+                        # new_state = new_state.unsqueeze(0)#.to(device) #This as well?
+                        # _, Qval, (hidden_state, hebb_traces) = self.agent_net.forward(new_state.float(), [hidden_state, hebb_traces])
+                        # Qval = Qval.detach().numpy()[0,0]
+
+                        if ((self.selection_method == "evaluation") and (episode % self.evaluate_every == 0)):
+                            evaluation_performance = np.mean(evaluate_BP_agent_pole_length(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds, 1.0))
+                            print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+                            validation_total_rewards.append(evaluation_performance)
+
+                            if evaluation_performance > best_average:
+                                best_average = evaluation_performance
+                                best_average_after = episode
+                                torch.save(self.agent_net.state_dict(),
+                                        self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                                
+                            if best_average == self.max_reward:
+                                print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                                best_average_after, '. Model saved in folder best.')
+                                return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+                                
+                        elif ((self.selection_method == "range_evaluation") and (episode % self.evaluate_every == 0)):
+                            # pole_length_mods = [0.1, 0.5, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 17.0, 20.0]
+                            pole_length_mods = [0.55, 10.5]
+                            eps_per_setting = 5
+                            evaluation_performance = 0
+                            for i, mod in enumerate(pole_length_mods):
+                                # Get performance over one episode with this pole length modifier, 
+                                # skip over the first i evaluation seeds so not all episodes have
+                                # the same seed.
+                                evaluation_performance += np.mean(evaluate_BP_agent_pole_length(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], mod))
+
+                            evaluation_performance /= len(pole_length_mods)
+                            print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                            if evaluation_performance >= best_average:
+                                best_average = evaluation_performance
+                                best_average_after = episode
+                                torch.save(self.agent_net.state_dict(),
+                                            self.result_dir + f'/checkpoint_{self.network_type}_A2C_{self.i_run}.pt')
+                            
+                            if best_average == self.max_reward:
+                                print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                                best_average_after, f'. Model saved in folder {self.result_dir}')
+                                return smoothed_scores, scores, best_average, best_average_after
+
+
+                        elif ((self.selection_method == "range_evaluation_all_params") and (episode % self.evaluate_every == 0)):
+                            pole_length_mods = [0.55, 10.5]
+                            pole_mass_mods = [3.0]
+                            force_mag_mods = [0.6, 3.5]
+
+                            eps_per_setting = 1
+                            evaluation_performance = 0
+                            total_eval_eps = 10
+                            for i in range(total_eval_eps):
+                                np.random.seed(self.evaluation_seeds[i+eps_per_setting-1])
+                                pole_length_mod = np.random.choice(pole_length_mods)
+                                pole_mass_mod = np.random.choice(pole_mass_mods)
+                                force_mag_mod = np.random.choice(force_mag_mods)
+                                evaluation_performance += np.mean(evaluate_BP_agent_all_params(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                            evaluation_performance /= total_eval_eps
+                            print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                            if evaluation_performance >= best_average:
+                                best_average = evaluation_performance
+                                best_average_after = episode
+                                torch.save(self.agent_net.state_dict(),
+                                            self.result_dir + f'/checkpoint_{self.network_type}_A2C_{self.i_run}.pt')
+                                
+                            if best_average == self.max_reward:
+                                print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                                best_average_after, f'. Model saved in folder {self.result_dir}')
+                                return smoothed_scores, scores, best_average, best_average_after
+        
+                        elif ((self.selection_method == "true_range_eval_all_params") and (episode % self.evaluate_every == 0)):
+                            validation_ranges = [[(0.55, 0.775), (5.75, 10.5)], [(2.0, 3.0)], [(0.6, 0.8), (2.25, 3.5)]]
+
+                            eps_per_setting = 1
+                            evaluation_performance = 0
+                            current_np_seed = np.random.get_state()
+                            current_r_seed = random.getstate()
+                            for i in range(self.num_evaluation_episodes):
+                                np.random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
+                                random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
+                                pole_length_range = random.choice(validation_ranges[0])
+                                pole_length_mod = np.random.uniform(pole_length_range[0], pole_length_range[1])
+                                pole_mass_mod = np.random.uniform(validation_ranges[1][0][0], validation_ranges[1][0][1])
+                                force_mag_range = random.choice(validation_ranges[2])
+                                force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
+                                evaluation_performance += np.mean(evaluate_BP_agent_all_params(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                            evaluation_performance /= self.num_evaluation_episodes
+                            print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+                            validation_total_rewards.append(evaluation_performance)
+                            if evaluation_performance >= best_average:
+                                best_average = evaluation_performance
+                                best_average_after = episode
+                                torch.save(self.agent_net.state_dict(),
+                                            self.result_dir + f'/checkpoint_{self.network_type}_A2C_{self.i_run}.pt')
+                                
+                            if best_average == self.max_reward:
+                                print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                                best_average_after, f'. Model saved in folder {self.result_dir}')
+                                return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+                            np.random.set_state(current_np_seed)
+                            random.setstate(current_r_seed)
+                        elif (self.selection_method == "exp_BW_validation" and (episode % self.evaluate_every == 0)):
+                            evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, 10, self.evaluation_seeds))
+                            print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+                            validation_total_rewards.append(evaluation_performance)
+                            if evaluation_performance > best_average:
+                                best_average = evaluation_performance
+                                best_average_after = episode
+                                torch.save(self.agent_net.state_dict(),
+                                        self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                                
+                            if best_average == self.max_reward:
+                                print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                                best_average_after, '. Model saved in folder best.')
+                                return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+                        elif (self.selection_method == "100 episode average"):
+                            scores_window.append(score)
+                            scores.append(score)
+                            smoothed_scores.append(np.mean(scores_window))
+
+                            if smoothed_scores[-1] > best_average:
+                                best_average = smoothed_scores[-1]
+                                best_average_after = episode
+                                torch.save(self.agent_net.state_dict(),
+                                        self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+
+                            print("Episode {}\tAverage Score: {:.2f}".format(episode, np.mean(scores_window)), end='\r')
+
+                            if episode % 100 == 0:
+                                print("\rEpisode {}\tAverage Score: {:.2f}".
+                                    format(episode, np.mean(scores_window)))
+                            
+                        break
+
+                        # all_rewards.append(np.sum(rewards))
+                        # all_lengths.append(steps)
+                        # average_lengths.append(np.mean(all_lengths[-10:]))
+                        # if episode % 10 == 0:                    
+                        #     sys.stdout.write("episode: {}, reward: {}, total length: {}, average length: {} \n".format(episode, np.sum(rewards), steps, average_lengths[-1]))
+                        # break
+                
+
+                returns = []
+                R = 0
+                for r in rewards[::-1]:
+                    R = r + self.gammaR * R
+                    returns.insert(0, R)
+                
+                log_probs = torch.cat(log_probs)
+                values = torch.cat(values).squeeze()
+                returns = torch.FloatTensor(returns)
+                
+                advantage = returns - values
+                actor_loss = -(log_probs * advantage.detach()).mean()
+                critic_loss = advantage.pow(2).mean()
+                entropy_loss = entropy.mean()  # Entropy loss
+                total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
+
+                self.optimizer.zero_grad()
+                total_loss.backward()
+                
+                torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
+                # for name, param in self.agent_net.named_parameters():
+                #     if param.grad is None:
+                #         print(f"None gradient for {name}")
+                #     else:
+                #         print(f"Gradient for {name}")
+                self.optimizer.step()
+                training_losses.append(total_loss.detach())
+
+            print(f'Current best {self.selection_method}: ', best_average, ' reached at episode ',
+                best_average_after, '.')
+            
+            return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+
 
     def get_current_memory_usage(self):
         rusage_denom = 1024.
@@ -928,8 +1190,6 @@ class A2C_Agent:
         vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(self.env_name) for _ in range(num_parallel_envs)])
 
         while eps_trained <= end_of_section:
-            tracemalloc.start()
-            snapshot1 = tracemalloc.take_snapshot()
             memory_usage_before_initialization = self.get_current_memory_usage()
             increase = memory_usage_before_initialization - latest_usage
             latest_usage = memory_usage_before_initialization
@@ -1002,12 +1262,10 @@ class A2C_Agent:
                         hidden_states_new = hidden_states.clone()
                         hidden_states_new[i] = torch.zeros_like(hidden_states[i])
                         hidden_states = hidden_states_new
-                        del hidden_states_new
 
                         hebb_traces_new = hebb_traces.clone()
                         hebb_traces_new[i] = torch.zeros_like(hebb_traces[i])
                         hebb_traces = hebb_traces_new
-                        del hebb_traces_new
 
                         memory_usage_after_reset = self.get_current_memory_usage()
                         increase = memory_usage_after_reset - latest_usage
@@ -1055,13 +1313,6 @@ class A2C_Agent:
             self.optimizer.step()
             # torch.cuda.empty_cache()
             training_losses.append(average_total_loss.detach())
-            snapshot2 = tracemalloc.take_snapshot()
-            tracemalloc.stop()
-
-            top_stats = snapshot2.compare_to(snapshot1, 'lineno')
-            print("[ Top 10 differences ]")
-            for stat in top_stats[:10]:
-                print(stat)
 
             memory_usage_before_collect = self.get_current_memory_usage()
             increase = memory_usage_before_collect - latest_usage
@@ -1100,6 +1351,418 @@ class A2C_Agent:
         return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
 
+    def train_agent_continuous_vectorized_v5(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
+        if torch.cuda.is_available():
+            print("GPU is available")
+            print("Number of GPUs available:", torch.cuda.device_count())
+            print("GPU device name:", torch.cuda.get_device_name(0))
+        else:
+            print("GPU is not available")
+        
+        
+
+
+        longest_episode_len = 0
+        steps_since_previous_episode_end = 0
+        start_memory_usage = self.get_current_memory_usage()
+        print(f"Memory usage at start: {start_memory_usage} MiB")
+        latest_usage = start_memory_usage
+        scores = []
+        smoothed_scores = []
+        training_total_rewards = []
+        training_losses = []
+        validation_total_rewards = []
+        validation_losses = []
+
+        eps_trained = 1 + section*training_eps_per_section
+        end_of_section = (section+1)*training_eps_per_section
+
+        # vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(self.env_name) for _ in range(num_parallel_envs)])
+        env = gym.make(self.env_name)
+        num_parallel_envs = 1
+
+        while eps_trained <= end_of_section:
+            memory_usage_before_initialization = self.get_current_memory_usage()
+            increase = memory_usage_before_initialization - latest_usage
+            latest_usage = memory_usage_before_initialization
+            print(f"Memory usage before initialization: {memory_usage_before_initialization} MiB (Increase: {increase} MiB)")
+            log_probs_batch = []
+            values_batch = []
+            rewards_batch = []
+            entropies_batch = []
+
+            running_log_probs = [[] for _ in range(num_parallel_envs)]
+            running_values = [[] for _ in range(num_parallel_envs)]
+            running_rewards = [[] for _ in range(num_parallel_envs)]
+            running_entropies = [[] for _ in range(num_parallel_envs)]
+
+            hidden_states = self.agent_net.initialZeroState(num_parallel_envs)
+            hebb_traces = self.agent_net.initialZeroHebb(num_parallel_envs)
+
+            memory_usage_after_initialization = self.get_current_memory_usage()
+            increase = memory_usage_after_initialization - latest_usage
+            latest_usage = memory_usage_after_initialization
+            print(f"Memory usage after initialization: {memory_usage_after_initialization} MiB (Increase: {increase} MiB)")
+
+            # SET ENV PARAMETERS HERE
+
+            states = env.reset()
+            appending_sum = 0
+            interaction_model_sum = 0
+            interaction_inside_model_sum = 0
+            interaction_dist_sum = 0
+            interaction_all_sum = 0
+            while len(log_probs_batch) < self.batch_size:
+                before_interacting = self.get_current_memory_usage()
+                states = torch.from_numpy(states).float()
+                policy_outputs, values, (hidden_states, hebb_traces), inside_usage = self.agent_net(states, [hidden_states, hebb_traces])
+                interaction_inside_model_sum += inside_usage
+                interaction_model_sum += self.get_current_memory_usage() - before_interacting
+                mus, sigmas = policy_outputs[0], policy_outputs[1]
+                sigmas = torch.diag_embed(sigmas)
+                dists = torch.distributions.MultivariateNormal(mus, sigmas)
+                interaction_dist_sum += self.get_current_memory_usage() - before_interacting
+                actions = dists.sample()
+                log_probs = dists.log_prob(actions)
+                entropies = dists.entropy()
+                states, rewards, dones, _ = env.step(actions.squeeze().numpy()) #.cpu().numpy()?
+                interaction_all_sum += self.get_current_memory_usage() - before_interacting
+                
+
+                # for i, (state, reward, done, log_prob, value, entropy) in enumerate(zip(states, rewards, dones, log_probs, values, entropies)):
+                before_appending = self.get_current_memory_usage()
+                running_log_probs[0].append(log_probs.unsqueeze(0))
+                running_values[0].append(values)
+                running_rewards[0].append(rewards)
+                running_entropies[0].append(entropies.unsqueeze(0))
+                after_appending = self.get_current_memory_usage()
+                appending_sum += after_appending - before_appending
+
+                if dones:
+                    print(f"APPENDING SUM: {appending_sum}, AVERAGE: {appending_sum/len(running_rewards[0])}")
+                    print(f"INTERACTION MODEL SUM: {interaction_model_sum}, AVERAGE: {interaction_model_sum/len(running_rewards[0])}")
+                    print(f"INTERACTION INSIDE MODEL SUM: {interaction_inside_model_sum}, AVERAGE: {interaction_inside_model_sum/len(running_rewards[0])}")
+                    print(f"DIFFERENCE INSIDE MODEL: {interaction_model_sum - interaction_inside_model_sum}")
+                    print(f"INTERACTION DIST SUM: {interaction_dist_sum}, AVERAGE: {interaction_dist_sum/len(running_rewards[0])}")
+                    print(f"INTERACTION ALL SUM: {interaction_all_sum}, AVERAGE: {interaction_all_sum/len(running_rewards[0])}")
+                    print(f"Current lengths of episodes: {[len(running_rewards[i]) for i in range(num_parallel_envs)]}")
+                    if len(running_rewards[0]) > longest_episode_len:
+                        print(f"New longest episode length: {len(running_rewards[0])}, previous longest: {longest_episode_len}")
+                        longest_episode_len = len(running_rewards[0])
+                        
+                    done_memory_usage = self.get_current_memory_usage()
+                    increase = done_memory_usage - latest_usage
+                    latest_usage = done_memory_usage
+                    print(f"Memory usage at done (index {0}, length {len(running_rewards[0])}, since_prev {steps_since_previous_episode_end}): {done_memory_usage} MiB (Increase: {increase} MiB)")
+                    log_probs_batch.append(running_log_probs[0])
+                    values_batch.append(running_values[0])
+                    rewards_batch.append(running_rewards[0])
+                    entropies_batch.append(running_entropies[0])
+                    steps_since_previous_episode_end = 0
+                    
+                    running_log_probs[0] = []
+                    running_values[0] = []
+                    running_rewards[0] = []
+                    running_entropies[0] = []
+
+                    # hidden_states[i] = torch.zeros_like(hidden_states[i]).detach()
+                    # hebb_traces[i] = torch.zeros_like(hebb_traces[i]).detach()
+                    memory_usage_before_reset = self.get_current_memory_usage()
+                    increase = memory_usage_before_reset - latest_usage
+                    latest_usage = memory_usage_before_reset
+                    print(f"Memory usage before reset: {memory_usage_before_reset} MiB (Increase: {increase} MiB)")
+                    hidden_states_new = hidden_states.clone()
+                    hidden_states_new[0] = torch.zeros_like(hidden_states[0])
+                    hidden_states = hidden_states_new
+
+                    hebb_traces_new = hebb_traces.clone()
+                    hebb_traces_new[0] = torch.zeros_like(hebb_traces[0])
+                    hebb_traces = hebb_traces_new
+
+                    memory_usage_after_reset = self.get_current_memory_usage()
+                    increase = memory_usage_after_reset - latest_usage
+                    latest_usage = memory_usage_after_reset
+                    print(f"Memory usage after reset: {memory_usage_after_reset} MiB (Increase: {increase} MiB)")
+
+                    # SET ENV PARAMETERS HERE
+                    states = env.reset()
+
+                    if len(log_probs_batch) == self.batch_size:
+                        break
+
+                steps_since_previous_episode_end += 1
+
+            eps_trained += self.batch_size
+            print(f"Training episode {eps_trained-1}")
+            middle_memory_usage = self.get_current_memory_usage()
+            increase = middle_memory_usage - latest_usage
+            latest_usage = middle_memory_usage
+            print(f"Memory usage at middle: {middle_memory_usage} MiB (Increase: {increase} MiB)")
+            summed_loss = 0
+            for rewards_history, log_probs_history, values_history, entropies_history in zip(rewards_batch, log_probs_batch, values_batch, entropies_batch):
+                returns = []
+                R = 0
+                for r in rewards_history[::-1]:
+                    R = r + self.gammaR * R
+                    returns.insert(0, R)
+                
+                log_probs_history = torch.cat(log_probs_history)
+                values_history = torch.cat(values_history).squeeze()
+                entropies_history = torch.cat(entropies_history)
+                returns = torch.FloatTensor(returns)
+
+                advantage_history = returns - values_history
+                actor_loss = -(log_probs_history * advantage_history.detach()).mean()
+                critic_loss = advantage_history.pow(2).mean()
+                entropy_loss = entropies_history.mean()
+                total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
+
+                summed_loss += total_loss
+
+            average_total_loss = summed_loss / self.batch_size
+            self.optimizer.zero_grad()
+            average_total_loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
+            self.optimizer.step()
+            # torch.cuda.empty_cache()
+            training_losses.append(average_total_loss.detach())
+
+            memory_usage_before_collect = self.get_current_memory_usage()
+            increase = memory_usage_before_collect - latest_usage
+            latest_usage = memory_usage_before_collect
+            print(f"Memory usage before collect: {memory_usage_before_collect} MiB (Increase: {increase} MiB)")
+            gc.collect()
+            memory_usage_after_collect = self.get_current_memory_usage()
+            increase = memory_usage_after_collect - latest_usage
+            latest_usage = memory_usage_after_collect
+            print(f"Memory usage after collect: {memory_usage_after_collect} MiB (Increase: {increase} MiB)")
+
+
+            if (eps_trained-1) % self.evaluate_every == 0:
+                evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds))
+                print(f"Episode {eps_trained-1}\tAverage evaluation: {evaluation_performance}")
+                validation_total_rewards.append(evaluation_performance)
+                if evaluation_performance > best_average:
+                    best_average = evaluation_performance
+                    best_average_after = eps_trained-1
+                    torch.save(self.agent_net.state_dict(),
+                            self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                    
+                if best_average == self.max_reward:
+                    print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                    best_average_after, '. Model saved in folder best.')
+                    return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+            
+        print(f'Current best {self.selection_method}: ', best_average, ' reached at episode ', best_average_after, '.')
+        end_memory_usage = self.get_current_memory_usage()
+        increase = end_memory_usage - latest_usage
+        latest_usage = end_memory_usage
+        print(f"Memory usage at end: {end_memory_usage} MiB (Increase: {increase} MiB)")
+        print(f"Memory used by function: {end_memory_usage - start_memory_usage} MiB")
+        
+        
+        return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+
+
+
+
+    def train_agent_continuous_vectorized_v4(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
+        if torch.cuda.is_available():
+            print("GPU is available")
+            print("Number of GPUs available:", torch.cuda.device_count())
+            print("GPU device name:", torch.cuda.get_device_name(0))
+        else:
+            print("GPU is not available")
+        
+        
+
+
+        longest_episode_len = 0
+        steps_since_previous_episode_end = 0
+        start_memory_usage = self.get_current_memory_usage()
+        print(f"Memory usage at start: {start_memory_usage} MiB")
+        latest_usage = start_memory_usage
+        scores = []
+        smoothed_scores = []
+        training_total_rewards = []
+        training_losses = []
+        validation_total_rewards = []
+        validation_losses = []
+
+        eps_trained = 1 + section*training_eps_per_section
+        end_of_section = (section+1)*training_eps_per_section
+
+        vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(self.env_name) for _ in range(num_parallel_envs)])
+
+        while eps_trained <= end_of_section:
+            memory_usage_before_initialization = self.get_current_memory_usage()
+            increase = memory_usage_before_initialization - latest_usage
+            latest_usage = memory_usage_before_initialization
+            print(f"Memory usage before initialization: {memory_usage_before_initialization} MiB (Increase: {increase} MiB)")
+            # log_probs_batch = []
+            # values_batch = []
+            # rewards_batch = []
+            # entropies_batch = []
+            batch_losses = []
+
+            running_log_probs = [[] for _ in range(num_parallel_envs)]
+            running_values = [[] for _ in range(num_parallel_envs)]
+            running_rewards = [[] for _ in range(num_parallel_envs)]
+            running_entropies = [[] for _ in range(num_parallel_envs)]
+
+            hidden_states = self.agent_net.initialZeroState(num_parallel_envs)
+            hebb_traces = self.agent_net.initialZeroHebb(num_parallel_envs)
+
+            memory_usage_after_initialization = self.get_current_memory_usage()
+            increase = memory_usage_after_initialization - latest_usage
+            latest_usage = memory_usage_after_initialization
+            print(f"Memory usage after initialization: {memory_usage_after_initialization} MiB (Increase: {increase} MiB)")
+
+            # SET ENV PARAMETERS HERE
+
+            states = vec_env.reset()
+            while len(batch_losses) < self.batch_size:
+                states = torch.from_numpy(states)
+                policy_outputs, values, (hidden_states, hebb_traces) = self.agent_net(states, [hidden_states, hebb_traces])
+                mus, sigmas = policy_outputs[0], policy_outputs[1]
+                sigmas = torch.diag_embed(sigmas)
+                dists = torch.distributions.MultivariateNormal(mus, sigmas)
+                actions = dists.sample()
+                log_probs = dists.log_prob(actions)
+                entropies = dists.entropy()
+                states, rewards, dones, _ = vec_env.step(actions) #.cpu().numpy()?
+
+                for i, (state, reward, done, log_prob, value, entropy) in enumerate(zip(states, rewards, dones, log_probs, values, entropies)):
+                    running_log_probs[i].append(log_prob.unsqueeze(0))
+                    running_values[i].append(value)
+                    running_rewards[i].append(reward)
+                    running_entropies[i].append(entropy.unsqueeze(0))
+
+                    if done:
+                        print(f"Current lengths of episodes: {[len(running_rewards[i]) for i in range(num_parallel_envs)]}")
+                        if len(running_rewards[i]) > longest_episode_len:
+                            print(f"New longest episode length: {len(running_rewards[i])}, previous longest: {longest_episode_len}")
+                            longest_episode_len = len(running_rewards[i])
+                            
+                        done_memory_usage = self.get_current_memory_usage()
+                        increase = done_memory_usage - latest_usage
+                        latest_usage = done_memory_usage
+                        print(f"Memory usage at done (index {i}, length {len(running_rewards[i])}, since_prev {steps_since_previous_episode_end}): {done_memory_usage} MiB (Increase: {increase} MiB)")
+                        
+                        rewards_history = running_rewards[i]
+                        log_probs_history = running_log_probs[i]
+                        values_history = running_values[i]
+                        entropies_history = running_entropies[i]
+                        
+                        
+                        returns = []
+                        R = 0
+                        for r in rewards_history[::-1]:
+                            R = r + self.gammaR * R
+                            returns.insert(0, R)
+                        
+                        log_probs_history = torch.cat(log_probs_history)
+                        values_history = torch.cat(values_history).squeeze()
+                        entropies_history = torch.cat(entropies_history)
+                        returns = torch.FloatTensor(returns)
+
+                        advantage_history = returns - values_history
+                        actor_loss = -(log_probs_history * advantage_history.detach()).mean()
+                        critic_loss = advantage_history.pow(2).mean()
+                        entropy_loss = entropies_history.mean()
+                        total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
+                        batch_losses.append(total_loss)
+
+
+
+
+                        steps_since_previous_episode_end = 0
+                        
+                        running_log_probs[i] = []
+                        running_values[i] = []
+                        running_rewards[i] = []
+                        running_entropies[i] = []
+
+                        # hidden_states[i] = torch.zeros_like(hidden_states[i]).detach()
+                        # hebb_traces[i] = torch.zeros_like(hebb_traces[i]).detach()
+                        memory_usage_before_reset = self.get_current_memory_usage()
+                        increase = memory_usage_before_reset - latest_usage
+                        latest_usage = memory_usage_before_reset
+                        print(f"Memory usage before reset: {memory_usage_before_reset} MiB (Increase: {increase} MiB)")
+                        hidden_states_new = hidden_states.clone()
+                        hidden_states_new[i] = torch.zeros_like(hidden_states[i])
+                        hidden_states = hidden_states_new
+                        del hidden_states_new
+
+                        hebb_traces_new = hebb_traces.clone()
+                        hebb_traces_new[i] = torch.zeros_like(hebb_traces[i])
+                        hebb_traces = hebb_traces_new
+                        del hebb_traces_new
+
+                        memory_usage_after_reset = self.get_current_memory_usage()
+                        increase = memory_usage_after_reset - latest_usage
+                        latest_usage = memory_usage_after_reset
+                        print(f"Memory usage after reset: {memory_usage_after_reset} MiB (Increase: {increase} MiB)")
+
+                        # SET ENV PARAMETERS HERE
+
+                        if len(batch_losses) == self.batch_size:
+                            break
+
+                steps_since_previous_episode_end += 1
+
+            eps_trained += self.batch_size
+            print(f"Training episode {eps_trained-1}")
+            middle_memory_usage = self.get_current_memory_usage()
+            increase = middle_memory_usage - latest_usage
+            latest_usage = middle_memory_usage
+            print(f"Memory usage at middle: {middle_memory_usage} MiB (Increase: {increase} MiB)")
+            
+
+            average_total_loss = sum(batch_losses) / self.batch_size
+            self.optimizer.zero_grad()
+            average_total_loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
+            self.optimizer.step()
+            # torch.cuda.empty_cache()
+            training_losses.append(average_total_loss.detach())
+
+            memory_usage_before_collect = self.get_current_memory_usage()
+            increase = memory_usage_before_collect - latest_usage
+            latest_usage = memory_usage_before_collect
+            print(f"Memory usage before collect: {memory_usage_before_collect} MiB (Increase: {increase} MiB)")
+            gc.collect()
+            memory_usage_after_collect = self.get_current_memory_usage()
+            increase = memory_usage_after_collect - latest_usage
+            latest_usage = memory_usage_after_collect
+            print(f"Memory usage after collect: {memory_usage_after_collect} MiB (Increase: {increase} MiB)")
+
+
+            if (eps_trained-1) % self.evaluate_every == 0:
+                evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds))
+                print(f"Episode {eps_trained-1}\tAverage evaluation: {evaluation_performance}")
+                validation_total_rewards.append(evaluation_performance)
+                if evaluation_performance > best_average:
+                    best_average = evaluation_performance
+                    best_average_after = eps_trained-1
+                    torch.save(self.agent_net.state_dict(),
+                            self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                    
+                if best_average == self.max_reward:
+                    print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                    best_average_after, '. Model saved in folder best.')
+                    return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+            
+        print(f'Current best {self.selection_method}: ', best_average, ' reached at episode ', best_average_after, '.')
+        end_memory_usage = self.get_current_memory_usage()
+        increase = end_memory_usage - latest_usage
+        latest_usage = end_memory_usage
+        print(f"Memory usage at end: {end_memory_usage} MiB (Increase: {increase} MiB)")
+        print(f"Memory used by function: {end_memory_usage - start_memory_usage} MiB")
+        
+        
+        return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
 
 

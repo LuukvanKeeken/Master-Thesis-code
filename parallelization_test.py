@@ -16,6 +16,6 @@ env_id = 'CartPole-v1'
 
 # Create a vector of environments
 envs = AsyncVectorEnv([make_env(env_id, i) for i in range(num_envs)])
-
+print(envs)
 # Now you can interact with the environments
 observations = envs.reset()

@@ -16,6 +16,12 @@ env_id = 'CartPole-v1'
 
 # Create a vector of environments
 envs = AsyncVectorEnv([make_env(env_id, i) for i in range(num_envs)])
-print(envs)
+
 # Now you can interact with the environments
 observations = envs.reset()
+
+for i in range(1000):
+    #Randomly sample actions
+    actions = [envs.action_space.sample() for _ in range(num_envs)]
+    observations, rewards, dones, infos = envs.step(actions)
+    

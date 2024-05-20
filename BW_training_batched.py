@@ -1,5 +1,6 @@
 import argparse
 import time
+import gym
 import torch
 import numpy as np
 import random
@@ -9,9 +10,11 @@ from Master_Thesis_Code.backpropamine_A2C import BP_RNetwork, Standard_RNetwork,
 from Master_Thesis_Code.BP_A2C.BP_A2C_agent import A2C_Agent
 import cProfile, pstats
 
+from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVectorEnv
+
 
 parser = argparse.ArgumentParser(description='Train an A2C agent on the BipedalWalker environment')
-parser.add_argument('--num_neurons', type=int, default=96, help='Number of neurons in the hidden layer')
+parser.add_argument('--num_neurons', type=int, default=64, help='Number of neurons in the hidden layer')
 parser.add_argument('--network_type', type=str, default='BP_RNN', help='Type of network to use')
 parser.add_argument('--learning_rate', type=float, default=0.00001, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=1, help='Number of models to train')
@@ -29,8 +32,8 @@ parser.add_argument('--num_evaluation_episodes', type=int, default=10, help='Num
 parser.add_argument('--training_episodes_per_section', type=int, default=100, help='Number of training episodes to run per section')
 parser.add_argument('--magic_number', type=int, default=2, help='Magic number to use for the results directory')
 parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
-parser.add_argument('--batch_size', type=int, default=10, help='Batch size to use for training')
-parser.add_argument('--num_parallel_envs', type=int, default=4, help='Number of parallel environments to use')
+parser.add_argument('--batch_size', type=int, default=1, help='Batch size to use for training')
+parser.add_argument('--num_parallel_envs', type=int, default=1, help='Number of parallel environments to use')
 
 args = parser.parse_args()
 learning_rate = args.learning_rate
@@ -108,6 +111,7 @@ all_validation_total_rewards = []
 best_average_after_all = []
 best_average_all = []
 start_time = time.time()
+vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(env_name) for _ in range(num_parallel_envs)])
 for i_run in range(num_models):
     print("Run # {}".format(i_run))
     seed = int(training_seeds[i_run])
@@ -139,9 +143,9 @@ for i_run in range(num_models):
         # elif training_method == "quarter_range":
         #     smoothed_scores, scores, best_average, best_average_after = agent.train_agent(randomization_params = randomization_params)
         if section == 0:
-            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous_vectorized_v3(training_eps_per_section, section, randomization_params = randomization_params, num_parallel_envs=num_parallel_envs)
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous_vectorized_v3(vec_env, training_eps_per_section, section, randomization_params = randomization_params, num_parallel_envs=num_parallel_envs)
         else:
-            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous_vectorized_v3(training_eps_per_section, section, randomization_params = randomization_params, best_average=best_average_all[i_run], best_average_after=best_average_after_all[i_run], num_parallel_envs=num_parallel_envs)
+            smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous_vectorized_v3(vec_env, training_eps_per_section, section, randomization_params = randomization_params, best_average=best_average_all[i_run], best_average_after=best_average_after_all[i_run], num_parallel_envs=num_parallel_envs)
         
         
         

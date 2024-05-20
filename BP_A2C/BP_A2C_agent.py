@@ -1121,6 +1121,11 @@ class A2C_Agent:
                     R = r + self.gammaR * R
                     returns.insert(0, R)
                 
+                for name, var in locals().items():
+                    if isinstance(var, torch.Tensor) and var.requires_grad:
+                        print(f"{name}, {var.shape}")
+                    elif isinstance(var, list) and len(var) > 0 and isinstance(var[0], torch.Tensor) and var[0].requires_grad:
+                        print(f"{name}, {len(var)}, {var[0].shape}")
                 log_probs = torch.cat(log_probs)
                 values = torch.cat(values).squeeze()
                 returns = torch.FloatTensor(returns)
@@ -1161,7 +1166,7 @@ class A2C_Agent:
 
 
     # @profile
-    def train_agent_continuous_vectorized_v3(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
+    def train_agent_continuous_vectorized_v3(self, vec_env, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
         if torch.cuda.is_available():
             print("GPU is available")
             print("Number of GPUs available:", torch.cuda.device_count())
@@ -1187,7 +1192,7 @@ class A2C_Agent:
         eps_trained = 1 + section*training_eps_per_section
         end_of_section = (section+1)*training_eps_per_section
 
-        vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(self.env_name) for _ in range(num_parallel_envs)])
+        
 
         while eps_trained <= end_of_section:
             memory_usage_before_initialization = self.get_current_memory_usage()
@@ -1217,7 +1222,7 @@ class A2C_Agent:
             states = vec_env.reset()
             while len(log_probs_batch) < self.batch_size:
                 states = torch.from_numpy(states)
-                policy_outputs, values, (hidden_states, hebb_traces) = self.agent_net(states, [hidden_states, hebb_traces])
+                policy_outputs, values, (hidden_states, hebb_traces), usage = self.agent_net(states, [hidden_states, hebb_traces])
                 mus, sigmas = policy_outputs[0], policy_outputs[1]
                 sigmas = torch.diag_embed(sigmas)
                 dists = torch.distributions.MultivariateNormal(mus, sigmas)
@@ -1306,6 +1311,12 @@ class A2C_Agent:
 
                 summed_loss += total_loss
 
+            for name, var in locals().items():
+                if isinstance(var, torch.Tensor) and var.requires_grad:
+                    print(f"{name}, {var.shape}")
+                elif isinstance(var, list) and len(var) > 0 and isinstance(var[0], torch.Tensor) and var[0].requires_grad:
+                    print(f"{name}, {len(var)}, {var[0].shape}")
+            
             average_total_loss = summed_loss / self.batch_size
             self.optimizer.zero_grad()
             average_total_loss.backward()
@@ -3289,7 +3300,7 @@ def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds):
             while not done:
                 state = torch.from_numpy(state)
                 state = state.unsqueeze(0)#.to(device) #This as well?
-                policy_output, value, (hidden_activations, hebbian_traces) = agent_net.forward(state.float(), [hidden_activations, hebbian_traces])
+                policy_output, value, (hidden_activations, hebbian_traces), _ = agent_net.forward(state.float(), [hidden_activations, hebbian_traces])
                 
                 means, std_devs = policy_output
                 

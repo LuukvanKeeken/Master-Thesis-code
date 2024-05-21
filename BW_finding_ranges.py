@@ -22,7 +22,7 @@ def main():
         variables = ['left_leg_w_unscaled', 'left_leg_h_unscaled', 'right_leg_w_unscaled', 'right_leg_h_unscaled', 'terrain_friction', 'speed_hip', 'speed_knee', 'left_leg_density', 'right_leg_density', 'hull_density', 'hull_friction', 'lidar_range_unscaled']
         default_values = [8.0, 34.0, 8.0, 34.0, 2.5, 4.0, 6.0, 1.0, 1.0, 5.0, 0.1, 160.0]
         percentages = [0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1.01, 1.05, 1.1, 1.2, 1.3, 1.5, 2.0, 3.5, 5.0, 10.0, 15.0, 20.0]
-        percentages = [0.9, 1.0, 1.1]
+        
         all_results_means = []
         all_results_stds = []
         num_episodes = 100

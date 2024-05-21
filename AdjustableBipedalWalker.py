@@ -52,7 +52,7 @@ HULL_POLY =[
     (+34,-8), (-30,-8)
     ]
 LEG_DOWN = -8/SCALE
-LEG_W, LEG_H = 8/SCALE, 34/SCALE
+
 
 VIEWPORT_W = 600
 VIEWPORT_H = 400
@@ -72,19 +72,6 @@ HULL_FD = fixtureDef(
                 maskBits=0x001,  # collide only with ground
                 restitution=0.0) # 0.99 bouncy
 
-LEG_FD = fixtureDef(
-                    shape=polygonShape(box=(LEG_W/2, LEG_H/2)),
-                    density=1.0,
-                    restitution=0.0,
-                    categoryBits=0x0020,
-                    maskBits=0x001)
-
-LOWER_FD = fixtureDef(
-                    shape=polygonShape(box=(0.8*LEG_W/2, LEG_H/2)),
-                    density=1.0,
-                    restitution=0.0,
-                    categoryBits=0x0020,
-                    maskBits=0x001)
 
 class ContactDetector(contactListener):
     def __init__(self, env):
@@ -109,7 +96,8 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
 
     hardcore = False
 
-    def __init__(self):
+    def __init__(self, left_leg_w_unscaled = 8, left_leg_h_unscaled = 34, right_leg_w_unscaled = 8, right_leg_h_unscaled = 34,
+                 ):
         EzPickle.__init__(self)
         self.seed()
         self.viewer = None
@@ -135,6 +123,12 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
                     friction = FRICTION,
                     categoryBits=0x0001,
                 )
+        
+        self.left_leg_w_unscaled, self.left_leg_h_unscaled = left_leg_w_unscaled, left_leg_h_unscaled
+        self.right_leg_w_unscaled, self.right_leg_h_unscaled = right_leg_w_unscaled, right_leg_h_unscaled
+        self._left_leg_w, self._left_leg_h = left_leg_w_unscaled/SCALE, left_leg_h_unscaled/SCALE
+        self._right_leg_w, self._right_leg_h = right_leg_w_unscaled/SCALE, right_leg_h_unscaled/SCALE
+
 
         self.reset()
 
@@ -296,14 +290,43 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
         self.scroll = 0.0
         self.lidar_render = 0
 
-        W = VIEWPORT_W/SCALE
-        H = VIEWPORT_H/SCALE
+        self._left_leg_w, self._left_leg_h = self.left_leg_w_unscaled/SCALE, self.left_leg_h_unscaled/SCALE
+        self._right_leg_w, self._right_leg_h = self.right_leg_w_unscaled/SCALE, self.right_leg_h_unscaled/SCALE
+
+        self._left_leg_fd = fixtureDef(
+                    shape=polygonShape(box=(self._left_leg_w/2, self._left_leg_h/2)),
+                    density=1.0,
+                    restitution=0.0,
+                    categoryBits=0x0020,
+                    maskBits=0x001)
+
+        self._right_leg_fd = fixtureDef(
+                            shape=polygonShape(box=(self._right_leg_w/2, self._right_leg_h/2)),
+                            density=1.0,
+                            restitution=0.0,
+                            categoryBits=0x0020,
+                            maskBits=0x001)
+
+        self._left_lower_fd = fixtureDef(
+                            shape=polygonShape(box=(0.8*self._left_leg_w/2, self._left_leg_h/2)),
+                            density=1.0,
+                            restitution=0.0,
+                            categoryBits=0x0020,
+                            maskBits=0x001)
+
+        self._right_lower_fd = fixtureDef(
+                            shape=polygonShape(box=(0.8*self._right_leg_w/2, self._right_leg_h/2)),
+                            density=1.0,
+                            restitution=0.0,
+                            categoryBits=0x0020,
+                            maskBits=0x001)
+        
 
         self._generate_terrain(self.hardcore)
         self._generate_clouds()
 
         init_x = TERRAIN_STEP*TERRAIN_STARTPAD/2
-        init_y = TERRAIN_HEIGHT+2*LEG_H
+        init_y = TERRAIN_HEIGHT+2*max(self._left_leg_h, self._right_leg_h)
         self.hull = self.world.CreateDynamicBody(
             position = (init_x, init_y),
             fixtures = HULL_FD
@@ -315,10 +338,21 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
         self.legs = []
         self.joints = []
         for i in [-1,+1]:
+            if i == -1:
+                leg_h = self._left_leg_h
+                leg_w = self._left_leg_w
+                leg_fd = self._left_leg_fd
+                lower_fd = self._left_lower_fd
+            else:
+                leg_h = self._right_leg_h
+                leg_w = self._right_leg_w
+                leg_fd = self._right_leg_fd
+                lower_fd = self._right_lower_fd
+
             leg = self.world.CreateDynamicBody(
-                position = (init_x, init_y - LEG_H/2 - LEG_DOWN),
+                position = (init_x, init_y - leg_h/2 - LEG_DOWN),
                 angle = (i*0.05),
-                fixtures = LEG_FD
+                fixtures = leg_fd
                 )
             leg.color1 = (0.6-i/10., 0.3-i/10., 0.5-i/10.)
             leg.color2 = (0.4-i/10., 0.2-i/10., 0.3-i/10.)
@@ -326,7 +360,7 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
                 bodyA=self.hull,
                 bodyB=leg,
                 localAnchorA=(0, LEG_DOWN),
-                localAnchorB=(0, LEG_H/2),
+                localAnchorB=(0, leg_h/2),
                 enableMotor=True,
                 enableLimit=True,
                 maxMotorTorque=MOTORS_TORQUE,
@@ -338,17 +372,17 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
             self.joints.append(self.world.CreateJoint(rjd))
 
             lower = self.world.CreateDynamicBody(
-                position = (init_x, init_y - LEG_H*3/2 - LEG_DOWN),
+                position = (init_x, init_y - leg_h*3/2 - LEG_DOWN),
                 angle = (i*0.05),
-                fixtures = LOWER_FD
+                fixtures = lower_fd
                 )
             lower.color1 = (0.6-i/10., 0.3-i/10., 0.5-i/10.)
             lower.color2 = (0.4-i/10., 0.2-i/10., 0.3-i/10.)
             rjd = revoluteJointDef(
                 bodyA=leg,
                 bodyB=lower,
-                localAnchorA=(0, -LEG_H/2),
-                localAnchorB=(0, LEG_H/2),
+                localAnchorA=(0, -leg_h/2),
+                localAnchorB=(0, leg_h/2),
                 enableMotor=True,
                 enableLimit=True,
                 maxMotorTorque=MOTORS_TORQUE,

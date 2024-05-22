@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 import torch
-from Master_Thesis_Code.backpropamine_A2C import BP_RNetwork
+from Master_Thesis_Code.backpropamine_A2C import BP_RNetwork, Standard_RNetwork
 
 gym.envs.registration.register(
     id='AdjustableBipedalWalker-v3',
@@ -16,6 +16,9 @@ def main():
         state = env.reset()
 
         policy_weights = torch.load("Master_Thesis_Code/BP_A2C/29_BW_BPandRNN_original_96/BP_RNN_a2c_result_98_2024516_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt")
+        # policy_weights = torch.load("Master_Thesis_Code/BP_A2C/29_BW_BPandRNN_original_96/Standard_RNN_a2c_result_68024_202459_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt")
+
+        # agent_net = Standard_RNetwork(24, 96, 4, 5, continuous_actions=True)
         agent_net = BP_RNetwork(24, 96, 4, 5, continuous_actions=True)
         agent_net.load_state_dict(policy_weights)
         
@@ -25,7 +28,7 @@ def main():
         
         all_results_means = []
         all_results_stds = []
-        num_episodes = 100
+        num_episodes = 2
         for variable, default_value in zip(variables, default_values):
             with open(f"Master_Thesis_Code/current_variable.txt", 'w') as f:
                 f.write(f"{variable}")

@@ -28,7 +28,7 @@ def main():
         
         all_results_means = []
         all_results_stds = []
-        num_episodes = 2
+        num_episodes = 100
         for variable, default_value in zip(variables, default_values):
             with open(f"Master_Thesis_Code/current_variable.txt", 'w') as f:
                 f.write(f"{variable}")

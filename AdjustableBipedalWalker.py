@@ -40,10 +40,6 @@ from gym.utils import colorize, seeding, EzPickle
 FPS    = 50
 SCALE  = 30.0   # affects how fast-paced the game is, forces should be adjusted as well
 
-MOTORS_TORQUE = 80
-SPEED_HIP     = 4
-SPEED_KNEE    = 6
-LIDAR_RANGE   = 160/SCALE
 
 INITIAL_RANDOM = 5
 
@@ -62,15 +58,8 @@ TERRAIN_LENGTH = 200     # in steps
 TERRAIN_HEIGHT = VIEWPORT_H/SCALE/4
 TERRAIN_GRASS    = 10    # low long are grass spots, in steps
 TERRAIN_STARTPAD = 20    # in steps
-FRICTION = 2.5
 
-HULL_FD = fixtureDef(
-                shape=polygonShape(vertices=[ (x/SCALE,y/SCALE) for x,y in HULL_POLY ]),
-                density=5.0,
-                friction=0.1,
-                categoryBits=0x0020,
-                maskBits=0x001,  # collide only with ground
-                restitution=0.0) # 0.99 bouncy
+MOTORS_TORQUE = 80
 
 
 class ContactDetector(contactListener):
@@ -97,7 +86,8 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
     hardcore = False
 
     def __init__(self, left_leg_w_unscaled = 8, left_leg_h_unscaled = 34, right_leg_w_unscaled = 8, right_leg_h_unscaled = 34,
-                 ):
+                 terrain_friction = 2.5, speed_hip = 4, speed_knee = 6, left_leg_density = 1.0, right_leg_density = 1.0, 
+                 hull_density = 5.0, hull_friction = 0.1, lidar_range_unscaled = 160):
         EzPickle.__init__(self)
         self.seed()
         self.viewer = None
@@ -108,27 +98,19 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
 
         self.prev_shaping = None
 
-        self.fd_polygon = fixtureDef(
-                        shape = polygonShape(vertices=
-                        [(0, 0),
-                         (1, 0),
-                         (1, -1),
-                         (0, -1)]),
-                        friction = FRICTION)
-
-        self.fd_edge = fixtureDef(
-                    shape = edgeShape(vertices=
-                    [(0, 0),
-                     (1, 1)]),
-                    friction = FRICTION,
-                    categoryBits=0x0001,
-                )
-        
         self.left_leg_w_unscaled, self.left_leg_h_unscaled = left_leg_w_unscaled, left_leg_h_unscaled
         self.right_leg_w_unscaled, self.right_leg_h_unscaled = right_leg_w_unscaled, right_leg_h_unscaled
         self._left_leg_w, self._left_leg_h = left_leg_w_unscaled/SCALE, left_leg_h_unscaled/SCALE
         self._right_leg_w, self._right_leg_h = right_leg_w_unscaled/SCALE, right_leg_h_unscaled/SCALE
-
+        self.terrain_friction = terrain_friction
+        self.speed_hip = speed_hip
+        self.speed_knee = speed_knee
+        self.left_leg_density = left_leg_density
+        self.right_leg_density = right_leg_density
+        self.hull_density = hull_density
+        self.hull_friction = hull_friction
+        self.lidar_range_unscaled = lidar_range_unscaled
+        self.lidar_range = lidar_range_unscaled/SCALE
 
         self.reset()
 
@@ -290,36 +272,63 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
         self.scroll = 0.0
         self.lidar_render = 0
 
+        # Reset body proportions and models, as well as lidar range,
+        # as the user might have set new values.
         self._left_leg_w, self._left_leg_h = self.left_leg_w_unscaled/SCALE, self.left_leg_h_unscaled/SCALE
         self._right_leg_w, self._right_leg_h = self.right_leg_w_unscaled/SCALE, self.right_leg_h_unscaled/SCALE
+        self.lidar_range = self.lidar_range_unscaled/SCALE
+
+        self.hull_fd = fixtureDef(
+                shape=polygonShape(vertices=[ (x/SCALE,y/SCALE) for x,y in HULL_POLY ]),
+                density=self.hull_density,
+                friction=self.hull_friction,
+                categoryBits=0x0020,
+                maskBits=0x001,  # collide only with ground
+                restitution=0.0) # 0.99 bouncy
 
         self._left_leg_fd = fixtureDef(
                     shape=polygonShape(box=(self._left_leg_w/2, self._left_leg_h/2)),
-                    density=1.0,
+                    density=self.left_leg_density,
                     restitution=0.0,
                     categoryBits=0x0020,
                     maskBits=0x001)
 
         self._right_leg_fd = fixtureDef(
                             shape=polygonShape(box=(self._right_leg_w/2, self._right_leg_h/2)),
-                            density=1.0,
+                            density=self.right_leg_density,
                             restitution=0.0,
                             categoryBits=0x0020,
                             maskBits=0x001)
 
         self._left_lower_fd = fixtureDef(
                             shape=polygonShape(box=(0.8*self._left_leg_w/2, self._left_leg_h/2)),
-                            density=1.0,
+                            density=self.left_leg_density,
                             restitution=0.0,
                             categoryBits=0x0020,
                             maskBits=0x001)
 
         self._right_lower_fd = fixtureDef(
                             shape=polygonShape(box=(0.8*self._right_leg_w/2, self._right_leg_h/2)),
-                            density=1.0,
+                            density=self.right_leg_density,
                             restitution=0.0,
                             categoryBits=0x0020,
                             maskBits=0x001)
+        
+        self.fd_polygon = fixtureDef(
+                        shape = polygonShape(vertices=
+                        [(0, 0),
+                         (1, 0),
+                         (1, -1),
+                         (0, -1)]),
+                        friction = self.terrain_friction)
+
+        self.fd_edge = fixtureDef(
+                    shape = edgeShape(vertices=
+                    [(0, 0),
+                     (1, 1)]),
+                    friction = self.terrain_friction,
+                    categoryBits=0x0001,
+                )
         
 
         self._generate_terrain(self.hardcore)
@@ -329,7 +338,7 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
         init_y = TERRAIN_HEIGHT+2*max(self._left_leg_h, self._right_leg_h)
         self.hull = self.world.CreateDynamicBody(
             position = (init_x, init_y),
-            fixtures = HULL_FD
+            fixtures = self.hull_fd
                 )
         self.hull.color1 = (0.5,0.4,0.9)
         self.hull.color2 = (0.3,0.3,0.5)
@@ -340,12 +349,10 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
         for i in [-1,+1]:
             if i == -1:
                 leg_h = self._left_leg_h
-                leg_w = self._left_leg_w
                 leg_fd = self._left_leg_fd
                 lower_fd = self._left_lower_fd
             else:
                 leg_h = self._right_leg_h
-                leg_w = self._right_leg_w
                 leg_fd = self._right_leg_fd
                 lower_fd = self._right_lower_fd
 
@@ -411,18 +418,18 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
         #self.hull.ApplyForceToCenter((0, 20), True) -- Uncomment this to receive a bit of stability help
         control_speed = False  # Should be easier as well
         if control_speed:
-            self.joints[0].motorSpeed = float(SPEED_HIP  * np.clip(action[0], -1, 1))
-            self.joints[1].motorSpeed = float(SPEED_KNEE * np.clip(action[1], -1, 1))
-            self.joints[2].motorSpeed = float(SPEED_HIP  * np.clip(action[2], -1, 1))
-            self.joints[3].motorSpeed = float(SPEED_KNEE * np.clip(action[3], -1, 1))
+            self.joints[0].motorSpeed = float(self.speed_hip  * np.clip(action[0], -1, 1))
+            self.joints[1].motorSpeed = float(self.speed_knee * np.clip(action[1], -1, 1))
+            self.joints[2].motorSpeed = float(self.speed_hip  * np.clip(action[2], -1, 1))
+            self.joints[3].motorSpeed = float(self.speed_knee * np.clip(action[3], -1, 1))
         else:
-            self.joints[0].motorSpeed     = float(SPEED_HIP     * np.sign(action[0]))
+            self.joints[0].motorSpeed     = float(self.speed_hip     * np.sign(action[0]))
             self.joints[0].maxMotorTorque = float(MOTORS_TORQUE * np.clip(np.abs(action[0]), 0, 1))
-            self.joints[1].motorSpeed     = float(SPEED_KNEE    * np.sign(action[1]))
+            self.joints[1].motorSpeed     = float(self.speed_knee    * np.sign(action[1]))
             self.joints[1].maxMotorTorque = float(MOTORS_TORQUE * np.clip(np.abs(action[1]), 0, 1))
-            self.joints[2].motorSpeed     = float(SPEED_HIP     * np.sign(action[2]))
+            self.joints[2].motorSpeed     = float(self.speed_hip     * np.sign(action[2]))
             self.joints[2].maxMotorTorque = float(MOTORS_TORQUE * np.clip(np.abs(action[2]), 0, 1))
-            self.joints[3].motorSpeed     = float(SPEED_KNEE    * np.sign(action[3]))
+            self.joints[3].motorSpeed     = float(self.speed_knee    * np.sign(action[3]))
             self.joints[3].maxMotorTorque = float(MOTORS_TORQUE * np.clip(np.abs(action[3]), 0, 1))
 
         self.world.Step(1.0/FPS, 6*30, 2*30)
@@ -434,8 +441,8 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
             self.lidar[i].fraction = 1.0
             self.lidar[i].p1 = pos
             self.lidar[i].p2 = (
-                pos[0] + math.sin(1.5*i/10.0)*LIDAR_RANGE,
-                pos[1] - math.cos(1.5*i/10.0)*LIDAR_RANGE)
+                pos[0] + math.sin(1.5*i/10.0)*self.lidar_range,
+                pos[1] - math.cos(1.5*i/10.0)*self.lidar_range)
             self.world.RayCast(self.lidar[i], self.lidar[i].p1, self.lidar[i].p2)
 
         state = [
@@ -444,14 +451,14 @@ class AdjustableBipedalWalker(gym.Env, EzPickle):
             0.3*vel.x*(VIEWPORT_W/SCALE)/FPS,  # Normalized to get -1..1 range
             0.3*vel.y*(VIEWPORT_H/SCALE)/FPS,
             self.joints[0].angle,   # This will give 1.1 on high up, but it's still OK (and there should be spikes on hiting the ground, that's normal too)
-            self.joints[0].speed / SPEED_HIP,
+            self.joints[0].speed / self.speed_hip,
             self.joints[1].angle + 1.0,
-            self.joints[1].speed / SPEED_KNEE,
+            self.joints[1].speed / self.speed_knee,
             1.0 if self.legs[1].ground_contact else 0.0,
             self.joints[2].angle,
-            self.joints[2].speed / SPEED_HIP,
+            self.joints[2].speed / self.speed_hip,
             self.joints[3].angle + 1.0,
-            self.joints[3].speed / SPEED_KNEE,
+            self.joints[3].speed / self.speed_knee,
             1.0 if self.legs[3].ground_contact else 0.0
             ]
         state += [l.fraction for l in self.lidar]

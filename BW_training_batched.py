@@ -159,20 +159,20 @@ for i_run in range(num_models):
         
         
         if section == 0:
-            best_average_after_all.append(best_average_after)
-            best_average_all.append(best_average)
-            all_training_losses.append(training_losses)
-            all_training_total_rewards.append(training_total_rewards)
-            all_validation_losses.append(validation_losses)
-            all_validation_total_rewards.append(validation_total_rewards)
+            best_average_after_all.append(best_average_after.cpu().numpy())
+            best_average_all.append(best_average.cpu().numpy())
+            all_training_losses.append(training_losses.cpu().numpy())
+            all_training_total_rewards.append(training_total_rewards.cpu().numpy())
+            all_validation_losses.append(validation_losses.cpu().numpy())
+            all_validation_total_rewards.append(validation_total_rewards.cpu().numpy())
         else:
             if best_average > best_average_all[i_run]:
                 best_average_after_all[i_run] = best_average_after
                 best_average_all[i_run] = best_average
-            all_training_losses[i_run] = np.concatenate((all_training_losses[i_run], training_losses))
-            all_training_total_rewards[i_run] = np.concatenate((all_training_total_rewards[i_run], training_total_rewards))
-            all_validation_losses[i_run] = np.concatenate((all_validation_losses[i_run], validation_losses))
-            all_validation_total_rewards[i_run] = np.concatenate((all_validation_total_rewards[i_run], validation_total_rewards))
+            all_training_losses[i_run] = np.concatenate((all_training_losses[i_run], training_losses.cpu().numpy()))
+            all_training_total_rewards[i_run] = np.concatenate((all_training_total_rewards[i_run], training_total_rewards.cpu().numpy()))
+            all_validation_losses[i_run] = np.concatenate((all_validation_losses[i_run], validation_losses.cpu().numpy()))
+            all_validation_total_rewards[i_run] = np.concatenate((all_validation_total_rewards[i_run], validation_total_rewards.cpu().numpy()))
 
         np.save(f"{result_dir}/all_training_losses_{i_run}.npy", all_training_losses[i_run])
         np.save(f"{result_dir}/all_training_total_rewards_{i_run}.npy", all_training_total_rewards[i_run])

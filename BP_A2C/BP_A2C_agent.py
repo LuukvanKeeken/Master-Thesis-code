@@ -3286,8 +3286,8 @@ def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds):
         env = gym.make(env_name)
             
         for i_episode in range(num_episodes):
-            hebbian_traces = agent_net.initialZeroHebb(1)
-            hidden_activations = agent_net.initialZeroState(1)
+            hebbian_traces = agent_net.initialZeroHebb(1).to(device)
+            hidden_activations = agent_net.initialZeroState(1).to(device)
             
             env.seed(int(evaluation_seeds[i_episode]))
             
@@ -3297,7 +3297,7 @@ def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds):
 
             while not done:
                 state = torch.from_numpy(state)
-                state = state.unsqueeze(0)#.to(device) #This as well?
+                state = state.unsqueeze(0).to(device) #This as well?
                 policy_output, value, (hidden_activations, hebbian_traces) = agent_net.forward(state.float(), [hidden_activations, hebbian_traces])
                 
                 means, std_devs = policy_output
@@ -3306,7 +3306,7 @@ def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds):
                 action = means
                 
 
-                state, r, done, _ = env.step(action[0].numpy())
+                state, r, done, _ = env.step(action[0].cpu().numpy())
 
                 total_reward += r
             eval_rewards.append(total_reward)

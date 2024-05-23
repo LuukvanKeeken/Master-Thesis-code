@@ -156,10 +156,10 @@ for i_run in range(num_models):
             smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous_vectorized_v3(vec_env, training_eps_per_section, section, randomization_params = randomization_params, best_average=best_average_all[i_run], best_average_after=best_average_after_all[i_run], num_parallel_envs=num_parallel_envs)
         
         
-        print("Is 'training_losses' a tensor on the GPU?: ", training_losses.is_cuda)
-        print("Is 'training_total_rewards' a tensor on the GPU?: ", training_total_rewards.is_cuda)
-        print("Is 'validation_losses' a tensor on the GPU?: ", validation_losses.is_cuda)
-        print("Is 'validation_total_rewards' a tensor on the GPU?: ", validation_total_rewards.is_cuda)
+        print("Is 'training_losses' a tensor on the GPU?: ", torch.is_tensor(training_losses) and training_losses.is_cuda)
+        print("Is 'training_total_rewards' a tensor on the GPU?: ", torch.is_tensor(training_total_rewards) and training_total_rewards.is_cuda)
+        print("Is 'validation_losses' a tensor on the GPU?: ", torch.is_tensor(validation_losses) and validation_losses.is_cuda)
+        print("Is 'validation_total_rewards' a tensor on the GPU?: ", torch.is_tensor(validation_total_rewards) and validation_total_rewards.is_cuda)
         
         if section == 0:
             best_average_after_all.append(best_average_after)

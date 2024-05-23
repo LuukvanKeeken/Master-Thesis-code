@@ -63,6 +63,12 @@ class BP_RNetwork(nn.Module):
         # hidden[0] is the h-state; hidden[1] is the Hebbian trace
         hebb = hidden[1]
 
+        print("Device of inputs: ", inputs.device)
+        print("Device of hidden[0]: ", hidden[0].device)
+        print("Device of hidden[1]: ", hidden[1].device)
+        print("Device of i2h weights: ", self.i2h.weight.device)
+        print("Device of h2o weights: ", self.h2o.weight.device)
+        print("Device of h2v weights: ", self.h2v.weight.device)
 
         # Each *column* of w, alpha and hebb contains the inputs weights to a single neuron
         hactiv = torch.tanh( self.i2h(inputs) + hidden[0].unsqueeze(1).bmm(self.w + torch.mul(self.alpha, hebb)).squeeze(1)  )  # Update the h-state

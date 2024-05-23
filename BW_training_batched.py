@@ -21,7 +21,7 @@ parser.add_argument('--num_models', type=int, default=1, help='Number of models 
 parser.add_argument('--selection_method', type=str, default='exp_BW_validation', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
-parser.add_argument('--env_name', type=str, default='BipedalWalker-v3', help='Name of the environment to use')
+parser.add_argument('--env_name', type=str, default='AdjustableBipedalWalker-v3', help='Name of the environment to use')
 parser.add_argument('--input_dims', type=int, default=24, help='Number of input dimensions to the network')
 parser.add_argument('--output_dims', type=int, default=4, help='Number of output dimensions to the network')
 parser.add_argument('--continuous_actions', type=bool, default=True, help='Whether the environment has continuous actions')
@@ -31,9 +31,17 @@ parser.add_argument('--num_training_episodes', type=int, default=100, help='Numb
 parser.add_argument('--num_evaluation_episodes', type=int, default=10, help='Number of evaluation episodes to run')
 parser.add_argument('--training_episodes_per_section', type=int, default=100, help='Number of training episodes to run per section')
 parser.add_argument('--magic_number', type=int, default=2, help='Magic number to use for the results directory')
-parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
-parser.add_argument('--batch_size', type=int, default=1, help='Batch size to use for training')
-parser.add_argument('--num_parallel_envs', type=int, default=1, help='Number of parallel environments to use')
+parser.add_argument('--evaluate_every', type=int, default=2, help='How often to evaluate the agent')
+parser.add_argument('--batch_size', type=int, default=2, help='Batch size to use for training')
+parser.add_argument('--num_parallel_envs', type=int, default=2, help='Number of parallel environments to use')
+
+gym.envs.registration.register(
+    id='AdjustableBipedalWalker-v3',
+    entry_point='Master_Thesis_Code.AdjustableBipedalWalker:AdjustableBipedalWalker',
+    max_episode_steps=1600,
+    reward_threshold=300,
+)
+
 
 args = parser.parse_args()
 learning_rate = args.learning_rate
@@ -120,7 +128,7 @@ for i_run in range(num_models):
     random.seed(seed)
 
     if network_type == 'BP_RNN':
-        agent_net = BP_RNetwork(input_dims, num_neurons, output_dims, seed, continuous_actions=continuous_actions)
+        agent_net = BP_RNetwork(input_dims, num_neurons, output_dims, seed, continuous_actions=continuous_actions).to(device)
     elif network_type == 'Standard_RNN':
         agent_net = Standard_RNetwork(input_dims, num_neurons, output_dims, seed, continuous_actions=continuous_actions)
     elif network_type == 'Standard_MLP':

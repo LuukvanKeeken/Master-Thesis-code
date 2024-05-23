@@ -65,7 +65,7 @@ num_evaluation_episodes = args.num_evaluation_episodes
 batch_size = args.batch_size
 num_parallel_envs = args.num_parallel_envs
 
-device = "cpu"
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 

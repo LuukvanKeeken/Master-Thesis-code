@@ -161,9 +161,9 @@ for i_run in range(num_models):
         if section == 0:
             best_average_after_all.append(best_average_after)
             best_average_all.append(best_average)
-            all_training_losses.append(training_losses)
-            all_training_total_rewards.append(training_total_rewards)
-            all_validation_losses.append(validation_losses)
+            all_training_losses.append([tensor.cpu().numpy() for tensor in training_losses])
+            all_training_total_rewards.append([tensor.cpu().numpy() for tensor in training_total_rewards])
+            all_validation_losses.append([tensor.cpu().numpy() for tensor in validation_losses])
             all_validation_total_rewards.append(validation_total_rewards)
         else:
             if best_average > best_average_all[i_run]:

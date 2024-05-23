@@ -159,8 +159,8 @@ for i_run in range(num_models):
         
         
         if section == 0:
-            best_average_after_all.append(best_average_after.cpu().numpy())
-            best_average_all.append(best_average.cpu().numpy())
+            best_average_after_all.append(best_average_after)
+            best_average_all.append(best_average)
             all_training_losses.append(training_losses.cpu().numpy())
             all_training_total_rewards.append(training_total_rewards.cpu().numpy())
             all_validation_losses.append(validation_losses.cpu().numpy())

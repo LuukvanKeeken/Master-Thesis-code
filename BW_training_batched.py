@@ -174,9 +174,9 @@ for i_run in range(num_models):
             all_validation_losses[i_run] = np.concatenate((all_validation_losses[i_run], [tensor.cpu().numpy() for tensor in validation_losses]))
             all_validation_total_rewards[i_run] = np.concatenate((all_validation_total_rewards[i_run], validation_total_rewards))
 
-        np.save(f"{result_dir}/all_training_losses_{i_run}.npy", [tensor.cpu().numpy() for tensor in all_training_losses[i_run]])
-        np.save(f"{result_dir}/all_training_total_rewards_{i_run}.npy", [tensor.cpu().numpy() for tensor in all_training_total_rewards[i_run]])
-        np.save(f"{result_dir}/all_validation_losses_{i_run}.npy", [tensor.cpu().numpy() for tensor in all_validation_losses[i_run]])
+        np.save(f"{result_dir}/all_training_losses_{i_run}.npy", all_training_losses[i_run])
+        np.save(f"{result_dir}/all_training_total_rewards_{i_run}.npy", all_training_total_rewards[i_run])
+        np.save(f"{result_dir}/all_validation_losses_{i_run}.npy", all_validation_losses[i_run])
         np.save(f"{result_dir}/all_validation_total_rewards_{i_run}.npy", all_validation_total_rewards[i_run])
 
 

@@ -1232,7 +1232,7 @@ class A2C_Agent:
                 actions = dists.sample()
                 log_probs = dists.log_prob(actions)
                 entropies = dists.entropy()
-                states, rewards, dones, _ = vec_env.step(actions) #.cpu().numpy()?
+                states, rewards, dones, _ = vec_env.step(actions.cpu().numpy()) #.cpu().numpy()?
 
                 for i, (state, reward, done, log_prob, value, entropy) in enumerate(zip(states, rewards, dones, log_probs, values, entropies)):
                     running_log_probs[i].append(log_prob.unsqueeze(0))

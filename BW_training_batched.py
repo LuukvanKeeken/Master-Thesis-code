@@ -156,26 +156,23 @@ for i_run in range(num_models):
             smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = agent.train_agent_continuous_vectorized_v3(vec_env, training_eps_per_section, section, randomization_params = randomization_params, best_average=best_average_all[i_run], best_average_after=best_average_after_all[i_run], num_parallel_envs=num_parallel_envs)
         
         
-        print("Is 'training_losses' a tensor on the GPU?: ", torch.is_tensor(training_losses) and training_losses.is_cuda)
-        print("Is 'training_total_rewards' a tensor on the GPU?: ", torch.is_tensor(training_total_rewards) and training_total_rewards.is_cuda)
-        print("Is 'validation_losses' a tensor on the GPU?: ", torch.is_tensor(validation_losses) and validation_losses.is_cuda)
-        print("Is 'validation_total_rewards' a tensor on the GPU?: ", torch.is_tensor(validation_total_rewards) and validation_total_rewards.is_cuda)
+        
         
         if section == 0:
             best_average_after_all.append(best_average_after)
             best_average_all.append(best_average)
-            all_training_losses.append(training_losses.cpu().numpy())
-            all_training_total_rewards.append(training_total_rewards.cpu().numpy())
-            all_validation_losses.append(validation_losses.cpu().numpy())
-            all_validation_total_rewards.append(validation_total_rewards.cpu().numpy())
+            all_training_losses.append(training_losses)
+            all_training_total_rewards.append(training_total_rewards)
+            all_validation_losses.append(validation_losses)
+            all_validation_total_rewards.append(validation_total_rewards)
         else:
             if best_average > best_average_all[i_run]:
                 best_average_after_all[i_run] = best_average_after
                 best_average_all[i_run] = best_average
-            all_training_losses[i_run] = np.concatenate((all_training_losses[i_run], training_losses.cpu().numpy()))
-            all_training_total_rewards[i_run] = np.concatenate((all_training_total_rewards[i_run], training_total_rewards.cpu().numpy()))
-            all_validation_losses[i_run] = np.concatenate((all_validation_losses[i_run], validation_losses.cpu().numpy()))
-            all_validation_total_rewards[i_run] = np.concatenate((all_validation_total_rewards[i_run], validation_total_rewards.cpu().numpy()))
+            all_training_losses[i_run] = np.concatenate((all_training_losses[i_run], training_losses))
+            all_training_total_rewards[i_run] = np.concatenate((all_training_total_rewards[i_run], training_total_rewards))
+            all_validation_losses[i_run] = np.concatenate((all_validation_losses[i_run], validation_losses))
+            all_validation_total_rewards[i_run] = np.concatenate((all_validation_total_rewards[i_run], validation_total_rewards))
 
         np.save(f"{result_dir}/all_training_losses_{i_run}.npy", all_training_losses[i_run])
         np.save(f"{result_dir}/all_training_total_rewards_{i_run}.npy", all_training_total_rewards[i_run])

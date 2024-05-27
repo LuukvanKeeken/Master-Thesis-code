@@ -691,6 +691,7 @@ class A2C_Agent:
                 log_probs = []
                 values = []
                 rewards = []
+                entropies = []
 
                 state = self.env.reset()
                 for steps in range(self.max_steps):
@@ -708,6 +709,7 @@ class A2C_Agent:
                     log_probs.append(log_prob)
                     values.append(value)
                     rewards.append(reward)
+                    entropies.append(entropy)
                     score += reward
                     state = next_state
                     
@@ -873,11 +875,12 @@ class A2C_Agent:
                 log_probs = torch.cat(log_probs)
                 values = torch.cat(values).squeeze()
                 returns = torch.FloatTensor(returns)
+                entropies = torch.FloatTensor(entropies)
                 
                 advantage = returns - values
                 actor_loss = -(log_probs * advantage.detach()).mean()
                 critic_loss = advantage.pow(2).mean()
-                entropy_loss = entropy.mean()  # Entropy loss
+                entropy_loss = entropies.mean()  # Entropy loss
                 total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
 
                 self.optimizer.zero_grad()

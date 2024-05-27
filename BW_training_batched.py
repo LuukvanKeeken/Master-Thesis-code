@@ -31,9 +31,9 @@ parser.add_argument('--num_training_episodes', type=int, default=100, help='Numb
 parser.add_argument('--num_evaluation_episodes', type=int, default=10, help='Number of evaluation episodes to run')
 parser.add_argument('--training_episodes_per_section', type=int, default=100, help='Number of training episodes to run per section')
 parser.add_argument('--magic_number', type=int, default=2, help='Magic number to use for the results directory')
-parser.add_argument('--evaluate_every', type=int, default=2, help='How often to evaluate the agent')
-parser.add_argument('--batch_size', type=int, default=2, help='Batch size to use for training')
-parser.add_argument('--num_parallel_envs', type=int, default=2, help='Number of parallel environments to use')
+parser.add_argument('--evaluate_every', type=int, default=10, help='How often to evaluate the agent')
+parser.add_argument('--batch_size', type=int, default=5, help='Batch size to use for training')
+parser.add_argument('--num_parallel_envs', type=int, default=5, help='Number of parallel environments to use')
 
 gym.envs.registration.register(
     id='AdjustableBipedalWalker-v3',
@@ -70,7 +70,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 gammaR = 0.99
-max_grad_norm = 0.5
+max_grad_norm = 10
 max_steps = 1600
 
 

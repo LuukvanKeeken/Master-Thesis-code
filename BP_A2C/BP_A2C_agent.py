@@ -330,6 +330,7 @@ class A2C_Agent:
             log_probs = []
             values = []
             rewards = []
+            entropies = []
 
             state = self.env.reset()
             for steps in range(self.max_steps):
@@ -344,6 +345,7 @@ class A2C_Agent:
                 log_probs.append(log_prob)
                 values.append(value)
                 rewards.append(reward)
+                entropies.append(entropy)
                 score += reward
                 state = next_state
                 
@@ -509,11 +511,12 @@ class A2C_Agent:
             log_probs = torch.cat(log_probs)
             values = torch.cat(values).squeeze()
             returns = torch.FloatTensor(returns)
+            entropies = torch.FloatTensor(entropies)
             
             advantage = returns - values
             actor_loss = -(log_probs * advantage.detach()).mean()
             critic_loss = advantage.pow(2).mean()
-            entropy_loss = entropy.mean()  # Entropy loss
+            entropy_loss = entropies.mean()  # Entropy loss
             total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
 
             self.optimizer.zero_grad()
@@ -688,6 +691,7 @@ class A2C_Agent:
                 log_probs = []
                 values = []
                 rewards = []
+                entropies = []
 
                 state = self.env.reset()
                 for steps in range(self.max_steps):
@@ -705,6 +709,7 @@ class A2C_Agent:
                     log_probs.append(log_prob)
                     values.append(value)
                     rewards.append(reward)
+                    entropies.append(entropy)
                     score += reward
                     state = next_state
                     
@@ -870,11 +875,12 @@ class A2C_Agent:
                 log_probs = torch.cat(log_probs)
                 values = torch.cat(values).squeeze()
                 returns = torch.FloatTensor(returns)
+                entropies = torch.FloatTensor(entropies)
                 
                 advantage = returns - values
                 actor_loss = -(log_probs * advantage.detach()).mean()
                 critic_loss = advantage.pow(2).mean()
-                entropy_loss = entropy.mean()  # Entropy loss
+                entropy_loss = entropies.mean()  # Entropy loss
                 total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
 
                 self.optimizer.zero_grad()
@@ -1209,8 +1215,8 @@ class A2C_Agent:
             running_rewards = [[] for _ in range(num_parallel_envs)]
             running_entropies = [[] for _ in range(num_parallel_envs)]
 
-            hidden_states = self.agent_net.initialZeroState(num_parallel_envs)
-            hebb_traces = self.agent_net.initialZeroHebb(num_parallel_envs)
+            hidden_states = self.agent_net.initialZeroState(num_parallel_envs).to(device)
+            hebb_traces = self.agent_net.initialZeroHebb(num_parallel_envs).to(device)
 
             memory_usage_after_initialization = self.get_current_memory_usage()
             increase = memory_usage_after_initialization - latest_usage
@@ -1221,7 +1227,7 @@ class A2C_Agent:
 
             states = vec_env.reset()
             while len(log_probs_batch) < self.batch_size:
-                states = torch.from_numpy(states)
+                states = torch.from_numpy(states).to(device)
                 policy_outputs, values, (hidden_states, hebb_traces) = self.agent_net(states, [hidden_states, hebb_traces])
                 mus, sigmas = policy_outputs[0], policy_outputs[1]
                 sigmas = torch.diag_embed(sigmas)
@@ -1229,7 +1235,7 @@ class A2C_Agent:
                 actions = dists.sample()
                 log_probs = dists.log_prob(actions)
                 entropies = dists.entropy()
-                states, rewards, dones, _ = vec_env.step(actions) #.cpu().numpy()?
+                states, rewards, dones, _ = vec_env.step(actions.cpu().numpy()) #.cpu().numpy()?
 
                 for i, (state, reward, done, log_prob, value, entropy) in enumerate(zip(states, rewards, dones, log_probs, values, entropies)):
                     running_log_probs[i].append(log_prob.unsqueeze(0))
@@ -1265,11 +1271,11 @@ class A2C_Agent:
                         latest_usage = memory_usage_before_reset
                         print(f"Memory usage before reset: {memory_usage_before_reset} MiB (Increase: {increase} MiB)")
                         hidden_states_new = hidden_states.clone()
-                        hidden_states_new[i] = torch.zeros_like(hidden_states[i])
+                        hidden_states_new[i] = torch.zeros_like(hidden_states[i]).to(device)
                         hidden_states = hidden_states_new
 
                         hebb_traces_new = hebb_traces.clone()
-                        hebb_traces_new[i] = torch.zeros_like(hebb_traces[i])
+                        hebb_traces_new[i] = torch.zeros_like(hebb_traces[i]).to(device)
                         hebb_traces = hebb_traces_new
 
                         memory_usage_after_reset = self.get_current_memory_usage()
@@ -1298,10 +1304,10 @@ class A2C_Agent:
                     R = r + self.gammaR * R
                     returns.insert(0, R)
                 
-                log_probs_history = torch.cat(log_probs_history)
-                values_history = torch.cat(values_history).squeeze()
-                entropies_history = torch.cat(entropies_history)
-                returns = torch.FloatTensor(returns)
+                log_probs_history = torch.cat(log_probs_history).to(device)
+                values_history = torch.cat(values_history).squeeze().to(device)
+                entropies_history = torch.cat(entropies_history).to(device)
+                returns = torch.FloatTensor(returns).to(device)
 
                 advantage_history = returns - values_history
                 actor_loss = -(log_probs_history * advantage_history.detach()).mean()
@@ -1311,11 +1317,6 @@ class A2C_Agent:
 
                 summed_loss += total_loss
 
-            for name, var in locals().items():
-                if isinstance(var, torch.Tensor) and var.requires_grad:
-                    print(f"{name}, {var.shape}")
-                elif isinstance(var, list) and len(var) > 0 and isinstance(var[0], torch.Tensor) and var[0].requires_grad:
-                    print(f"{name}, {len(var)}, {var[0].shape}")
             
             average_total_loss = summed_loss / self.batch_size
             self.optimizer.zero_grad()
@@ -3288,8 +3289,8 @@ def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds):
         env = gym.make(env_name)
             
         for i_episode in range(num_episodes):
-            hebbian_traces = agent_net.initialZeroHebb(1)
-            hidden_activations = agent_net.initialZeroState(1)
+            hebbian_traces = agent_net.initialZeroHebb(1).to(device)
+            hidden_activations = agent_net.initialZeroState(1).to(device)
             
             env.seed(int(evaluation_seeds[i_episode]))
             
@@ -3299,7 +3300,7 @@ def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds):
 
             while not done:
                 state = torch.from_numpy(state)
-                state = state.unsqueeze(0)#.to(device) #This as well?
+                state = state.unsqueeze(0).to(device) #This as well?
                 policy_output, value, (hidden_activations, hebbian_traces) = agent_net.forward(state.float(), [hidden_activations, hebbian_traces])
                 
                 means, std_devs = policy_output
@@ -3308,7 +3309,7 @@ def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds):
                 action = means
                 
 
-                state, r, done, _ = env.step(action[0].numpy())
+                state, r, done, _ = env.step(action[0].cpu().numpy())
 
                 total_reward += r
             eval_rewards.append(total_reward)

@@ -62,7 +62,7 @@ class BP_RNetwork(nn.Module):
         
         # hidden[0] is the h-state; hidden[1] is the Hebbian trace
         hebb = hidden[1]
-
+    
 
         # Each *column* of w, alpha and hebb contains the inputs weights to a single neuron
         hactiv = torch.tanh( self.i2h(inputs) + hidden[0].unsqueeze(1).bmm(self.w + torch.mul(self.alpha, hebb)).squeeze(1)  )  # Update the h-state

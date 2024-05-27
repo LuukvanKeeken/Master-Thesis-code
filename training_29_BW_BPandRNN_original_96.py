@@ -55,7 +55,7 @@ device = "cpu"
 
 
 gammaR = 0.99
-max_grad_norm = 1000
+max_grad_norm = 10
 max_steps = 1600
 batch_size = 1
 

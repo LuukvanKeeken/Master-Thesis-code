@@ -15,16 +15,16 @@ def main():
         env = gym.make('AdjustableBipedalWalker-v3')
         state = env.reset()
 
-        policy_weights = torch.load("Master_Thesis_Code/BP_A2C/29_BW_BPandRNN_original_96/BP_RNN_a2c_result_98_2024516_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt")
+        policy_weights = torch.load("Master_Thesis_Code/BP_A2C/bipedal_walker/Continued_Standard_RNN_a2c_result_68024_202459_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt")
         # policy_weights = torch.load("Master_Thesis_Code/BP_A2C/29_BW_BPandRNN_original_96/Standard_RNN_a2c_result_68024_202459_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt")
 
         # agent_net = Standard_RNetwork(24, 96, 4, 5, continuous_actions=True)
-        agent_net = BP_RNetwork(24, 96, 4, 5, continuous_actions=True)
+        agent_net = Standard_RNetwork(24, 96, 4, 5, continuous_actions=True)
         agent_net.load_state_dict(policy_weights)
         
         variables = ['left_leg_w_unscaled', 'left_leg_h_unscaled', 'right_leg_w_unscaled', 'right_leg_h_unscaled', 'terrain_friction', 'speed_hip', 'speed_knee', 'left_leg_density', 'right_leg_density', 'hull_density', 'hull_friction', 'lidar_range_unscaled']
         default_values = [8.0, 34.0, 8.0, 34.0, 2.5, 4.0, 6.0, 1.0, 1.0, 5.0, 0.1, 160.0]
-        percentages = [0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99, 1.01, 1.05, 1.1, 1.2, 1.3, 1.5, 2.0, 3.5, 5.0, 10.0, 15.0, 20.0]
+        percentages = [0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.8, 0.9, 0.925, 0.95, 0.975, 0.99, 1.01, 1.025, 1.05, 1.075, 1.1, 1.2, 1.3, 1.5, 2.0, 3.5, 5.0, 10.0, 15.0, 20.0]
         
         all_results_means = []
         all_results_stds = []

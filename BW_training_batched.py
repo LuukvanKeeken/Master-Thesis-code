@@ -16,10 +16,10 @@ from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVector
 parser = argparse.ArgumentParser(description='Train an A2C agent on the BipedalWalker environment')
 parser.add_argument('--num_neurons', type=int, default=64, help='Number of neurons in the hidden layer')
 parser.add_argument('--network_type', type=str, default='BP_RNN', help='Type of network to use')
-parser.add_argument('--learning_rate', type=float, default=0.00001, help='Learning rate for the agent')
+parser.add_argument('--learning_rate', type=float, default=0.0001, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=1, help='Number of models to train')
-parser.add_argument('--selection_method', type=str, default='exp_BW_validation', help='Method to use for selecting the best model')
-parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
+parser.add_argument('--selection_method', type=str, default='range', help='Method to use for selecting the best model')
+parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
 parser.add_argument('--env_name', type=str, default='AdjustableBipedalWalker-v3', help='Name of the environment to use')
 parser.add_argument('--input_dims', type=int, default=24, help='Number of input dimensions to the network')
@@ -27,11 +27,11 @@ parser.add_argument('--output_dims', type=int, default=4, help='Number of output
 parser.add_argument('--continuous_actions', type=bool, default=True, help='Whether the environment has continuous actions')
 parser.add_argument('--entropy_coef', type=float, default=0.0001, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.0001, help='Value prediction coefficient for the agent')
-parser.add_argument('--num_training_episodes', type=int, default=100, help='Number of training episodes to run')
-parser.add_argument('--num_evaluation_episodes', type=int, default=10, help='Number of evaluation episodes to run')
-parser.add_argument('--training_episodes_per_section', type=int, default=100, help='Number of training episodes to run per section')
+parser.add_argument('--num_training_episodes', type=int, default=1000000, help='Number of training episodes to run')
+parser.add_argument('--num_evaluation_episodes', type=int, default=20, help='Number of evaluation episodes to run')
+parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
 parser.add_argument('--magic_number', type=int, default=2, help='Magic number to use for the results directory')
-parser.add_argument('--evaluate_every', type=int, default=10, help='How often to evaluate the agent')
+parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
 parser.add_argument('--batch_size', type=int, default=5, help='Batch size to use for training')
 parser.add_argument('--num_parallel_envs', type=int, default=5, help='Number of parallel environments to use')
 
@@ -67,6 +67,7 @@ num_parallel_envs = args.num_parallel_envs
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+assert evaluate_every % batch_size == 0
 
 
 gammaR = 0.99
@@ -83,14 +84,25 @@ range_min = 0.7
 range_max = 1.3
 
 if training_method == "quarter_range":
-    raise NotImplementedError("These values don't make sense for the BipedalWalker environment")
-    randomization_params = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
+    randomization_params = [
+    (0.79, 1.22),
+    (0.99, 1.03),
+    (0.79, 1.22),
+    (0.99, 1.03),
+    (0.81, 1.11),
+    (0.88, 1.13),
+    (0.88, 1.06),
+    (0.78, 1.44),
+    (0.78, 1.44),
+    (0.96, 1.09),
+    (0.93, 1.03)
+]
 else:
     randomization_params = None
 
 if result_id == -1:
     # Create Results Directory
-    dirs = os.listdir('Master_Thesis_Code/BP_A2C/bipedal_walker/exploration/')
+    dirs = os.listdir('Master_Thesis_Code/BP_A2C/bipedal_walker/BP_and_StandardRNN/')
     if not any('a2c_result' in d for d in dirs):
         result_id = 1
     else:
@@ -99,7 +111,7 @@ if result_id == -1:
 
 # Get today's date and add it to the results directory
 d = date.today()
-result_dir = f'Master_Thesis_Code/BP_A2C/bipedal_walker/exploration/{network_type}_a2c_result_' + str(result_id) + "_{}_entropycoef_{}_valuepredcoef_{}_\
+result_dir = f'Master_Thesis_Code/BP_A2C/bipedal_walker/BP_and_StandardRNN/{network_type}_a2c_result_' + str(result_id) + "_{}_entropycoef_{}_valuepredcoef_{}_\
 learningrate_{}_numtrainepisodes_{}_selectionmethod_{}_trainingmethod_{}_numneurons_{}".format(
     str(d.year) + str(d.month) + str(d.day), entropy_coef, value_pred_coef,
     learning_rate, num_training_episodes, selection_method, training_method, num_neurons)

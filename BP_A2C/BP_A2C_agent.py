@@ -1173,16 +1173,6 @@ class A2C_Agent:
 
     # @profile
     def train_agent_continuous_vectorized_v3(self, vec_env, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
-        if torch.cuda.is_available():
-            print("GPU is available")
-            print("Number of GPUs available:", torch.cuda.device_count())
-            print("GPU device name:", torch.cuda.get_device_name(0))
-        else:
-            print("GPU is not available")
-        
-        
-
-
         longest_episode_len = 0
         steps_since_previous_episode_end = 0
         start_memory_usage = self.get_current_memory_usage()
@@ -1223,7 +1213,8 @@ class A2C_Agent:
             latest_usage = memory_usage_after_initialization
             print(f"Memory usage after initialization: {memory_usage_after_initialization} MiB (Increase: {increase} MiB)")
 
-            # SET ENV PARAMETERS HERE
+            randomized_env_params = get_random_env_paramvals_BW(randomization_params, num_parallel_envs)
+            vec_env.set_env_params(randomized_env_params)
 
             states = vec_env.reset()
             while len(log_probs_batch) < self.batch_size:
@@ -1248,7 +1239,8 @@ class A2C_Agent:
                         if len(running_rewards[i]) > longest_episode_len:
                             print(f"New longest episode length: {len(running_rewards[i])}, previous longest: {longest_episode_len}")
                             longest_episode_len = len(running_rewards[i])
-                            
+
+                        training_total_rewards.append(sum(running_rewards[i]))   
                         done_memory_usage = self.get_current_memory_usage()
                         increase = done_memory_usage - latest_usage
                         latest_usage = done_memory_usage
@@ -1283,7 +1275,8 @@ class A2C_Agent:
                         latest_usage = memory_usage_after_reset
                         print(f"Memory usage after reset: {memory_usage_after_reset} MiB (Increase: {increase} MiB)")
 
-                        # SET ENV PARAMETERS HERE
+                        randomized_env_params = get_random_env_paramvals_BW(randomization_params)
+                        vec_env.set_env_params(randomized_env_params[0], i)
 
                         if len(log_probs_batch) == self.batch_size:
                             break
@@ -1316,6 +1309,7 @@ class A2C_Agent:
                 total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
 
                 summed_loss += total_loss
+                training_losses.append(total_loss.detach())
 
             
             average_total_loss = summed_loss / self.batch_size
@@ -1337,7 +1331,7 @@ class A2C_Agent:
             print(f"Memory usage after collect: {memory_usage_after_collect} MiB (Increase: {increase} MiB)")
 
 
-            if (eps_trained-1) % self.evaluate_every == 0:
+            if ((self.selection_method == "original") and ((eps_trained-1) % self.evaluate_every == 0)):
                 evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds))
                 print(f"Episode {eps_trained-1}\tAverage evaluation: {evaluation_performance}")
                 validation_total_rewards.append(evaluation_performance)
@@ -1351,7 +1345,44 @@ class A2C_Agent:
                     print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
                     best_average_after, '. Model saved in folder best.')
                     return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
-            
+            elif ((self.selection_method == "range") and ((eps_trained - 1) % self.evaluate_every == 0)):
+                validation_ranges = [[(0.58, 0.79), (1.22, 1.44)], [(0.97, 0.99), (1.03, 1.06)], [(0.58, 0.79), (1.22, 1.44)], [(0.97, 0.99), (1.03, 1.06)], [(0.61, 0.81), (1.11, 1.23)], [(0.75, 0.88), (1.13, 1.25)], [(0.76, 0.88), (1.06, 1.11)], [(0.55, 0.78), (1.44, 1.88)], [(0.55, 0.78), (1.44, 1.88)], [(0.92, 0.96), (1.09, 1.19)], [(0.86, 0.93), (1.03, 1.05)]]
+                default_values = [8.0, 34.0, 8.0, 34.0, 2.5, 4.0, 6.0, 1.0, 1.0, 5.0, 160.0]
+                env_params = ['left_leg_w_unscaled', 'left_leg_h_unscaled', 'right_leg_w_unscaled', 'right_leg_h_unscaled', 'terrain_friction', 'speed_hip', 'speed_knee', 'left_leg_density', 'right_leg_density', 'hull_density', 'lidar_range_unscaled']
+                
+                eps_per_setting = 1
+                evaluation_performance = 0
+                current_np_seed = np.random.get_state()
+                current_r_seed = random.getstate()
+                for i in range(self.num_evaluation_episodes):
+                    np.random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
+                    random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
+                    
+                    random_env_param_settings = {}
+                    for param, ranges, default_val in zip(env_params, validation_ranges, default_values):
+                        val_range = random.choice(ranges)
+                        random_env_param_settings[param] = np.random.uniform(val_range[0], val_range[1])*default_val
+                    
+                    evaluation_performance += np.mean(evaluate_BW(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], env_parameter_settings=random_env_param_settings))
+
+                evaluation_performance /= self.num_evaluation_episodes
+                print(f"Episode {eps_trained-1}\tAverage evaluation: {evaluation_performance}")
+                validation_total_rewards.append(evaluation_performance)
+                if evaluation_performance > best_average:
+                    best_average = evaluation_performance
+                    best_average_after = eps_trained-1
+                    torch.save(self.agent_net.state_dict(),
+                            self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                    
+                if best_average == self.max_reward:
+                    print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                    best_average_after, '. Model saved in folder best.')
+                    return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+                
+                np.random.set_state(current_np_seed)
+                random.setstate(current_r_seed)
+                        
+
         print(f'Current best {self.selection_method}: ', best_average, ' reached at episode ', best_average_after, '.')
         end_memory_usage = self.get_current_memory_usage()
         increase = end_memory_usage - latest_usage
@@ -3283,10 +3314,35 @@ class A2C_Agent:
         return best_weights, best_reward, best_episode
 
 
-def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds):
+def get_random_env_paramvals_BW(randomization_params, batch_size = 1):
+
+    default_values = [8.0, 34.0, 8.0, 34.0, 2.5, 4.0, 6.0, 1.0, 1.0, 5.0, 160.0]
+    param_names = ['left_leg_w_unscaled', 'left_leg_h_unscaled', 'right_leg_w_unscaled', 'right_leg_h_unscaled', 'terrain_friction', 'speed_hip', 'speed_knee', 'left_leg_density', 'right_leg_density', 'hull_density', 'lidar_range_unscaled']
+    new_params = [{name: None for name in param_names} for _ in range(batch_size)]
+    
+    for i in range(len(default_values)):
+        if isinstance(randomization_params[i], float):
+            low = default_values[i] - default_values[i] * randomization_params[i]
+            high = default_values[i] + default_values[i] * randomization_params[i]
+        elif isinstance(randomization_params[i], tuple):
+            low = default_values[i]*randomization_params[i][0]
+            high = default_values[i]*randomization_params[i][1]
+            
+        sampled_values = np.random.uniform(low, high, batch_size)
+
+        for j in range(batch_size):
+            new_params[j][param_names[i]] = sampled_values[j]
+
+    return new_params
+
+
+def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds, env_parameter_settings = None):
     with torch.no_grad():
         eval_rewards = []
         env = gym.make(env_name)
+
+        for param, value in env_parameter_settings.items():
+            setattr(env.unwrapped, param, value)
             
         for i_episode in range(num_episodes):
             hebbian_traces = agent_net.initialZeroHebb(1).to(device)

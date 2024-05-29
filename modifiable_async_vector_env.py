@@ -152,6 +152,7 @@ class ModifiableAsyncVectorEnv(VectorEnv):
 
             self.parent_pipes[index].send(('set_env_params', env_params))
             _, successes = self.parent_pipes[index].recv()
+            successes = [successes]
         else:
             assert len(env_params) == self.num_envs
             assert isinstance(env_params, list)

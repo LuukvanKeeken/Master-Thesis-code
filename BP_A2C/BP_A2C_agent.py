@@ -1319,7 +1319,7 @@ class A2C_Agent:
             torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
             self.optimizer.step()
             # torch.cuda.empty_cache()
-            training_losses.append(average_total_loss.detach())
+            # training_losses.append(average_total_loss.detach())
 
             memory_usage_before_collect = self.get_current_memory_usage()
             increase = memory_usage_before_collect - latest_usage

@@ -1173,7 +1173,7 @@ class A2C_Agent:
 
 
     # @profile
-    def train_agent_continuous_vectorized_v3(self, vec_env, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
+    def train_agent_continuous_vectorized_v3(self, vec_env, training_eps_per_section, section, randomization_params = None, best_average = -np.inf, best_average_after = np.inf, num_parallel_envs = 10):
         longest_episode_len = 0
         steps_since_previous_episode_end = 0
         start_memory_usage = self.get_current_memory_usage()

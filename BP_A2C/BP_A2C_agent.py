@@ -16,7 +16,8 @@ torch.autograd.set_detect_anomaly(True)
 
 
 use_cuda = torch.cuda.is_available()
-device = torch.device("cuda:0" if use_cuda else "cpu")
+# device = torch.device("cuda:0" if use_cuda else "cpu")
+device = torch.device("cpu")
 
 
 class A2C_Agent:

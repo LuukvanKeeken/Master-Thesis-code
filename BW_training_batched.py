@@ -27,11 +27,11 @@ parser.add_argument('--output_dims', type=int, default=4, help='Number of output
 parser.add_argument('--continuous_actions', type=bool, default=True, help='Whether the environment has continuous actions')
 parser.add_argument('--entropy_coef', type=float, default=0.0001, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.0001, help='Value prediction coefficient for the agent')
-parser.add_argument('--num_training_episodes', type=int, default=1000000, help='Number of training episodes to run')
+parser.add_argument('--num_training_episodes', type=int, default=10, help='Number of training episodes to run')
 parser.add_argument('--num_evaluation_episodes', type=int, default=20, help='Number of evaluation episodes to run')
-parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
+parser.add_argument('--training_episodes_per_section', type=int, default=10, help='Number of training episodes to run per section')
 parser.add_argument('--magic_number', type=int, default=2, help='Magic number to use for the results directory')
-parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
+parser.add_argument('--evaluate_every', type=int, default=10, help='How often to evaluate the agent')
 parser.add_argument('--batch_size', type=int, default=5, help='Batch size to use for training')
 parser.add_argument('--num_parallel_envs', type=int, default=5, help='Number of parallel environments to use')
 
@@ -65,7 +65,8 @@ num_evaluation_episodes = args.num_evaluation_episodes
 batch_size = args.batch_size
 num_parallel_envs = args.num_parallel_envs
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 
 assert evaluate_every % batch_size == 0
 
@@ -174,7 +175,7 @@ for i_run in range(num_models):
             best_average_after_all.append(best_average_after)
             best_average_all.append(best_average)
             all_training_losses.append([tensor.cpu().numpy() for tensor in training_losses])
-            all_training_total_rewards.append([tensor.cpu().numpy() for tensor in training_total_rewards])
+            all_training_total_rewards.append(training_total_rewards)
             all_validation_losses.append([tensor.cpu().numpy() for tensor in validation_losses])
             all_validation_total_rewards.append(validation_total_rewards)
         else:

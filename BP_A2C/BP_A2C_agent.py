@@ -3342,8 +3342,9 @@ def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds, env_paramet
         eval_rewards = []
         env = gym.make(env_name)
 
-        for param, value in env_parameter_settings.items():
-            setattr(env.unwrapped, param, value)
+        if env_parameter_settings:
+            for param, value in env_parameter_settings.items():
+                setattr(env.unwrapped, param, value)
             
         for i_episode in range(num_episodes):
             hebbian_traces = agent_net.initialZeroHebb(1).to(device)

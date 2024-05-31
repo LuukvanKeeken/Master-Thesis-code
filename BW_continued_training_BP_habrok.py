@@ -24,7 +24,7 @@ parser.add_argument('--continuous_actions', type=bool, default=True, help='Wheth
 parser.add_argument('--entropy_coef', type=float, default=0.0001, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.0001, help='Value prediction coefficient for the agent')
 parser.add_argument('--num_training_episodes', type=int, default=1000000, help='Number of training episodes to run')
-parser.add_argument('--num_evaluation_episodes', type=int, default=20, help='Number of evaluation episodes to run')
+parser.add_argument('--num_evaluation_episodes', type=int, default=50, help='Number of evaluation episodes to run')
 parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
 parser.add_argument('--magic_number', type=int, default=2, help='Magic number to use for the results directory')
 parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
@@ -90,12 +90,12 @@ d = date.today()
 # if training_method == "range":
 #     result_dir += "_rangemin_{}_rangemax_{}".format(range_min, range_max)
 
-result_dir = 'Master_Thesis_Code/BP_A2C/bipedal_walker/EvenFurtherContinued_Standard_RNN_a2c_result_68024_202459_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96'
+result_dir = 'Master_Thesis_Code/BP_A2C/bipedal_walker/AgainFurtherContinued_Standard_RNN_a2c_result_68024_202459_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96'
 
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
 
-weights = torch.load('Master_Thesis_Code/BP_A2C/bipedal_walker/Continued_Standard_RNN_a2c_result_68024_202459_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt')
+weights = torch.load('Master_Thesis_Code/BP_A2C/bipedal_walker/EvenFurtherContinued_Standard_RNN_a2c_result_68024_202459_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt')
 
 
 

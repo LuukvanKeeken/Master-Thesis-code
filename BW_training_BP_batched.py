@@ -28,7 +28,7 @@ parser.add_argument('--continuous_actions', type=bool, default=True, help='Wheth
 parser.add_argument('--entropy_coef', type=float, default=0.0001, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.0001, help='Value prediction coefficient for the agent')
 parser.add_argument('--num_training_episodes', type=int, default=1000000, help='Number of training episodes to run')
-parser.add_argument('--num_evaluation_episodes', type=int, default=20, help='Number of evaluation episodes to run')
+parser.add_argument('--num_evaluation_episodes', type=int, default=30, help='Number of evaluation episodes to run')
 parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
 parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
 parser.add_argument('--batch_size', type=int, default=5, help='Batch size to use for training')
@@ -83,19 +83,7 @@ range_min = 0.7
 range_max = 1.3
 
 if training_method == "quarter_range":
-    randomization_params = [
-    (0.79, 1.22),
-    (0.99, 1.03),
-    (0.79, 1.22),
-    (0.99, 1.03),
-    (0.81, 1.11),
-    (0.88, 1.13),
-    (0.88, 1.06),
-    (0.78, 1.44),
-    (0.78, 1.44),
-    (0.96, 1.09),
-    (0.93, 1.03)
-]
+    randomization_params = [(0.95, 1.025), (0.99375, 1.0125), (0.95, 1.025), (0.99375, 1.0125), (0.875, 2.0), (0.95, 1.0125), (0.975, 1.25), (0.95, 1.025), (0.95, 1.025), (0.99375, 1.05), (0.925, 1.00625)]
 else:
     randomization_params = None
 

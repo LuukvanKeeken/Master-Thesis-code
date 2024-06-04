@@ -1,4 +1,3 @@
-import argparse
 from datetime import date
 import os
 import random
@@ -9,12 +8,18 @@ import numpy as np
 from collections import deque
 import torch
 from Master_Thesis_Code.LTC_A2C import LTC_Network, CfC_Network
+from Master_Thesis_Code.Neuromodulated_Agent import NeuromodulatedAgent
+from Master_Thesis_Code.backpropamine_A2C import BP_RNetwork
 from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVectorEnv
 from ncps_time_constant_extraction.ncps.wirings import AutoNCP
 from torch.distributions import Categorical
+import argparse
 
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+device = "cpu"
+
 
 
 def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds, env_parameter_settings = None):
@@ -26,7 +31,7 @@ def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds, env_paramet
             setattr(env.unwrapped, param, value)
             
         for i_episode in range(num_episodes):
-            hidden_state = None
+            policy_hidden_states = None
             
             env.seed(int(evaluation_seeds[i_episode]))
             
@@ -37,9 +42,11 @@ def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds, env_paramet
             while not done:
                 state = torch.from_numpy(state)
                 state = state.unsqueeze(0).to(device) #This as well?
-                policy_output, value, hidden_sate = agent_net.forward(state.float(), hidden_state)
+                privileged_info = get_privileged_info(env_parameter_settings).unsqueeze(0).to(device)
+                policy_outputs, values, policy_hidden_states = agent_net(state.float(), privileged_info, policy_hidden_states)
+
                 
-                means, std_devs = policy_output
+                means, std_devs = policy_outputs
                 
                 # Get greedy action
                 action = means
@@ -52,6 +59,61 @@ def evaluate_BW(agent_net, env_name, num_episodes, evaluation_seeds, env_paramet
 
         return eval_rewards
 
+
+
+
+
+
+
+def evaluate_agent_all_params(agent_net, env_name, num_episodes, evaluation_seeds, pole_length_modifier, pole_mass_modifier, force_mag_modifier):
+    with torch.no_grad():
+        eval_rewards = []
+        env = gym.make(env_name)
+        env.unwrapped.length *= pole_length_modifier
+        env.unwrapped.masspole *= pole_mass_modifier
+        env.unwrapped.force_mag *= force_mag_modifier
+            
+        for i_episode in range(num_episodes):
+            policy_hidden_state = None
+            
+            env.seed(int(evaluation_seeds[i_episode]))
+            
+            state = env.reset()
+            total_reward = 0
+            done = False
+
+            while not done:
+                state = torch.from_numpy(state)
+                state = state.unsqueeze(0).to(device) #This as well?
+                privileged_info = get_privileged_info(env).unsqueeze(0).to(device)
+                policy_output, value, policy_hidden_state = agent_net(state.float(), privileged_info, policy_hidden_state)
+                
+                policy_dist = torch.softmax(policy_output, dim = 1)
+                
+                action = torch.argmax(policy_dist)
+                
+
+                state, r, done, _ = env.step(action.item())
+
+                total_reward += r
+            eval_rewards.append(total_reward)
+
+        return eval_rewards
+
+
+
+def get_privileged_info_vectorized(randomized_env_params):
+    params_values = [[val for val in params.values()] for params in randomized_env_params]
+    params_tensor = torch.tensor(params_values, dtype=torch.float32)
+
+    return params_tensor
+
+
+def get_privileged_info(env_parameter_settings):
+    params_values = [val for val in env_parameter_settings.values()]
+    params_tensor = torch.tensor(params_values, dtype=torch.float32)
+
+    return params_tensor
 
 
 def get_random_env_paramvals_BW(randomization_params, batch_size = 1):
@@ -74,11 +136,17 @@ def get_random_env_paramvals_BW(randomization_params, batch_size = 1):
             new_params[j][param_names[i]] = sampled_values[j]
 
     return new_params
-
-
-def train_agent_batched(vec_env, training_eps_per_section, section, num_parallel_envs, batch_size, max_grad_norm, gamma, best_average = -np.inf, best_average_after = np.inf):
+    
+def train_agent_batched(vec_env, agent_net, 
+                evaluation_seeds, seed, i_run, neuron_type, section, training_eps_per_section,
+                num_parallel_envs, batch_size, selection_method = "range", 
+                gamma = 0.99, max_reward = 1600, env_name = "AdjustableBipedalWalker-v3", num_evaluation_episodes = 10, 
+                evaluate_every = 10, randomization_params = None, 
+                value_pred_coef = 0.5,
+                entropy_coef = 0.01, best_average = -np.inf, best_average_after = np.inf):
     
     
+
     training_total_rewards = []
     training_losses = []
     validation_total_rewards = []
@@ -98,7 +166,7 @@ def train_agent_batched(vec_env, training_eps_per_section, section, num_parallel
         running_rewards = [[] for _ in range(num_parallel_envs)]
         running_entropies = [[] for _ in range(num_parallel_envs)]
 
-        hidden_states = None
+        policy_hidden_states = None
 
         if randomization_params:
             randomized_env_params = get_random_env_paramvals_BW(randomization_params, num_parallel_envs)
@@ -106,15 +174,20 @@ def train_agent_batched(vec_env, training_eps_per_section, section, num_parallel
 
         states = vec_env.reset()
         while len(log_probs_batch) < batch_size:
-            states = torch.from_numpy(states).to(device)
-            policy_outputs, values, hidden_states = agent_net(states, hidden_states)
-            mus, sigmas = policy_outputs[0], policy_outputs[1]
+            if neuron_type == "BP":
+                states = torch.from_numpy(states).detach().to(device)
+            else:
+                states = torch.from_numpy(states).unsqueeze(0).detach().to(device)
+            privileged_info = get_privileged_info_vectorized(randomized_env_params)
+            policy_outputs, values, policy_hidden_states = agent_net(states.float(), privileged_info, policy_hidden_states)
+            values = values.squeeze(0)
+            mus, sigmas = policy_outputs[0].squeeze(0), policy_outputs[1].squeeze(0)
             sigmas = torch.diag_embed(sigmas)
             dists = torch.distributions.MultivariateNormal(mus, sigmas)
             actions = dists.sample()
             log_probs = dists.log_prob(actions)
             entropies = dists.entropy()
-            states,rewards, dones, _ = vec_env.step(actions.cpu().numpy())
+            states, rewards, dones, _, = vec_env.step(actions.cpu().numpy())
 
             for i, (state, reward, done, log_prob, value, entropy) in enumerate(zip(states, rewards, dones, log_probs, values, entropies)):
                 running_log_probs[i].append(log_prob.unsqueeze(0))
@@ -123,7 +196,7 @@ def train_agent_batched(vec_env, training_eps_per_section, section, num_parallel
                 running_entropies[i].append(entropy.unsqueeze(0))
 
                 if done:
-                    training_total_rewards.append(np.sum(running_rewards[i]))
+                    training_total_rewards.append(sum(running_rewards[i]))
                     log_probs_batch.append(running_log_probs[i])
                     values_batch.append(running_values[i])
                     rewards_batch.append(running_rewards[i])
@@ -134,12 +207,21 @@ def train_agent_batched(vec_env, training_eps_per_section, section, num_parallel
                     running_rewards[i] = []
                     running_entropies[i] = []
 
-                    hidden_states_new = hidden_states.clone()
-                    hidden_states_new[i] = torch.zeros_like(hidden_states[i]).to(device)
-                    hidden_states = hidden_states_new
+                    if neuron_type == "CfC":
+                        policy_hidden_states_new = policy_hidden_states.clone()
+                        policy_hidden_states_new[i] = torch.zeros_like(policy_hidden_states_new[i])
+                        policy_hidden_states = policy_hidden_states_new
+                    elif neuron_type == "BP":
+                        policy_hidden_states_new = policy_hidden_states[0].clone()
+                        policy_hidden_states_new[i] = torch.zeros_like(policy_hidden_states_new[i])
 
-                    randomized_env_params = get_random_env_paramvals_BW(randomization_params)
-                    vec_env.set_env_params(randomized_env_params[0], i)
+                        policy_hebbian_traces_new = policy_hidden_states[1].clone()
+                        policy_hebbian_traces_new[i] = torch.zeros_like(policy_hebbian_traces_new[i])
+                        policy_hidden_states = (policy_hidden_states_new, policy_hebbian_traces_new)
+
+
+                    randomized_env_params[i] = get_random_env_paramvals_BW(randomization_params)[0]
+                    vec_env.set_env_params(randomized_env_params[i], i)
 
                     if len(log_probs_batch) == batch_size:
                         break
@@ -154,10 +236,10 @@ def train_agent_batched(vec_env, training_eps_per_section, section, num_parallel
                 R = r + gamma * R
                 returns.insert(0, R)
             
-            log_probs_history = torch.cat(log_probs_history).to(device)
-            values_history = torch.cat(values_history).squeeze().to(device)
-            entropies_history = torch.cat(entropies_history).to(device)
-            returns = torch.FloatTensor(returns).to(device)
+            log_probs_history = torch.cat(log_probs_history)
+            values_history = torch.cat(values_history).squeeze()
+            entropies_history = torch.cat(entropies_history)
+            returns = torch.FloatTensor(returns)
 
             advantage_history = returns - values_history
             actor_loss = -(log_probs_history * advantage_history.detach()).mean()
@@ -173,7 +255,6 @@ def train_agent_batched(vec_env, training_eps_per_section, section, num_parallel
         average_total_loss.backward()
         torch.nn.utils.clip_grad_norm_(agent_net.parameters(), max_grad_norm)
         optimizer.step()
-
 
         if ((selection_method == "original") and ((eps_trained-1) % evaluate_every == 0)):
             evaluation_performance = np.mean(evaluate_BW(agent_net, env_name, num_evaluation_episodes, evaluation_seeds))
@@ -226,35 +307,44 @@ def train_agent_batched(vec_env, training_eps_per_section, section, num_parallel
             np.random.set_state(current_np_seed)
             random.setstate(current_r_seed)
 
-    print(f'Current best {selection_method}: ', best_average, ' reached at episode ', best_average_after, '.')
-
     return best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+
+
+
+
+
 
 
 
 parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole environment')
 parser.add_argument('--num_neurons', type=int, default=96, help='Number of neurons in the hidden layer')
-parser.add_argument('--network_type', type=str, default='CfC', help='Type of neuron, either "LTC" or "CfC"')
-parser.add_argument('--learning_rate', type=float, default=0.00005, help='Learning rate for the agent')
+parser.add_argument('--learning_rate', type=float, default=0.0001, help='Learning rate for the agent')
 parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
+parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [11, 192, 96], help='Dimensions of the neuromodulation network, without output layer')
 parser.add_argument('--selection_method', type=str, default = "range", help='Method to select the best model')
-parser.add_argument('--seed', type=int, default=5, help='Seed for the random number generator')
-parser.add_argument('--result_id', type=int, default=-1, help='ID for the result directory')
-parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
-parser.add_argument('--entropy_coef', type=float, default=0.001, help='Entropy coefficient for the agent')
-parser.add_argument('--value_pred_coef', type=float, default=0.5, help='Value prediction coefficient for the agent')
-parser.add_argument('--num_training_episodes', type=int, default=1000000, help='Number of training episodes to run')
+parser.add_argument('--num_models', type=int, default=1, help='Number of models to train')
+parser.add_argument('--num_training_episodes', type=int, default=1000000, help='Number of episodes to train the agent')
 parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
-parser.add_argument('--max_reward', type=int, default=200, help='Maximum number of steps to run in the environment')
+parser.add_argument('--encoder_output_activation', type=str, default="relu", help="Activation function of the encoder's output layer")
+parser.add_argument('--encoder_hidden_activation', type=str, default="relu", help="Activation function of the encoder's hidden layers")
+parser.add_argument('--result_id', type=int, default=-1, help='ID of the result folder')
+parser.add_argument('--mode', type=str, default="neuromodulated", help="The mode of the CfC network.")
+parser.add_argument('--schedule_start', type=float, default=0.00001, help="The starting value of the schedule factor")
+parser.add_argument('--schedule_end', type=float, default=1.0, help="The end value of the schedule factor")
+parser.add_argument('--schedule_type', type=str, default='None', help="The type of schedule to use for the schedule factor")
+parser.add_argument('--neuron_type', type=str, default='BP', help="The type of neuron to use")
+parser.add_argument('--value_pred_coef', type=float, default=0.5, help="The coefficient for the value prediction loss")
+parser.add_argument('--entropy_coef', type=float, default=0.01, help="The coefficient for the entropy loss")
 parser.add_argument('--num_evaluation_episodes', type=int, default=30, help='Number of evaluation episodes to run')
 parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
+parser.add_argument('--max_reward', type=int, default=1600, help='Maximum number of steps to run in the environment')
 parser.add_argument('--env_name', type=str, default='AdjustableBipedalWalker-v3', help='Name of the environment to use')
-parser.add_argument('--batch_size', type=int, default=5, help='Batch size to use for training')
-parser.add_argument('--num_parallel_envs', type=int, default=5, help='Number of parallel environments to use')
 parser.add_argument('--input_dims', type=int, default=24, help='Number of input dimensions to the network')
 parser.add_argument('--output_dims', type=int, default=4, help='Number of output dimensions to the network')
 parser.add_argument('--continuous_actions', type=bool, default=True, help='Whether the environment has continuous actions')
-
+parser.add_argument('--batch_size', type=int, default=5, help='Batch size to use for training')
+parser.add_argument('--num_parallel_envs', type=int, default=5, help='Number of parallel environments to use')
 
 
 gym.envs.registration.register(
@@ -266,53 +356,75 @@ gym.envs.registration.register(
 
 
 args = parser.parse_args()
-
-result_id = args.result_id
 num_neurons = args.num_neurons
-network_type = args.network_type
 learning_rate = args.learning_rate
 training_method = args.training_method
 selection_method = args.selection_method
+neuromod_network_dims = args.neuromod_network_dims
+neuromod_network_dims.append(num_neurons)
 num_models = args.num_models
-entropy_coef = args.entropy_coef
-value_pred_coef = args.value_pred_coef
-training_eps_per_section = args.training_episodes_per_section
 num_training_episodes = args.num_training_episodes
-max_reward = args.max_reward
+result_id = args.result_id
+mode = args.mode
+schedule_start = args.schedule_start
+schedule_end = args.schedule_end
+schedule_type = args.schedule_type
+neuron_type = args.neuron_type
+value_pred_coef = args.value_pred_coef
+entropy_coef = args.entropy_coef
 num_evaluation_episodes = args.num_evaluation_episodes
 evaluate_every = args.evaluate_every
+training_eps_per_section = args.training_episodes_per_section
+max_reward = args.max_reward
 env_name = args.env_name
-batch_size = args.batch_size
-num_parallel_envs = args.num_parallel_envs
 input_dims = args.input_dims
 output_dims = args.output_dims
 continuous_actions = args.continuous_actions
+batch_size = args.batch_size
+num_parallel_envs = args.num_parallel_envs
+if args.encoder_output_activation == "identity":
+    encoder_output_activation = torch.nn.Identity()
+elif args.encoder_output_activation == "relu":
+    encoder_output_activation = torch.nn.ReLU()
+elif args.encoder_output_activation == "tanh":
+    encoder_output_activation = torch.nn.Tanh()
+else:
+    raise NotImplementedError
+
+if args.encoder_hidden_activation == "relu":
+    encoder_hidden_activation = torch.nn.ReLU()
+elif args.encoder_hidden_activation == "tanh":
+    encoder_hidden_activation = torch.nn.Tanh()
+else:
+    raise NotImplementedError
 
 if num_training_episodes % training_eps_per_section != 0:
     raise ValueError("Number of training episodes must be divisible by training episodes per section")
 
 
-# print(f"Num neurons: {num_neurons}, sparsity level: {sparsity_level}, learning rate: {learning_rate}")
-print(f"Num neurons: {num_neurons}, learning rate: {learning_rate}, neuron type: {network_type}")
 device = "cpu"
-
 
 gamma = 0.99
 max_grad_norm = 10
-mode = "pure"
-tau_sys_extraction = True
-sparsity_level = 0.5
-# wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
-wiring = None
-factor = 0.2
 
 if training_method == "quarter_range":
     randomization_params = [(0.95, 1.025), (0.99375, 1.0125), (0.95, 1.025), (0.99375, 1.0125), (0.875, 2.0), (0.95, 1.0125), (0.975, 1.25), (0.95, 1.025), (0.95, 1.025), (0.99375, 1.05), (0.925, 1.00625)]
 else:
     randomization_params = None
 
+
+tau_sys_extraction = True
+sparsity_level = 0.5
+# wiring = AutoNCP(num_neurons, 3, sparsity_level=sparsity_level, seed=seed)
+wiring = None
+
+if neuron_type == "BP":
+    top_dir = "BP_A2C"
+elif neuron_type == "LTC" or neuron_type == "CfC":
+    top_dir = "LTC_A2C"
+
 if result_id == -1:
-    dirs = os.listdir('Master_Thesis_Code/LTC_A2C/bipedal_walker/CfC')
+    dirs = os.listdir(f'Master_Thesis_Code/{top_dir}/bipedal_walker/')
     if not any('a2c_result' in d for d in dirs):
         result_id = 1
     else:
@@ -321,11 +433,15 @@ if result_id == -1:
 
 
 d = date.today()
-result_dir = f'Master_Thesis_Code/LTC_A2C/bipedal_walker/CfC/{network_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_selectiomethod_{selection_method}_trainingmethod_{training_method}_numneurons_{num_neurons}'
-if network_type == "CfC":
-    result_dir += "_mode_" + mode
+result_dir = f'Master_Thesis_Code/{top_dir}/bipedal_walker/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{args.encoder_output_activation}'
+# if neuron_type == "CfC":
+    # result_dir += "_mode_" + mode
+if mode == "neuromodulated" or mode == "only_neuromodulated":
+    result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
 if wiring:
     result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
+# if randomization_params:
+#     result_dir += "_randomization_params_" + str(randomization_params)
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
 
@@ -350,34 +466,58 @@ for i_run in range(num_models):
 
     torch.manual_seed(seed)
     random.seed(seed)
+    # np.random.seed(seed)
     
-    if network_type == "LTC":
-        agent_net = LTC_Network(input_dims, num_neurons, output_dims, seed, wiring = wiring).to(device)
-    elif network_type == "CfC":
-        agent_net = CfC_Network(input_dims, num_neurons, output_dims, seed, mode = mode, wiring = wiring, continuous_actions=continuous_actions).to(device)
+    if neuron_type == "LTC":
+        raise NotImplementedError
+        agent_net = LTC_Network(4, num_neurons, 2, seed, wiring = wiring).to(device)
+    elif neuron_type == "CfC":
+        layer_list = []
+        for dim in range(len(neuromod_network_dims) - 1):
+            layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
+            if dim < len(neuromod_network_dims)-2:
+                layer_list.append(encoder_hidden_activation)
+            else:
+                layer_list.append(encoder_output_activation)
+        encoder = torch.nn.Sequential(*layer_list)
+        
+        policy_net = CfC_Network(input_dims, num_neurons, output_dims, seed, mode = mode, wiring = wiring, continuous_actions=continuous_actions).to(device)
+
+        agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
+    elif neuron_type == "BP":
+        layer_list = []
+        for dim in range(len(neuromod_network_dims) - 1):
+            layer_list.append(torch.nn.Linear(neuromod_network_dims[dim], neuromod_network_dims[dim + 1]))
+            if dim < len(neuromod_network_dims)-2:
+                layer_list.append(encoder_hidden_activation)
+            else:
+                layer_list.append(encoder_output_activation)
+        encoder = torch.nn.Sequential(*layer_list)
+
+        policy_net = BP_RNetwork(input_dims, num_neurons, output_dims, seed, external_neuromodulation = True, continuous_actions=continuous_actions).to(device)
+
+        agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
+
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)
 
-
     for section in range(0, int(num_training_episodes/training_eps_per_section)):
         print(f"Section {section+1} out of {int(num_training_episodes/training_eps_per_section)} sections")
-        
+
         # Make sure that the training takes into account the actual best average
         # when deciding to save the model, and not just the best performance in
         # the current section.
         if section == 0:
-            best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = train_agent_batched(vec_env, training_eps_per_section, section, num_parallel_envs, batch_size, max_grad_norm, gamma)
-        else:
-            best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = train_agent_batched(vec_env, training_eps_per_section, section, num_parallel_envs, batch_size, max_grad_norm, gamma)
-
-        if section == 0:
+            best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = train_agent_batched(vec_env, agent_net, evaluation_seeds, seed, i_run, neuron_type, section, training_eps_per_section, num_parallel_envs=num_parallel_envs, batch_size=batch_size, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, value_pred_coef = value_pred_coef, entropy_coef = entropy_coef, num_evaluation_episodes=num_evaluation_episodes, evaluate_every=evaluate_every)
             best_average_after_all.append(best_average_after)
             best_average_all.append(best_average)
             all_training_losses.append(training_losses)
             all_training_total_rewards.append(training_total_rewards)
             all_validation_losses.append(validation_losses)
             all_validation_total_rewards.append(validation_total_rewards)
+        
         else:
+            best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses = train_agent_batched(vec_env, agent_net, evaluation_seeds, seed, i_run, neuron_type, section, training_eps_per_section, num_parallel_envs=num_parallel_envs, batch_size=batch_size, selection_method = selection_method, gamma = gamma, randomization_params=randomization_params, value_pred_coef = value_pred_coef, entropy_coef = entropy_coef, num_evaluation_episodes=num_evaluation_episodes, evaluate_every=evaluate_every, best_average=best_average_all[i_run], best_average_after=best_average_after_all[i_run])
             if best_average > best_average_all[i_run]:
                 best_average_after_all[i_run] = best_average_after
                 best_average_all[i_run] = best_average
@@ -390,7 +530,6 @@ for i_run in range(num_models):
         np.save(f"{result_dir}/all_training_total_rewards_{i_run}.npy", all_training_total_rewards[i_run])
         np.save(f"{result_dir}/all_validation_losses_{i_run}.npy", all_validation_losses[i_run])
         np.save(f"{result_dir}/all_validation_total_rewards_{i_run}.npy", all_validation_total_rewards[i_run])
-
 
         with open(f"{result_dir}/best_average_after.txt", 'w') as f:
             for i, best_episode in enumerate(best_average_after_all):
@@ -409,6 +548,7 @@ for i_run in range(num_models):
             break
 
     print(f"Best average after {best_average_after_all[i_run]} episodes: {best_average_all[i_run]}")
+
 
 
 

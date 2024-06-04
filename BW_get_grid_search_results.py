@@ -1,17 +1,18 @@
 import os
 import numpy as np
 
-types = ["CfC"]
+types = ["Standard_RNN", "BP_RNN"]
 nums_neurons = [96]
-learning_rates = [0.0001, 0.00001]
+learning_rates = [0.0001]
 entropy_coefs = [0.001, 1.0]
 value_coefs = [0.001, 1.0]
+result_id = 100000
 
 
 
 
 
-directory = "bipedal_walker/CfC"
+directory = "bipedal_walker/BP_and_StandardRNN"
 training_method = "quarter_range"
 selection_method = "range"
 num_models = 1
@@ -20,6 +21,7 @@ results_id = 200000
 date = 2024530
 missing_ids = []
 fine_ids = []
+num_train_eps = 1000000
 for neuron_type in types:
     for num_neurons in nums_neurons:
         for learning_rate in learning_rates:

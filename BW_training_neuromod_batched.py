@@ -333,7 +333,7 @@ parser.add_argument('--mode', type=str, default="neuromodulated", help="The mode
 parser.add_argument('--schedule_start', type=float, default=0.00001, help="The starting value of the schedule factor")
 parser.add_argument('--schedule_end', type=float, default=1.0, help="The end value of the schedule factor")
 parser.add_argument('--schedule_type', type=str, default='None', help="The type of schedule to use for the schedule factor")
-parser.add_argument('--neuron_type', type=str, default='BP', help="The type of neuron to use")
+parser.add_argument('--neuron_type', type=str, default='CfC', help="The type of neuron to use")
 parser.add_argument('--value_pred_coef', type=float, default=0.5, help="The coefficient for the value prediction loss")
 parser.add_argument('--entropy_coef', type=float, default=0.01, help="The coefficient for the entropy loss")
 parser.add_argument('--num_evaluation_episodes', type=int, default=30, help='Number of evaluation episodes to run')

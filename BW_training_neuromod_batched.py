@@ -307,6 +307,8 @@ def train_agent_batched(vec_env, agent_net,
             np.random.set_state(current_np_seed)
             random.setstate(current_r_seed)
 
+    print(f'Current best {selection_method}: ', best_average, ' reached at episode ', best_average_after, '.')
+
     return best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
 
@@ -319,9 +321,9 @@ def train_agent_batched(vec_env, agent_net,
 
 parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole environment')
 parser.add_argument('--num_neurons', type=int, default=96, help='Number of neurons in the hidden layer')
-parser.add_argument('--learning_rate', type=float, default=0.0001, help='Learning rate for the agent')
+parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate for the agent')
 parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
-parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [11, 192, 96], help='Dimensions of the neuromodulation network, without output layer')
+parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [11, 256, 128], help='Dimensions of the neuromodulation network, without output layer')
 parser.add_argument('--selection_method', type=str, default = "range", help='Method to select the best model')
 parser.add_argument('--num_models', type=int, default=1, help='Number of models to train')
 parser.add_argument('--num_training_episodes', type=int, default=1000000, help='Number of episodes to train the agent')
@@ -333,9 +335,9 @@ parser.add_argument('--mode', type=str, default="neuromodulated", help="The mode
 parser.add_argument('--schedule_start', type=float, default=0.00001, help="The starting value of the schedule factor")
 parser.add_argument('--schedule_end', type=float, default=1.0, help="The end value of the schedule factor")
 parser.add_argument('--schedule_type', type=str, default='None', help="The type of schedule to use for the schedule factor")
-parser.add_argument('--neuron_type', type=str, default='CfC', help="The type of neuron to use")
-parser.add_argument('--value_pred_coef', type=float, default=0.5, help="The coefficient for the value prediction loss")
-parser.add_argument('--entropy_coef', type=float, default=0.01, help="The coefficient for the entropy loss")
+parser.add_argument('--neuron_type', type=str, default='BP', help="The type of neuron to use")
+parser.add_argument('--value_pred_coef', type=float, default=0.001, help="The coefficient for the value prediction loss")
+parser.add_argument('--entropy_coef', type=float, default=0.001, help="The coefficient for the entropy loss")
 parser.add_argument('--num_evaluation_episodes', type=int, default=30, help='Number of evaluation episodes to run')
 parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
 parser.add_argument('--max_reward', type=int, default=1600, help='Maximum number of steps to run in the environment')
@@ -433,15 +435,16 @@ if result_id == -1:
 
 
 d = date.today()
-result_dir = f'Master_Thesis_Code/{top_dir}/bipedal_walker/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{args.encoder_output_activation}'
+# result_dir = f'Master_Thesis_Code/{top_dir}/bipedal_walker/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{args.encoder_output_activation}'
 # if neuron_type == "CfC":
     # result_dir += "_mode_" + mode
-if mode == "neuromodulated" or mode == "only_neuromodulated":
-    result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
-if wiring:
-    result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
-# if randomization_params:
-#     result_dir += "_randomization_params_" + str(randomization_params)
+# if mode == "neuromodulated" or mode == "only_neuromodulated":
+#     result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
+# if wiring:
+#     result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
+# # if randomization_params:
+# #     result_dir += "_randomization_params_" + str(randomization_params)
+result_dir = f'Master_Thesis_Code/{top_dir}/bipedal_walker/debugging'
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
 
@@ -497,6 +500,8 @@ for i_run in range(num_models):
         policy_net = BP_RNetwork(input_dims, num_neurons, output_dims, seed, external_neuromodulation = True, continuous_actions=continuous_actions).to(device)
 
         agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
+        weights = torch.load('Master_Thesis_Code/BP_A2C/bipedal_walker/BP_a2c_result_600000_202464_learningrate_0.001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96/checkpoint_BP_A2C_0.pt')
+        agent_net.load_state_dict(weights)
 
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)

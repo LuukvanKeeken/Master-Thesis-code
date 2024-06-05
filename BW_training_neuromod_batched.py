@@ -435,16 +435,15 @@ if result_id == -1:
 
 
 d = date.today()
-# result_dir = f'Master_Thesis_Code/{top_dir}/bipedal_walker/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{args.encoder_output_activation}'
-# if neuron_type == "CfC":
-    # result_dir += "_mode_" + mode
-# if mode == "neuromodulated" or mode == "only_neuromodulated":
-#     result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
-# if wiring:
-#     result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
-# # if randomization_params:
-# #     result_dir += "_randomization_params_" + str(randomization_params)
-result_dir = f'Master_Thesis_Code/{top_dir}/bipedal_walker/debugging'
+result_dir = f'Master_Thesis_Code/{top_dir}/bipedal_walker/{neuron_type}_a2c_result_' + str(result_id) + f'_{str(d.year)+str(d.month)+str(d.day)}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{args.encoder_output_activation}'
+if neuron_type == "CfC":
+    result_dir += "_mode_" + mode
+if mode == "neuromodulated" or mode == "only_neuromodulated":
+    result_dir += "_neuromod_network_dims_" + "_".join(map(str, neuromod_network_dims))
+if wiring:
+    result_dir += "_wiring_" + "AutoNCP" + f"_sparsity_{sparsity_level}"
+# if randomization_params:
+#     result_dir += "_randomization_params_" + str(randomization_params)
 os.mkdir(result_dir)
 print('Created Directory {} to store the results in'.format(result_dir))
 

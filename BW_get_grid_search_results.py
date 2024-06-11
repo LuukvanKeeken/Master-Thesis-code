@@ -1,24 +1,24 @@
 import os
 import numpy as np
 
-types = ["Standard_RNN", "BP_RNN"]
+types = ["CfC"]
 nums_neurons = [96]
-learning_rates = [0.0001]
+learning_rates = [0.01, 0.001]
 entropy_coefs = [0.001, 1.0]
 value_coefs = [0.001, 1.0]
-result_id = 100000
+result_id = 300000
 
 
 
 
 
-directory = "bipedal_walker/BP_and_StandardRNN"
+directory = "bipedal_walker/CfC"
 training_method = "quarter_range"
 selection_method = "range"
 num_models = 1
 all_results = []
-results_id = 100000
-date = 2024530
+results_id = 300000
+date = 202464
 missing_ids = []
 fine_ids = []
 num_train_eps = 1000000

@@ -27,7 +27,13 @@ for neuron_type in types:
         for learning_rate in learning_rates:
             for entropy_coef in entropy_coefs:
                 for value_coef in value_coefs:
-
+                    if results_id == 300003:
+                        date = 202465
+                    elif results_id == 300005:
+                        date = 202466
+                    else:
+                        date = 202464
+                        
                     if neuron_type == "CfC" or neuron_type == "LTC":
                         top_dir = "LTC_A2C"
                     else:

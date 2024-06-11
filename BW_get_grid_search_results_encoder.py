@@ -3,26 +3,26 @@ import numpy as np
 
 
 nums_neurons = [96]
-learning_rates = [0.00001, 0.000001]
+learning_rates = [0.001, 0.0001]
 neuromod_nets = [[11, 256, 128]]
 entropy_coefs = [0.001, 0.01, 1.0]
 value_coefs = [0.001, 0.01, 1.0]
-activation_functions = ["relu"]
+activation_functions = ["tanh"]
 
 
 
 
 # types = ["BP", "StandardRNN", "StandardMLP"]
 directory = "bipedal_walker"
-neuron_type = "CfC"
+neuron_type = "BP"
 if neuron_type == "CfC":
     top_dir = "LTC_A2C"
 else:
     top_dir = "BP_A2C"
 num_models = 1
 all_results = []
-results_id = 800000
-date = 202465
+results_id = 600000
+date = 202464
 fine_ids = []
 not_fine_ids = []
 

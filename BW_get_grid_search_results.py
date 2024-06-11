@@ -1,15 +1,12 @@
 import os
 import numpy as np
 
-types = ["Standard_RNN", "BP_RNN"]
+types = ["CfC"]
 nums_neurons = [96]
-learning_rates = [0.0001]
+learning_rates = [0.0001, 0.00001]
 entropy_coefs = [0.001, 0.01, 1.0]
 value_coefs = [0.001, 0.01, 1.0]
-results_id = 400000
-
-
-
+results_id = 900000
 
 
 directory = "bipedal_walker/BP_and_StandardRNN"

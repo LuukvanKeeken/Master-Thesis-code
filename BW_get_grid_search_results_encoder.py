@@ -3,11 +3,12 @@ import numpy as np
 
 
 nums_neurons = [96]
-learning_rates = [0.001, 0.0001]
+learning_rates = [0.00001, 0.000001]
 neuromod_nets = [[11, 256, 128]]
 entropy_coefs = [0.001, 0.01, 1.0]
 value_coefs = [0.001, 0.01, 1.0]
 activation_functions = ["relu"]
+
 
 
 
@@ -20,8 +21,8 @@ else:
     top_dir = "BP_A2C"
 num_models = 1
 all_results = []
-results_id = 500000
-date = 202464
+results_id = 800000
+date = 202465
 fine_ids = []
 not_fine_ids = []
 

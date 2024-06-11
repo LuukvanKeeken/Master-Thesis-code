@@ -59,7 +59,8 @@ for num_neurons in nums_neurons:
                                 num_eps = float(num_eps_line[3].strip(','))
                                 last_line = file.readline()
                                 last_line = last_line.split(" ")
-                                all_results.append((results_id, neuron_type, num_neurons, learning_rate, entropy_coef, value_coef, float(last_line[3].strip(',')), float(last_line[6]), num_eps, total_eps))
+                                all_results.append((results_id, num_neurons, learning_rate, neuromodnet, func, entropy_coef, value_coef, float(last_line[3].strip(',')), float(last_line[6]), num_eps, total_eps))
+                                # all_results.append((results_id, neuron_type, num_neurons, learning_rate, float(last_line[3].strip(',')), float(last_line[6])))
                                 fine_ids.append(results_id)
                         except:
                             print(f"Could not find {results_dir}")

@@ -18,7 +18,7 @@ if neuron_type == "CfC":
     top_dir = "LTC_A2C"
 else:
     top_dir = "BP_A2C"
-num_models = 10
+num_models = 1
 all_results = []
 results_id = 500000
 date = 202464

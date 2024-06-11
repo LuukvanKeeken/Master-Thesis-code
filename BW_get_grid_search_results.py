@@ -1,23 +1,22 @@
 import os
 import numpy as np
 
-types = ["CfC"]
+types = ["Standard_RNN", "BP_RNN"]
 nums_neurons = [96]
-learning_rates = [0.01, 0.001]
-entropy_coefs = [0.001, 1.0]
-value_coefs = [0.001, 1.0]
-result_id = 300000
+learning_rates = [0.0001]
+entropy_coefs = [0.001, 0.01, 1.0]
+value_coefs = [0.001, 0.01, 1.0]
+results_id = 400000
 
 
 
 
 
-directory = "bipedal_walker/CfC"
+directory = "bipedal_walker/BP_and_StandardRNN"
 training_method = "quarter_range"
 selection_method = "range"
 num_models = 1
 all_results = []
-results_id = 300000
 date = 202464
 missing_ids = []
 fine_ids = []
@@ -27,13 +26,8 @@ for neuron_type in types:
         for learning_rate in learning_rates:
             for entropy_coef in entropy_coefs:
                 for value_coef in value_coefs:
-                    if results_id == 300003:
-                        date = 202465
-                    elif results_id == 300005:
-                        date = 202466
-                    else:
-                        date = 202464
-                        
+                    
+
                     if neuron_type == "CfC" or neuron_type == "LTC":
                         top_dir = "LTC_A2C"
                     else:

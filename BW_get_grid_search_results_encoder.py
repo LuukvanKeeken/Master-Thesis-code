@@ -36,7 +36,7 @@ for num_neurons in nums_neurons:
                         
 
                         if neuron_type == "CfC":
-                            results_dir = f"CfC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{func}_neuromod_network_dims_{'_'.join(map(str, neuromodnet))}_{num_neurons}"
+                            results_dir = f"CfC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{func}_mode_neuromodulated_neuromod_network_dims_{'_'.join(map(str, neuromodnet))}_{num_neurons}"
                         elif neuron_type == "LTC":
                             results_dir = f'LTC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_selectiomethod_true_range_eval_all_params_trainingmethod_original_numneurons_{num_neurons}_tausysextraction_True'
                         elif neuron_type == "BP":

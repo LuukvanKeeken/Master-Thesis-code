@@ -9,7 +9,7 @@ value_coefs = [0.001, 0.01, 1.0]
 results_id = 900000
 
 
-directory = "bipedal_walker/BP_and_StandardRNN"
+directory = "bipedal_walker/CfC"
 training_method = "quarter_range"
 selection_method = "range"
 num_models = 1

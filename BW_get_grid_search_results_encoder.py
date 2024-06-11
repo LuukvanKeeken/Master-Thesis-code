@@ -50,13 +50,16 @@ for num_neurons in nums_neurons:
                         try:
                             with open(f"Master_Thesis_Code/{top_dir}/{directory}/{results_dir}/best_average_after.txt", "r") as file:
                                 for i in range(num_models):
-                                    file.readline()
+                                    info = file.readline()
+                                    info = info.split(":")
+                                    total_eps = int(info[2].split(")")[0].strip())
 
-                                file.readline()
+                                num_eps_line = file.readline()
+                                num_eps_line = num_eps_line.split(" ")
+                                num_eps = float(num_eps_line[3].strip(','))
                                 last_line = file.readline()
                                 last_line = last_line.split(" ")
-                                all_results.append((results_id, num_neurons, learning_rate, neuromodnet, func, entropy_coef, value_coef, float(last_line[3].strip(',')), float(last_line[6])))
-                                # all_results.append((results_id, neuron_type, num_neurons, learning_rate, float(last_line[3].strip(',')), float(last_line[6])))
+                                all_results.append((results_id, neuron_type, num_neurons, learning_rate, entropy_coef, value_coef, float(last_line[3].strip(',')), float(last_line[6]), num_eps, total_eps))
                                 fine_ids.append(results_id)
                         except:
                             print(f"Could not find {results_dir}")

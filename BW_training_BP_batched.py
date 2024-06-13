@@ -16,10 +16,10 @@ from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVector
 parser = argparse.ArgumentParser(description='Train an A2C agent on the BipedalWalker environment')
 parser.add_argument('--num_neurons', type=int, default=64, help='Number of neurons in the hidden layer')
 parser.add_argument('--network_type', type=str, default='BP_RNN', help='Type of network to use')
-parser.add_argument('--learning_rate', type=float, default=0.0001, help='Learning rate for the agent')
+parser.add_argument('--learning_rate', type=float, default=0.00001, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=1, help='Number of models to train')
-parser.add_argument('--selection_method', type=str, default='range', help='Method to use for selecting the best model')
-parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
+parser.add_argument('--selection_method', type=str, default='exp_BW_validation', help='Method to use for selecting the best model')
+parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
 parser.add_argument('--env_name', type=str, default='AdjustableBipedalWalker-v3', help='Name of the environment to use')
 parser.add_argument('--input_dims', type=int, default=24, help='Number of input dimensions to the network')
@@ -28,7 +28,7 @@ parser.add_argument('--continuous_actions', type=bool, default=True, help='Wheth
 parser.add_argument('--entropy_coef', type=float, default=0.0001, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.0001, help='Value prediction coefficient for the agent')
 parser.add_argument('--num_training_episodes', type=int, default=1000000, help='Number of training episodes to run')
-parser.add_argument('--num_evaluation_episodes', type=int, default=30, help='Number of evaluation episodes to run')
+parser.add_argument('--num_evaluation_episodes', type=int, default=50, help='Number of evaluation episodes to run')
 parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
 parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
 parser.add_argument('--batch_size', type=int, default=5, help='Batch size to use for training')
@@ -194,6 +194,9 @@ for i_run in range(num_models):
             f.write(f"Mean average performance: {np.mean(best_average_all)}, std dev: {np.std(best_average_all)}")
 
         if best_average_all[i_run] == max_reward:
+            break
+
+        if best_average_all[i_run] >= 300:
             break
 
     print(f"Best average after {best_average_after_all[i_run]} episodes: {best_average_all[i_run]}")

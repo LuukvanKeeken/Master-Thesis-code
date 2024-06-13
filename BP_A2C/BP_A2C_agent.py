@@ -1214,8 +1214,9 @@ class A2C_Agent:
             latest_usage = memory_usage_after_initialization
             print(f"Memory usage after initialization: {memory_usage_after_initialization} MiB (Increase: {increase} MiB)")
 
-            randomized_env_params = get_random_env_paramvals_BW(randomization_params, num_parallel_envs)
-            vec_env.set_env_params(randomized_env_params)
+            if randomization_params:
+                randomized_env_params = get_random_env_paramvals_BW(randomization_params, num_parallel_envs)
+                vec_env.set_env_params(randomized_env_params)
 
             states = vec_env.reset()
             while len(log_probs_batch) < self.batch_size:
@@ -1276,8 +1277,9 @@ class A2C_Agent:
                         latest_usage = memory_usage_after_reset
                         print(f"Memory usage after reset: {memory_usage_after_reset} MiB (Increase: {increase} MiB)")
 
-                        randomized_env_params = get_random_env_paramvals_BW(randomization_params)
-                        vec_env.set_env_params(randomized_env_params[0], i)
+                        if randomization_params:
+                            randomized_env_params = get_random_env_paramvals_BW(randomization_params)
+                            vec_env.set_env_params(randomized_env_params[0], i)
 
                         if len(log_probs_batch) == self.batch_size:
                             break
@@ -1347,7 +1349,7 @@ class A2C_Agent:
                     best_average_after, '. Model saved in folder best.')
                     return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
             elif ((self.selection_method == "range") and ((eps_trained - 1) % self.evaluate_every == 0)):
-                validation_ranges = [[(0.58, 0.79), (1.22, 1.44)], [(0.97, 0.99), (1.03, 1.06)], [(0.58, 0.79), (1.22, 1.44)], [(0.97, 0.99), (1.03, 1.06)], [(0.61, 0.81), (1.11, 1.23)], [(0.75, 0.88), (1.13, 1.25)], [(0.76, 0.88), (1.06, 1.11)], [(0.55, 0.78), (1.44, 1.88)], [(0.55, 0.78), (1.44, 1.88)], [(0.92, 0.96), (1.09, 1.19)], [(0.86, 0.93), (1.03, 1.05)]]
+                validation_ranges = [[(0.9, 0.95), (1.025, 1.05)], [(0.9875, 0.99375), (1.0125, 1.025)], [(0.9, 0.95), (1.025, 1.05)], [(0.9875, 0.99375), (1.0125, 1.025)], [(0.75, 0.875), (2.0, 3.0)], [(0.9, 0.95), (1.0125, 1.025)], [(0.95, 0.975), (1.25, 1.5)], [(0.9, 0.95), (1.025, 1.05)], [(0.9, 0.95), (1.025, 1.05)], [(0.9875, 0.99375), (1.05, 1.1)], [(0.85, 0.925), (1.00625, 1.0125)]]
                 default_values = [8.0, 34.0, 8.0, 34.0, 2.5, 4.0, 6.0, 1.0, 1.0, 5.0, 160.0]
                 env_params = ['left_leg_w_unscaled', 'left_leg_h_unscaled', 'right_leg_w_unscaled', 'right_leg_h_unscaled', 'terrain_friction', 'speed_hip', 'speed_knee', 'left_leg_density', 'right_leg_density', 'hull_density', 'lidar_range_unscaled']
                 

@@ -14,25 +14,26 @@ from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVector
 
 
 parser = argparse.ArgumentParser(description='Train an A2C agent on the BipedalWalker environment')
-parser.add_argument('--num_neurons', type=int, default=64, help='Number of neurons in the hidden layer')
-parser.add_argument('--network_type', type=str, default='BP_RNN', help='Type of network to use')
-parser.add_argument('--learning_rate', type=float, default=0.00001, help='Learning rate for the agent')
+parser.add_argument('--num_neurons', type=int, default=96, help='Number of neurons in the hidden layer')
+parser.add_argument('--network_type', type=str, default='Standard_RNN', help='Type of network to use')
+parser.add_argument('--learning_rate', type=float, default=0.0001, help='Learning rate for the agent')
 parser.add_argument('--num_models', type=int, default=1, help='Number of models to train')
-parser.add_argument('--selection_method', type=str, default='exp_BW_validation', help='Method to use for selecting the best model')
+parser.add_argument('--selection_method', type=str, default='original', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
 parser.add_argument('--env_name', type=str, default='AdjustableBipedalWalker-v3', help='Name of the environment to use')
 parser.add_argument('--input_dims', type=int, default=24, help='Number of input dimensions to the network')
 parser.add_argument('--output_dims', type=int, default=4, help='Number of output dimensions to the network')
 parser.add_argument('--continuous_actions', type=bool, default=True, help='Whether the environment has continuous actions')
-parser.add_argument('--entropy_coef', type=float, default=0.0001, help='Entropy coefficient for the agent')
-parser.add_argument('--value_pred_coef', type=float, default=0.0001, help='Value prediction coefficient for the agent')
+parser.add_argument('--entropy_coef', type=float, default=0.01, help='Entropy coefficient for the agent')
+parser.add_argument('--value_pred_coef', type=float, default=0.01, help='Value prediction coefficient for the agent')
 parser.add_argument('--num_training_episodes', type=int, default=1000000, help='Number of training episodes to run')
 parser.add_argument('--num_evaluation_episodes', type=int, default=50, help='Number of evaluation episodes to run')
 parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
 parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
 parser.add_argument('--batch_size', type=int, default=5, help='Batch size to use for training')
 parser.add_argument('--num_parallel_envs', type=int, default=5, help='Number of parallel environments to use')
+parser.add_argument('--magic_number', type=int, default=0, help='Magic number to add to the seed')
 
 gym.envs.registration.register(
     id='AdjustableBipedalWalker-v3',
@@ -62,6 +63,7 @@ training_eps_per_section = args.training_episodes_per_section
 num_evaluation_episodes = args.num_evaluation_episodes
 batch_size = args.batch_size
 num_parallel_envs = args.num_parallel_envs
+magic_number = args.magic_number
 
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 device = torch.device("cpu")
@@ -121,7 +123,7 @@ start_time = time.time()
 vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(env_name) for _ in range(num_parallel_envs)])
 for i_run in range(num_models):
     print("Run # {}".format(i_run))
-    seed = int(training_seeds[i_run])
+    seed = int(training_seeds[i_run]+magic_number)
     
     torch.manual_seed(seed)
     random.seed(seed)

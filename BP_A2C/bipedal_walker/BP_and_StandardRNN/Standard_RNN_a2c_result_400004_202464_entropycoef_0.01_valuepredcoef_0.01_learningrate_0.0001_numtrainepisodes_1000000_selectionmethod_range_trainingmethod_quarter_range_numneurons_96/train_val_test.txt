@@ -1,0 +1,6 @@
+All training rewards: [262.42245470576125]
+Mean avg training reward: 262.42245470576125 +/- 0.0
+All validation rewards: [218.6169250673725]
+Mean avg validation reward: 218.6169250673725 +/- 0.0
+All testing rewards: [169.46755495155838]
+Mean avg testing reward: 169.46755495155838 +/- 0.0

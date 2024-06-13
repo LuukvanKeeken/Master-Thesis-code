@@ -1,0 +1,7 @@
+0: 200.0 after 1870 (total trained: 1870)
+1: 200.0 after 1900 (total trained: 1900)
+2: 200.0 after 1500 (total trained: 1500)
+3: 200.0 after 1020 (total trained: 1020)
+4: 200.0 after 1740 (total trained: 1740)
+Average training episodes: 1606.0, std dev: 325.1830253872425
+Mean average performance: 200.0, std dev: 0.0

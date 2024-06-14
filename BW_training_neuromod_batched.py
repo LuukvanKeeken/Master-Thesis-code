@@ -340,7 +340,7 @@ parser.add_argument('--schedule_type', type=str, default='None', help="The type 
 parser.add_argument('--neuron_type', type=str, default='BP', help="The type of neuron to use")
 parser.add_argument('--value_pred_coef', type=float, default=0.001, help="The coefficient for the value prediction loss")
 parser.add_argument('--entropy_coef', type=float, default=0.001, help="The coefficient for the entropy loss")
-parser.add_argument('--num_evaluation_episodes', type=int, default=30, help='Number of evaluation episodes to run')
+parser.add_argument('--num_evaluation_episodes', type=int, default=50, help='Number of evaluation episodes to run')
 parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
 parser.add_argument('--max_reward', type=int, default=1600, help='Maximum number of steps to run in the environment')
 parser.add_argument('--env_name', type=str, default='AdjustableBipedalWalker-v3', help='Name of the environment to use')

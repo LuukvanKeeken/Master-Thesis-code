@@ -271,7 +271,9 @@ def train_agent_batched(vec_env, agent_net,
                 best_average_after, '. Model saved in folder best.')
                 return best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
         elif ((selection_method == "range") and ((eps_trained - 1) % evaluate_every == 0)):
-            validation_ranges = [[(0.9, 0.95), (1.025, 1.05)], [(0.9875, 0.99375), (1.0125, 1.025)], [(0.9, 0.95), (1.025, 1.05)], [(0.9875, 0.99375), (1.0125, 1.025)], [(0.75, 0.875), (2.0, 3.0)], [(0.9, 0.95), (1.0125, 1.025)], [(0.95, 0.975), (1.25, 1.5)], [(0.9, 0.95), (1.025, 1.05)], [(0.9, 0.95), (1.025, 1.05)], [(0.9875, 0.99375), (1.05, 1.1)], [(0.85, 0.925), (1.00625, 1.0125)]]
+            # validation_ranges = [[(0.9, 0.95), (1.025, 1.05)], [(0.9875, 0.99375), (1.0125, 1.025)], [(0.9, 0.95), (1.025, 1.05)], [(0.9875, 0.99375), (1.0125, 1.025)], [(0.75, 0.875), (2.0, 3.0)], [(0.9, 0.95), (1.0125, 1.025)], [(0.95, 0.975), (1.25, 1.5)], [(0.9, 0.95), (1.025, 1.05)], [(0.9, 0.95), (1.025, 1.05)], [(0.9875, 0.99375), (1.05, 1.1)], [(0.85, 0.925), (1.00625, 1.0125)]]
+            validation_ranges = [[(0.7375, 0.86875), (1.121875, 1.24375)], [(0.97875, 0.989375), (1.021875, 1.04375)], [(0.7375, 0.86875), (1.121875, 1.24375)], [(0.97875, 0.989375), (1.021875, 1.04375)], [(0.68125, 0.840625), (1.55625, 2.1125)], [(0.825, 0.9125), (1.06875, 1.1375)], [(0.85625, 0.928125), (1.153125, 1.30625)], [(0.725, 0.8625), (1.23125, 1.4625)], [(0.725, 0.8625), (1.23125, 1.4625)], [(0.953125, 0.9765625), (1.071875, 1.14375)], [(0.853125, 0.9265625), (1.015625, 1.03125)]]
+
             default_values = [8.0, 34.0, 8.0, 34.0, 2.5, 4.0, 6.0, 1.0, 1.0, 5.0, 160.0]
             env_params = ['left_leg_w_unscaled', 'left_leg_h_unscaled', 'right_leg_w_unscaled', 'right_leg_h_unscaled', 'terrain_friction', 'speed_hip', 'speed_knee', 'left_leg_density', 'right_leg_density', 'hull_density', 'lidar_range_unscaled']
             
@@ -297,7 +299,7 @@ def train_agent_batched(vec_env, agent_net,
                 best_average = evaluation_performance
                 best_average_after = eps_trained-1
                 torch.save(agent_net.state_dict(),
-                        result_dir + '/checkpoint_BP_A2C_{}.pt'.format(i_run))
+                        result_dir + '/checkpoint_{}_A2C_{}.pt'.format(neuron_type, i_run))
                 
             if best_average == max_reward:
                 print(f'Best {selection_method}: ', best_average, ' reached at episode ',
@@ -410,7 +412,8 @@ gamma = 0.99
 max_grad_norm = 10
 
 if training_method == "quarter_range":
-    randomization_params = [(0.95, 1.025), (0.99375, 1.0125), (0.95, 1.025), (0.99375, 1.0125), (0.875, 2.0), (0.95, 1.0125), (0.975, 1.25), (0.95, 1.025), (0.95, 1.025), (0.99375, 1.05), (0.925, 1.00625)]
+    # randomization_params = [(0.95, 1.025), (0.99375, 1.0125), (0.95, 1.025), (0.99375, 1.0125), (0.875, 2.0), (0.95, 1.0125), (0.975, 1.25), (0.95, 1.025), (0.95, 1.025), (0.99375, 1.05), (0.925, 1.00625)]
+    randomization_params =  [(0.86875, 1.121875), (0.989375, 1.021875), (0.86875, 1.121875), (0.989375, 1.021875), (0.840625, 1.55625), (0.9125, 1.06875), (0.928125, 1.153125), (0.8625, 1.23125), (0.8625, 1.23125), (0.9765625, 1.071875), (0.9265625, 1.015625)]
 else:
     randomization_params = None
 

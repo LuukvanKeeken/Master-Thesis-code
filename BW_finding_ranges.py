@@ -20,7 +20,7 @@ def main():
         # policy_weights = torch.load("Master_Thesis_Code/BP_A2C/29_BW_BPandRNN_original_96/Standard_RNN_a2c_result_68024_202459_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt")
         # policy_weights = torch.load("Master_Thesis_Code/BP_A2C/bipedal_walker/EvenFurtherContinued_Standard_RNN_a2c_result_68024_202459_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt")
         # policy_weights = torch.load("Master_Thesis_Code/BP_A2C/29_BW_BPandRNN_original_96/BP_RNN_a2c_result_98_2024516_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt")
-        policy_weights = torch.load("Master_Thesis_Code/BP_A2C/bipedal_walker/AgainFurtherContinued_Standard_RNN_a2c_result_68024_202459_entropycoef_0.0001_valuepredcoef_0.0001_learningrate_1e-05_numtrainepisodes_1000000_selectionmethod_exp_BW_validation_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt")
+        policy_weights = torch.load("Master_Thesis_Code/BP_A2C/bipedal_walker/BP_and_StandardRNN/Standard_RNN_a2c_result_9000000_2024613_entropycoef_0.01_valuepredcoef_0.01_learningrate_0.0001_numtrainepisodes_1000000_selectionmethod_original_trainingmethod_original_numneurons_96/checkpoint_BP_A2C_0.pt")
         agent_net = Standard_RNetwork(24, 96, 4, 5, continuous_actions=True)
         # agent_net = BP_RNetwork(24, 96, 4, 5, continuous_actions=True)
         agent_net.load_state_dict(policy_weights)
@@ -31,9 +31,9 @@ def main():
         
         all_results_means = []
         all_results_stds = []
-        num_episodes = 150
+        num_episodes = 2
         for variable, default_value in zip(variables, default_values):
-            with open(f"Master_Thesis_Code/current_variable.txt", 'w') as f:
+            with open(f"Master_Thesis_Code/current_variable_0.txt", 'w') as f:
                 f.write(f"{variable}")
 
             print(f"{variable}: {default_value}")
@@ -75,8 +75,8 @@ def main():
             all_results_means.append(all_means)
             all_results_stds.append(all_stds)
             setattr(env.unwrapped, variable, default_value)
-            np.save("Master_Thesis_Code/BW_finding_ranges_means_STDRNN50eps.npy", all_results_means)
-            np.save("Master_Thesis_Code/BW_finding_ranges_stds_STDRNN50eps.npy", all_results_stds)
+            np.save("Master_Thesis_Code/BW_finding_ranges_means_STDRNN_0.npy", all_results_means)
+            np.save("Master_Thesis_Code/BW_finding_ranges_stds_STDRNN_0.npy", all_results_stds)
         
         print(all_results_means)
         print(all_results_stds)

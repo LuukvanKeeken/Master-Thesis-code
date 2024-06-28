@@ -29,9 +29,9 @@ not_fine_ids = []
 for num_neurons in nums_neurons:
     for learning_rate in learning_rates:
         for neuromodnet in neuromod_nets:
-            for entropy_coef in entropy_coefs:
-                for value_coef in value_coefs:
-                    for func in activation_functions:
+            for func in activation_functions:
+                for entropy_coef in entropy_coefs:
+                    for value_coef in value_coefs:
                         
 
                         if neuron_type == "CfC":

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=168:00:00
+#SBATCH --time=236:00:00
 #SBATCH --mem=7000M
 
 module purge
@@ -7,6 +7,6 @@ module load Python/3.8.16-GCCcore-11.2.0
 
 source $HOME/venvs/LTC/bin/activate
 
-python3 -m Master_Thesis_Code.BW_training_LTC_batched --network_type CfC --num_neurons 96 --learning_rate 0.0001 --result_id 2100008 --entropy_coef 1.0 --value_pred_coef 1.0
+python3 -m Master_Thesis_Code.BW_training_LTC_batched --network_type CfC --num_neurons 96 --learning_rate 0.0001 --result_id 3100008 --entropy_coef 1.0 --value_pred_coef 1.0
 
 deactivate

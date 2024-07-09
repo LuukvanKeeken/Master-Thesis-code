@@ -13,7 +13,7 @@ results_id = 3200000
 
 # types = ["BP", "StandardRNN", "StandardMLP"]
 directory = "bipedal_walker"
-neuron_type = "BP"
+neuron_type = "CfC"
 if neuron_type == "CfC":
     top_dir = "LTC_A2C"
 else:

@@ -24,13 +24,13 @@ for num_neurons in nums_neurons:
         for wd in wd_terms:
             
             if neuron_type == "CfC":
-                results_dir = f'adaptation_module_StandardRNN_result_{results_id}_{date}_BP_a2c_result_2169_202448_numneuronsadaptmod_{num_neurons}_lradaptmod_{learning_rate}_wdadaptmod_{wd}'
+                results_dir = f"adaptation_module_StandardRNN_result_{results_id}_{date}_BP_a2c_result_2169_202448_numneuronsadaptmod_{num_neurons}_lradaptmod_{learning_rate}_wdadaptmod_{wd}"
             else:
                 # adaptation_module_StandardRNN_result_2000_2024412_BP_a2c_result_2169_202448_numneuronsadaptmod_64_lradaptmod_0.001_wdadaptmod_0.0
                 results_dir = f'adaptation_module_StandardRNN_result_{results_id}_{date}_BP_a2c_result_2169_202448_numneuronsadaptmod_{num_neurons}_lradaptmod_{learning_rate}_wdadaptmod_{wd}'
             
             try:
-                with open(f"Master_Thesis_Code/{top_dir}/32_adaptmod_ONMCfC_tanh_64/{results_dir}/best_validation_loss_after.txt", "r") as file:
+                with open(f"Master_Thesis_Code/{top_dir}/bipedal_walker/adaptation_module/training_results/{results_dir}/best_validation_loss_after.txt", "r") as file:
                     for i in range(num_models):
                         file.readline()
 

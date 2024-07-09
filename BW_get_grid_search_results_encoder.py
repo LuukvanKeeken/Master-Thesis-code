@@ -9,7 +9,7 @@ neuromod_nets = [[11, 256, 128]]
 entropy_coefs = [0.001, 0.01]
 value_coefs = [0.001, 0.01, 1.0]
 activation_functions = ["tanh", "relu"]
-result_id = 3400000
+results_id = 3400000
 
 
 

@@ -2,13 +2,14 @@ import numpy as np
 
 
 
+types = ["CfC"]
 nums_neurons = [96]
-learning_rates = [0.001, 0.0001]
+learning_rates = [0.0001, 0.00001]
 neuromod_nets = [[11, 256, 128]]
 entropy_coefs = [0.001, 0.01]
-value_coefs = [0.001, 0.01]
-activation_functions = ["relu", "tanh"]
-results_id = 3400000
+value_coefs = [0.001, 0.01, 1.0]
+activation_functions = ["tanh", "relu"]
+result_id = 3400000
 
 
 

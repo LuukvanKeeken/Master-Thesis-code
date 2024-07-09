@@ -3,17 +3,19 @@ import numpy as np
 
 
 nums_neurons = [96]
-learning_rates = [0.0001, 0.00001]
+learning_rates = [0.001, 0.0001]
 neuromod_nets = [[11, 256, 128]]
 entropy_coefs = [0.001, 0.01]
-value_coefs = [0.001, 0.01, 1.0]
-activation_functions = ["tanh", "relu"]
-results_id = 3300000
+value_coefs = [0.001, 0.01]
+activation_functions = ["relu", "tanh"]
+results_id = 3400000
+
 
 
 # types = ["BP", "StandardRNN", "StandardMLP"]
 directory = "bipedal_walker"
-neuron_type = "BP"
+neuron_type = "CfC"
+mode = "only_neuromodulated"
 if neuron_type == "CfC":
     top_dir = "LTC_A2C"
 else:
@@ -34,7 +36,7 @@ for num_neurons in nums_neurons:
                         
 
                         if neuron_type == "CfC":
-                            results_dir = f"CfC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{func}_mode_neuromodulated_neuromod_network_dims_{'_'.join(map(str, neuromodnet))}_{num_neurons}"
+                            results_dir = f"CfC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_numneurons_{num_neurons}_encoutact_{func}_mode_{mode}_neuromod_network_dims_{'_'.join(map(str, neuromodnet))}_{num_neurons}"
                         elif neuron_type == "LTC":
                             results_dir = f'LTC_a2c_result_{results_id}_{date}_learningrate_{learning_rate}_selectiomethod_true_range_eval_all_params_trainingmethod_original_numneurons_{num_neurons}_tausysextraction_True'
                         elif neuron_type == "BP":

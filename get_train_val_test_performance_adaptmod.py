@@ -84,7 +84,7 @@ def get_privileged_info(env):
 
 
 
-d = 2024331
+
 
 training_ranges = [(0.775, 5.75), (1.0, 2.0), (0.8, 2.25)]
 validation_ranges = [[(0.55, 0.775), (5.75, 10.5)], [(2.0, 3.0)], [(0.6, 0.8), (2.25, 3.5)]]
@@ -100,7 +100,7 @@ else:
     top_dir = "LTC_A2C"
 mode = "neuromodulated"
 adapt_mod_type = "StandardRNN"
-num_neurons_policy = 64
+num_neurons_policy = 48
 num_neurons_adaptmod = 64
 state_dims = 4
 action_dims = 1
@@ -109,43 +109,54 @@ num_actions = 2
 num_models = 10
 seed = 5
 env_name = "CartPole-v0"
-n_evaluations = 100
+n_evaluations = 1000
 
 wiring = None
-
+batch_dir_am = "27_adaptmod_BP_tanh_48"
+batch_dir_p = "4_NMBP_tanh_48"
 
 
 
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
+evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
+arrays = [evaluation_seeds]
 
-policy_dir = "BP_a2c_result_1013_2024331_learningrate_0.0001_numneurons_64_encoutact_relu_neuromod_network_dims_3_256_128_64"
-adapt_mod_dir = "adaptation_module_StandardRNN_result_6_202441_CfC_result_296_202437_numneuronsadaptmod_64_lradaptmod_0.0005_wdadaptmod_0.01"
+# Generate the new arrays and add them to the list
+for i in range(1, 10):
+    new_array = evaluation_seeds + i
+    arrays.append(new_array)
+
+# Concatenate all arrays together
+evaluation_seeds = np.concatenate(arrays)
+
+policy_dir = "BP_a2c_result_43092_202453_learningrate_0.0001_numneurons_48_encoutact_tanh_neuromod_network_dims_3_128_80_48"
+adapt_mod_dir = "adaptation_module_StandardRNN_result_66002_202459_BP_a2c_result_2169_202448_numneuronsadaptmod_64_lradaptmod_0.001_wdadaptmod_0.01"
 
 
-policy_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
-policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
-policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
-policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
-policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
-policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
-policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
-policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
-policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
-policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{policy_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
+policy_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_p}/{policy_dir}/checkpoint_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
+policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_p}/{policy_dir}/checkpoint_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
+policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_p}/{policy_dir}/checkpoint_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
+policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_p}/{policy_dir}/checkpoint_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
+policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_p}/{policy_dir}/checkpoint_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
+policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_p}/{policy_dir}/checkpoint_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
+policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_p}/{policy_dir}/checkpoint_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
+policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_p}/{policy_dir}/checkpoint_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
+policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_p}/{policy_dir}/checkpoint_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
+policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_p}/{policy_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
 policy_weights = [policy_weights_0, policy_weights_1, policy_weights_2, policy_weights_3, policy_weights_4, policy_weights_5, policy_weights_6, policy_weights_7, policy_weights_8, policy_weights_9]
 
 
-am_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
-am_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
-am_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
-am_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
-am_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
-am_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
-am_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
-am_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
-am_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
-am_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
+am_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_am}/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_0.pt', map_location=torch.device(device))
+am_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_am}/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_1.pt', map_location=torch.device(device))
+am_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_am}/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_2.pt', map_location=torch.device(device))
+am_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_am}/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_3.pt', map_location=torch.device(device))
+am_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_am}/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_4.pt', map_location=torch.device(device))
+am_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_am}/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_5.pt', map_location=torch.device(device))
+am_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_am}/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_6.pt', map_location=torch.device(device))
+am_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_am}/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_7.pt', map_location=torch.device(device))
+am_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_am}/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_8.pt', map_location=torch.device(device))
+am_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir_am}/{adapt_mod_dir}/best_adaptation_module_loss_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
 am_weights = [am_weights_0, am_weights_1, am_weights_2, am_weights_3, am_weights_4, am_weights_5, am_weights_6, am_weights_7, am_weights_8, am_weights_9]
 
 
@@ -168,7 +179,7 @@ with torch.no_grad():
                 raise NotImplementedError
 
             policy_net = CfC_Network(state_dims, num_neurons_policy, num_actions, seed, mode = mode, wiring = wiring).to(device)
-            w_policy = OrderedDict((k, v) for k, v in pw.items() if 'neuromod' not in k)
+            w_policy = OrderedDict((k.split('.', 1)[-1], v) for k, v in pw.items() if 'neuromod' not in k)
             w_policy['cfc_model.rnn_cell.tau_system'] = torch.reshape(w_policy['cfc_model.rnn_cell.tau_system'], (num_neurons_policy,))
             policy_net.load_state_dict(w_policy)
 
@@ -242,10 +253,16 @@ with torch.no_grad():
         print(eraser*3 + '-> Avg testing reward: {:7.2f}'.format(rewards_sum))
 
 
-    with open(f"Master_Thesis_Code/{top_dir}/adaptation_module/training_results/{adapt_mod_dir}/train_val_test.txt", "w") as f:
-        f.write(f"Mean avg training reward: {np.mean(training_rewards)} +/- {np.std(training_rewards)}\n")
-        f.write(f"Mean avg validation reward: {np.mean(validation_rewards)} +/- {np.std(validation_rewards)}\n")
-        f.write(f"Mean avg testing reward: {np.mean(testing_rewards)} +/- {np.std(testing_rewards)}\n")
+    # with open(f"Master_Thesis_Code/{top_dir}/{batch_dir_am}/{adapt_mod_dir}/train_val_test.txt", "w") as f:
+        # f.write(f"Mean avg training reward: {np.mean(training_rewards)} +/- {np.std(training_rewards)}\n")
+    print(training_rewards)
+    print(f"Mean avg training reward: {np.mean(training_rewards)} +/- {np.std(training_rewards)}")
+    # f.write(f"Mean avg validation reward: {np.mean(validation_rewards)} +/- {np.std(validation_rewards)}\n")
+    print(validation_rewards)
+    print(f"Mean avg validation reward: {np.mean(validation_rewards)} +/- {np.std(validation_rewards)}")
+    # f.write(f"Mean avg testing reward: {np.mean(testing_rewards)} +/- {np.std(testing_rewards)}\n")
+    print(testing_rewards)
+    print(f"Mean avg testing reward: {np.mean(testing_rewards)} +/- {np.std(testing_rewards)}")
 
 
 

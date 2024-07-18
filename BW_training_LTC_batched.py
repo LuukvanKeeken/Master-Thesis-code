@@ -255,7 +255,7 @@ parser.add_argument('--num_parallel_envs', type=int, default=5, help='Number of 
 parser.add_argument('--input_dims', type=int, default=24, help='Number of input dimensions to the network')
 parser.add_argument('--output_dims', type=int, default=4, help='Number of output dimensions to the network')
 parser.add_argument('--continuous_actions', type=bool, default=True, help='Whether the environment has continuous actions')
-
+parser.add_argument('--additional_seed', type=int, default=0, help='Additional number to add to the seed')
 
 
 gym.envs.registration.register(
@@ -288,6 +288,7 @@ num_parallel_envs = args.num_parallel_envs
 input_dims = args.input_dims
 output_dims = args.output_dims
 continuous_actions = args.continuous_actions
+additional_seed = args.additional_seed
 
 if num_training_episodes % training_eps_per_section != 0:
     raise ValueError("Number of training episodes must be divisible by training episodes per section")
@@ -348,7 +349,7 @@ best_average_all = []
 vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(env_name) for _ in range(num_parallel_envs)])
 for i_run in range(num_models):
     print(f"Run # {i_run}")
-    seed = int(training_seeds[i_run])
+    seed = int(training_seeds[i_run]+additional_seed)
 
     torch.manual_seed(seed)
     random.seed(seed)

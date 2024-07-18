@@ -1,18 +1,18 @@
 #!/bin/bash
-sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_Standard_RNN_96neurons_0.0001lr_0.001ec_0.001vc_1.sh'
+sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_BP_RNN_96neurons_0.0001lr_0.001ec_0.001vc_1.sh'
 sleep 3
-sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_Standard_RNN_96neurons_0.0001lr_0.001ec_0.001vc_2.sh'
+sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_BP_RNN_96neurons_0.0001lr_0.001ec_0.001vc_2.sh'
 sleep 3
-sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_Standard_RNN_96neurons_0.0001lr_0.001ec_0.001vc_3.sh'
+sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_BP_RNN_96neurons_0.0001lr_0.001ec_0.001vc_3.sh'
 sleep 3
-sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_Standard_RNN_96neurons_0.0001lr_0.001ec_0.001vc_4.sh'
+sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_BP_RNN_96neurons_0.0001lr_0.001ec_0.001vc_4.sh'
 sleep 3
-sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_Standard_RNN_96neurons_0.0001lr_0.001ec_0.001vc_5.sh'
+sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_BP_RNN_96neurons_0.0001lr_0.001ec_0.001vc_5.sh'
 sleep 3
-sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_Standard_RNN_96neurons_0.0001lr_0.001ec_0.001vc_6.sh'
+sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_BP_RNN_96neurons_0.0001lr_0.001ec_0.001vc_6.sh'
 sleep 3
-sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_Standard_RNN_96neurons_0.0001lr_0.001ec_0.001vc_7.sh'
+sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_BP_RNN_96neurons_0.0001lr_0.001ec_0.001vc_7.sh'
 sleep 3
-sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_Standard_RNN_96neurons_0.0001lr_0.001ec_0.001vc_8.sh'
+sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_BP_RNN_96neurons_0.0001lr_0.001ec_0.001vc_8.sh'
 sleep 3
-sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_Standard_RNN_96neurons_0.0001lr_0.001ec_0.001vc_9.sh'
+sbatch 'bipedal_walker/BP_and_StandardRNN/jobscript_BP_RNN_96neurons_0.0001lr_0.001ec_0.001vc_9.sh'

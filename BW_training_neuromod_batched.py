@@ -321,7 +321,7 @@ def train_agent_batched(vec_env, agent_net,
 
 
 
-parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole environment')
+parser = argparse.ArgumentParser(description='Train an A2C agent on the AdjustableBipedalWalker environment')
 parser.add_argument('--num_neurons', type=int, default=96, help='Number of neurons in the hidden layer')
 parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate for the agent')
 parser.add_argument('--training_method', type=str, default = "quarter_range", help='Method to train the agent')
@@ -349,7 +349,7 @@ parser.add_argument('--output_dims', type=int, default=4, help='Number of output
 parser.add_argument('--continuous_actions', type=bool, default=True, help='Whether the environment has continuous actions')
 parser.add_argument('--batch_size', type=int, default=5, help='Batch size to use for training')
 parser.add_argument('--num_parallel_envs', type=int, default=5, help='Number of parallel environments to use')
-
+parser.add_argument('--additional_seed', type=int, default=0, help='Additional number to add to the seed')
 
 gym.envs.registration.register(
     id='AdjustableBipedalWalker-v3',
@@ -386,6 +386,7 @@ output_dims = args.output_dims
 continuous_actions = args.continuous_actions
 batch_size = args.batch_size
 num_parallel_envs = args.num_parallel_envs
+additional_seed = args.additional_seed
 if args.encoder_output_activation == "identity":
     encoder_output_activation = torch.nn.Identity()
 elif args.encoder_output_activation == "relu":
@@ -467,7 +468,7 @@ best_average_all = []
 vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(env_name) for _ in range(num_parallel_envs)])
 for i_run in range(num_models):
     print(f"Run # {i_run}")
-    seed = int(training_seeds[i_run])
+    seed = int(training_seeds[i_run]+additional_seed)
 
     torch.manual_seed(seed)
     random.seed(seed)

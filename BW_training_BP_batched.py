@@ -33,7 +33,7 @@ parser.add_argument('--training_episodes_per_section', type=int, default=1000, h
 parser.add_argument('--evaluate_every', type=int, default=50, help='How often to evaluate the agent')
 parser.add_argument('--batch_size', type=int, default=5, help='Batch size to use for training')
 parser.add_argument('--num_parallel_envs', type=int, default=5, help='Number of parallel environments to use')
-parser.add_argument('--magic_number', type=int, default=0, help='Magic number to add to the seed')
+parser.add_argument('--additional_seed', type=int, default=0, help='Additional number to add to the seed')
 
 gym.envs.registration.register(
     id='AdjustableBipedalWalker-v3',
@@ -63,7 +63,7 @@ training_eps_per_section = args.training_episodes_per_section
 num_evaluation_episodes = args.num_evaluation_episodes
 batch_size = args.batch_size
 num_parallel_envs = args.num_parallel_envs
-magic_number = args.magic_number
+additional_seed = args.additional_seed
 
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 device = torch.device("cpu")
@@ -124,7 +124,7 @@ start_time = time.time()
 vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(env_name) for _ in range(num_parallel_envs)])
 for i_run in range(num_models):
     print("Run # {}".format(i_run))
-    seed = int(training_seeds[i_run]+magic_number)
+    seed = int(training_seeds[i_run]+additional_seed)
     
     torch.manual_seed(seed)
     random.seed(seed)

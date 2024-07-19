@@ -253,7 +253,7 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
 
             # Feed the previous states and actions into the adaptation module
             if neuron_type == "BP":
-                adaptation_module_inputs = torch.cat((prev_states, prev_actions.unsqueeze(-1)), -1).to(torch.float32).to(device)
+                adaptation_module_inputs = torch.cat((prev_states, prev_actions), -1).to(torch.float32).to(device)
             else:
                 adaptation_module_inputs = torch.cat((prev_states, prev_actions.unsqueeze(0)), -1).to(torch.float32).to(device)
             vec_adaptation_module_outputs, adaptation_module_hidden_states = adaptation_module(adaptation_module_inputs, adaptation_module_hidden_states)

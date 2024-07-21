@@ -12,48 +12,8 @@ from Master_Thesis_Code.modifiable_async_vector_env import ModifiableAsyncVector
 import os
 import argparse
 import time
-torch.autograd.set_detect_anomaly(True)
 
 
-
-# def get_privileged_info(randomized_env_params):
-#     params_values = [[d['length'], d['masspole'], d['force_mag']] for d in randomized_env_params]
-#     params_tensor = torch.tensor(params_values, dtype=torch.float32)
-
-#     return params_tensor
-
-# def get_privileged_info2(env):
-#     pole_length = env.unwrapped.length
-#     masspole = env.unwrapped.masspole
-#     force_mag = env.unwrapped.force_mag
-
-#     privileged_info = [pole_length, masspole, force_mag]
-#     return torch.tensor(privileged_info, dtype=torch.float32)
-
-
-# def get_random_env_paramvals(env, randomization_params, batch_size = 1):
-#     pole_length = env.unwrapped.length
-#     masspole = env.unwrapped.masspole
-#     force_mag = env.unwrapped.force_mag
-
-#     orig_params = [pole_length, masspole, force_mag]
-#     param_names = ['length', 'masspole', 'force_mag']
-#     new_params = [{name: None for name in param_names} for _ in range(batch_size)]
-    
-#     for i in range(len(orig_params)):
-#         if isinstance(randomization_params[i], float):
-#             low = orig_params[i] - orig_params[i] * randomization_params[i]
-#             high = orig_params[i] + orig_params[i] * randomization_params[i]
-#         elif isinstance(randomization_params[i], tuple):
-#             low = orig_params[i]*randomization_params[i][0]
-#             high = orig_params[i]*randomization_params[i][1]
-            
-#         sampled_values = np.random.uniform(low, high, batch_size)
-
-#         for j in range(batch_size):
-#             new_params[j][param_names[i]] = sampled_values[j]
-
-#     return new_params
 
 
 def get_privileged_info_vectorized(randomized_env_params):
@@ -99,7 +59,7 @@ def get_random_env_paramvals_BW(randomization_params, batch_size = 1):
 
 def validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation_seeds, env_name, num_validation_eps, max_steps):
     with torch.no_grad():
-        validation_ranges = [[(0.7375, 0.86875), (1.121875, 1.24375)], [(0.97875, 0.989375), (1.021875, 1.04375)], [(0.7375, 0.86875), (1.121875, 1.24375)], [(0.97875, 0.989375), (1.021875, 1.04375)], [(0.68125, 0.840625), (1.55625, 2.1125)], [(0.825, 0.9125), (1.06875, 1.1375)], [(0.85625, 0.928125), (1.153125, 1.30625)], [(0.725, 0.8625), (1.23125, 1.4625)], [(0.725, 0.8625), (1.23125, 1.4625)], [(0.953125, 0.9765625), (1.071875, 1.14375)], [(0.853125, 0.9265625), (1.015625, 1.03125)]]
+        validation_ranges = [[(0.85, 0.925), (1.125, 1.25)], [(0.975, 0.9875), (1.025, 1.05)], [(0.85, 0.925), (1.125, 1.25)], [(0.975, 0.9875), (1.025, 1.05)], [(0.75, 0.875), (1.125, 1.25)], [(0.85, 0.925), (1.025, 1.05)], [(0.9, 0.95), (1.075, 1.15)], [(0.75, 0.875), (1.125, 1.25)], [(0.75, 0.875), (1.125, 1.25)], [(0.95, 0.975), (1.05, 1.1)], [(0.85, 0.925), (1.01875, 1.0375)]]
         default_values = [8.0, 34.0, 8.0, 34.0, 2.5, 4.0, 6.0, 1.0, 1.0, 5.0, 160.0]
         env_params = ['left_leg_w_unscaled', 'left_leg_h_unscaled', 'right_leg_w_unscaled', 'right_leg_h_unscaled', 'terrain_friction', 'speed_hip', 'speed_knee', 'left_leg_density', 'right_leg_density', 'hull_density', 'lidar_range_unscaled']
  
@@ -472,7 +432,7 @@ if num_training_eps % training_eps_per_section != 0:
 
 
 if training_range == 'quarter_range':
-    randomization_params = [(0.86875, 1.121875), (0.989375, 1.021875), (0.86875, 1.121875), (0.989375, 1.021875), (0.840625, 1.55625), (0.9125, 1.06875), (0.928125, 1.153125), (0.8625, 1.23125), (0.8625, 1.23125), (0.9765625, 1.071875), (0.9265625, 1.015625)]
+    randomization_params =  [(0.925, 1.125), (0.9875, 1.025), (0.925, 1.125), (0.9875, 1.025), (0.875, 1.125), (0.925, 1.025), (0.95, 1.075), (0.875, 1.125), (0.875, 1.125), (0.975, 1.05), (0.925, 1.01875)]
 else:
     raise NotImplementedError
 
@@ -484,7 +444,7 @@ else:
     raise NotImplementedError
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-phase_1_dir = "BP_a2c_result_2300005_2024614_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96"
+phase_1_dir = "BP_a2c_result_3300005_2024628_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96"
 
 if result_id == -1:
     dirs = os.listdir(f'Master_Thesis_Code/{top_dir}/bipedal_walker/adaptation_module/training_results/')

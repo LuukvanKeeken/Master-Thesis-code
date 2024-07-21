@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=288:00:00
+#SBATCH --time=240:00:00
 #SBATCH --mem=6000M
 
 module purge

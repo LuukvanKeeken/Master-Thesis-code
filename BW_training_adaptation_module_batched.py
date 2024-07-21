@@ -196,7 +196,13 @@ def validate_adaptation_module(agent_net, encoder, adaptation_module, evaluation
 
 
 
-def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_episodes, max_steps, agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, encoder, adaptation_module, optimizer, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, env_name = "AdjustableBipedalWalker-v3", num_validation_eps = 10, validate_every = 10, randomization_params = None, randomize_every = 5):
+def train_adaptation_module(env, num_parallel_envs, batch_size, section, training_eps_per_section, max_steps, 
+                            agent_net, num_outputs, evaluation_seeds, i_run, neuron_type, encoder, adaptation_module, 
+                            optimizer, selection_method = "100 episode average", gamma = 0.99, max_reward = 200, 
+                            env_name = "AdjustableBipedalWalker-v3", num_validation_eps = 10, validate_every = 10, 
+                            randomization_params = None, randomize_every = 5, best_validation_rewards = None, best_validation_losses = None):
+    
+
     loss_function = torch.nn.MSELoss()
 
     training_losses = []
@@ -204,17 +210,17 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
     validation_losses = []
     validation_total_rewards = []
 
-    best_validation_reward = -np.inf
-    best_validation_reward_after = -1
-    best_validation_loss = np.inf
-    best_validation_loss_after = -1
-
-    total_episodes_trained = 0
+    # best_validation_reward = -np.inf
+    # best_validation_reward_after = -1
+    # best_validation_loss = np.inf
+    # best_validation_loss_after = -1
 
     vec_env = ModifiableAsyncVectorEnv([lambda: gym.make(env_name) for _ in range(num_parallel_envs)])
 
+    eps_trained = 1 + section*training_eps_per_section
+    end_of_section = (section+1)*training_eps_per_section
         
-    while total_episodes_trained < num_training_episodes:
+    while eps_trained < end_of_section:
         encoder_outputs_batch = []
         adaptation_module_outputs_batch = []
         total_training_rewards_batch = []
@@ -235,17 +241,17 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
 
         dones = [False for _ in range(num_parallel_envs)]
 
-        prev_actions = vec_env.action_space.sample()
+        
+        prev_actions = np.array(vec_env.action_space.sample())
         prev_actions = torch.tensor(prev_actions).detach().to(device)
         prev_states = vec_env.observation_space.sample()
         if neuron_type == "BP":
             prev_states = torch.from_numpy(prev_states).detach().to(device)
         else:
             prev_states = torch.from_numpy(prev_states).unsqueeze(0).detach().to(device)
-
+        
 
         states = vec_env.reset()
-        start = time.time()
         while len(encoder_outputs_batch) < batch_size:
             
             # Feed the settings of the parallel environments into the encoder
@@ -282,7 +288,7 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
                 sigmas = torch.diag_embed(sigmas)
                 dists = torch.distributions.MultivariateNormal(mus, sigmas)
                 actions = dists.sample()
-                prev_actions = torch.tensor(actions).to(device)
+                prev_actions = actions.clone().detach()#.to(device)
                 
                 states, rewards, dones, _ = vec_env.step(actions)
 
@@ -314,7 +320,7 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
         
         
 
-        total_episodes_trained += batch_size
+        eps_trained += batch_size
 
         losses = []
         for adaptation_module_output, encoder_output in zip(adaptation_module_outputs_batch, encoder_outputs_batch):
@@ -333,7 +339,7 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
         training_total_rewards.append(average_training_reward)
 
 
-        print(f"Episode {total_episodes_trained}/{num_training_episodes}, average batch training loss: {average_loss.item()}, average batch training reward: {average_training_reward} +/- {stddev_training_reward:.2f}")
+        print(f"Episode {eps_trained-1}, average batch training loss: {average_loss.item()}, average batch training reward: {average_training_reward} +/- {stddev_training_reward:.2f}")
         end = time.time()
         # print(f"Time taken: {end - start}")
 
@@ -342,14 +348,29 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, num_training_epi
         validation_total_rewards.append(mean_valid_reward)
         print(f"average validation loss: {mean_valid_loss}, average validation reward: {mean_valid_reward} +/- {std_valid_reward}")
 
+        if best_validation_rewards:
+            best_validation_reward = best_validation_rewards[0]
+            best_validation_reward_after = best_validation_rewards[1]
+        else:
+            best_validation_reward = -np.inf
+
+        if best_validation_losses:
+            best_validation_loss = best_validation_losses[0]
+            best_validation_loss_after = best_validation_losses[1]
+        else:
+            best_validation_loss = np.inf
+
         if mean_valid_reward >= best_validation_reward:
             best_validation_reward = mean_valid_reward
-            best_validation_reward_after = total_episodes_trained
+            best_validation_reward_after = eps_trained-1
             torch.save(adaptation_module.state_dict(), f"{results_dir}/best_adaptation_module_reward_{neuron_type}_A2C_{i_run}.pt")
         if mean_valid_loss <= best_validation_loss:
             best_validation_loss = mean_valid_loss
-            best_validation_loss_after = total_episodes_trained
+            best_validation_loss_after = eps_trained-1
             torch.save(adaptation_module.state_dict(), f"{results_dir}/best_adaptation_module_loss_{neuron_type}_A2C_{i_run}.pt")
+
+        best_validation_rewards = (best_validation_reward, best_validation_reward_after)
+        best_validation_losses = (best_validation_loss, best_validation_loss_after)
             
 
         
@@ -388,6 +409,7 @@ parser.add_argument('--batch_size', type=int, default=10, help='Batch size for t
 parser.add_argument('--num_parallel_envs', type=int, default=10, help='Number of parallel environments to train the adaptation module')
 parser.add_argument('--encoder_hidden_activation', type=str, default='tanh', help='Activation function for the encoder hidden layers')
 parser.add_argument('--encoder_output_activation', type=str, default='tanh', help='Activation function for the encoder output layer')
+parser.add_argument('--training_episodes_per_section', type=int, default=100, help='Number of training episodes to run per section')
 
 
 gym.envs.registration.register(
@@ -425,6 +447,7 @@ result_id = args.result_id
 batch_size = args.batch_size
 num_parallel_envs = args.num_parallel_envs
 output_dims = args.output_dims
+training_eps_per_section = args.training_episodes_per_section
 if neuron_type == "BP":
     top_dir = "BP_A2C"
 else:
@@ -442,6 +465,10 @@ elif args.encoder_output_activation == 'tanh':
     encoder_output_activation = torch.nn.Tanh()
 else:
     raise NotImplementedError
+
+
+if num_training_eps % training_eps_per_section != 0:
+    raise ValueError("Number of training episodes must be divisible by training episodes per section")
 
 
 if training_range == 'quarter_range':
@@ -493,8 +520,8 @@ all_validation_losses = []
 all_validation_total_rewards = []
 best_validation_rewards = []
 best_validation_losses = []
-for i, w in enumerate(weights):
-    print(f"Training adaptation module for model {i+1}")
+for i_run, w in enumerate(weights):
+    print(f"Training adaptation module for model {i_run+1}")
 
     if neuron_type == "CfC":
         policy_net = CfC_Network(state_dims, num_neurons_policy, output_dims, seed, mode = mode, wiring = wiring, continuous_actions=True)
@@ -550,30 +577,54 @@ for i, w in enumerate(weights):
 
     optimizer = torch.optim.Adam(adaptation_module.parameters(), lr = lr_adapt_mod, weight_decay = wd_adapt_mod)
 
-    training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, num_parallel_envs, batch_size, num_training_eps, 200, policy_net, output_dims, evaluation_seeds, i, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps)
-    all_training_losses.append(training_losses)
-    all_training_total_rewards.append(training_total_rewards)
-    all_validation_losses.append(validation_losses)
-    all_validation_total_rewards.append(validation_total_rewards)
-    best_validation_rewards.append((best_validation_reward, best_validation_reward_after))
-    best_validation_losses.append((best_validation_loss, best_validation_loss_after))
-    
-np.save(f"{results_dir}/all_training_losses.npy", all_training_losses)
-np.save(f"{results_dir}/all_training_total_rewards.npy", all_training_total_rewards)
-np.save(f"{results_dir}/all_validation_losses.npy", all_validation_losses)
-np.save(f"{results_dir}/all_validation_total_rewards.npy", all_validation_total_rewards)
+    for section in range(0, int(num_training_eps/training_eps_per_section)):
+        print(f"Section {section+1} out of {int(num_training_eps/training_eps_per_section)} sections")
+
+        if section == 0:
+            training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, num_parallel_envs, batch_size, section, training_eps_per_section, 200, policy_net, output_dims, evaluation_seeds, i_run, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps)
+            all_training_losses.append(training_losses)
+            all_training_total_rewards.append(training_total_rewards)
+            all_validation_losses.append(validation_losses)
+            all_validation_total_rewards.append(validation_total_rewards)
+            best_validation_rewards.append((best_validation_reward, best_validation_reward_after))
+            best_validation_losses.append((best_validation_loss, best_validation_loss_after))
+        else:
+            training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, num_parallel_envs, batch_size, section, training_eps_per_section, 200, policy_net, output_dims, evaluation_seeds, i_run, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps, best_validation_rewards=best_validation_rewards[i_run], best_validation_losses=best_validation_losses[i_run])
+            all_training_losses.append(training_losses)
+            all_training_total_rewards.append(training_total_rewards)
+            all_validation_losses.append(validation_losses)
+            all_validation_total_rewards.append(validation_total_rewards)
+            if best_validation_reward > best_validation_rewards[-1][0]:
+                best_validation_rewards[-1] = (best_validation_reward, best_validation_reward_after)
+            if best_validation_loss < best_validation_losses[-1][0]:
+                best_validation_losses[-1] = (best_validation_loss, best_validation_loss_after)
 
 
-with open(f"{results_dir}/best_validation_reward_after.txt", "w") as f:
-    for i, reward_results in enumerate(best_validation_rewards):
-        f.write(f"{i}: {reward_results[0]} after {reward_results[1]}\n")
+        np.save(f"{results_dir}/all_training_losses_{i_run}.npy", all_training_losses[i_run])
+        np.save(f"{results_dir}/all_training_total_rewards_{i_run}.npy", all_training_total_rewards[i_run])
+        np.save(f"{results_dir}/all_validation_losses_{i_run}.npy", all_validation_losses[i_run])
+        np.save(f"{results_dir}/all_validation_total_rewards_{i_run}.npy", all_validation_total_rewards[i_run])
 
-    f.write(f"Average training episodes: {np.mean([x[1] for x in best_validation_rewards])}\n")
-    f.write(f"Mean average reward: {np.mean([x[0] for x in best_validation_rewards])} +/- {np.std([x[0] for x in best_validation_rewards])}")
+        with open(f"{results_dir}/best_validation_reward_after.txt", "w") as f:
+            for i, best_episode in enumerate(best_validation_rewards):
+                if i == i_run:
+                    f.write(f"{best_episode[0]} after {best_episode[1]} (total trained: {(section+1)*training_eps_per_section})\n")
+                else:
+                    f.write(f"{best_episode[0]} after {best_episode[1]} (total trained: {num_training_eps}\n")
+            
+            f.write(f"Average training episodes: {np.mean([x[1] for x in best_validation_rewards])}\n")
+            f.write(f"Mean average reward: {np.mean([x[0] for x in best_validation_rewards])} +/- {np.std([x[0] for x in best_validation_rewards])}")
 
-with open(f"{results_dir}/best_validation_loss_after.txt", "w") as f:
-    for i, loss_results in enumerate(best_validation_losses):
-        f.write(f"{i}: {loss_results[0]} after {loss_results[1]}\n")
+        with open(f"{results_dir}/best_validation_loss_after.txt", "w") as f:
+            for i, best_episode in enumerate(best_validation_losses):
+                if i == i_run:
+                    f.write(f"{best_episode[0]} after {best_episode[1]} (total trained: {(section+1)*training_eps_per_section})\n")
+                else:
+                    f.write(f"{best_episode[0]} after {best_episode[1]} (total trained: {num_training_eps}\n")
+            
+            f.write(f"Average training episodes: {np.mean([x[1] for x in best_validation_losses])}\n")
+            f.write(f"Mean average loss: {np.mean([x[0] for x in best_validation_losses])} +/- {np.std([x[0] for x in best_validation_losses])}")
 
-    f.write(f"Average training episodes: {np.mean([x[1] for x in best_validation_losses])}\n")
-    f.write(f"Mean average loss: {np.mean([x[0] for x in best_validation_losses])} +/- {np.std([x[0] for x in best_validation_losses])}")
+
+    print(f"Best average after {best_validation_rewards[i_run][1]} episodes: {best_validation_rewards[i_run][0]}")
+    print(f"Best loss after {best_validation_losses[i_run][1]} episodes: {best_validation_losses[i_run][0]}")

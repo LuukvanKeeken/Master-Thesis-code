@@ -369,7 +369,7 @@ parser.add_argument('--batch_size', type=int, default=10, help='Batch size for t
 parser.add_argument('--num_parallel_envs', type=int, default=10, help='Number of parallel environments to train the adaptation module')
 parser.add_argument('--encoder_hidden_activation', type=str, default='tanh', help='Activation function for the encoder hidden layers')
 parser.add_argument('--encoder_output_activation', type=str, default='tanh', help='Activation function for the encoder output layer')
-parser.add_argument('--training_episodes_per_section', type=int, default=100, help='Number of training episodes to run per section')
+parser.add_argument('--training_episodes_per_section', type=int, default=20, help='Number of training episodes to run per section')
 
 
 gym.envs.registration.register(
@@ -444,7 +444,7 @@ else:
     raise NotImplementedError
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-phase_1_dir = "BP_a2c_result_3300005_2024628_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96"
+phase_1_dir = "CfC_a2c_result_3400000_2024628_learningrate_0.0001_numneurons_96_encoutact_tanh_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96"
 
 if result_id == -1:
     dirs = os.listdir(f'Master_Thesis_Code/{top_dir}/bipedal_walker/adaptation_module/training_results/')

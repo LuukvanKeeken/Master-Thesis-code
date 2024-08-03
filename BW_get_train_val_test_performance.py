@@ -81,7 +81,7 @@ default_values = [8.0, 34.0, 8.0, 34.0, 2.5, 4.0, 6.0, 1.0, 1.0, 5.0, 160.0]
 env_params = ['left_leg_w_unscaled', 'left_leg_h_unscaled', 'right_leg_w_unscaled', 'right_leg_h_unscaled', 'terrain_friction', 'speed_hip', 'speed_knee', 'left_leg_density', 'right_leg_density', 'hull_density', 'lidar_range_unscaled']
 
 device = "cpu"
-neuron_type = "BP"
+neuron_type = "CfC"
 if neuron_type == "BP" or neuron_type == "StandardRNN" or neuron_type == "StandardMLP":
     top_dir = "BP_A2C"
     if neuron_type == "StandardRNN":
@@ -98,13 +98,13 @@ else:
         model_signifier = "LTC"
 mode = "pure"
 num_neurons_policy = 96
-batch_dir = "bipedal_walker/BP_and_StandardRNN"
+batch_dir = "bipedal_walker/CfC"
 # batch_dir = "29_BW_BPandRNN_original_96"
 
 num_models = 9
 seed = 5
 env_name = "AdjustableBipedalWalker-v3"
-n_evaluations = 2
+n_evaluations = 1000
 magic_number = 0
 wiring = None
 
@@ -139,15 +139,15 @@ evaluation_seeds = np.concatenate(arrays)
 # policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_7.pt', map_location=torch.device(device))
 # policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_8.pt', map_location=torch.device(device))
 # policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_9.pt', map_location=torch.device(device))
-policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_RNN_a2c_result_4100000_2024718_entropycoef_0.001_valuepredcoef_0.001_learningrate_0.0001_numtrainepisodes_1000000_selectionmethod_range_trainingmethod_quarter_range_numneurons_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_RNN_a2c_result_4100001_2024718_entropycoef_0.001_valuepredcoef_0.001_learningrate_0.0001_numtrainepisodes_1000000_selectionmethod_range_trainingmethod_quarter_range_numneurons_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_RNN_a2c_result_4100002_2024718_entropycoef_0.001_valuepredcoef_0.001_learningrate_0.0001_numtrainepisodes_1000000_selectionmethod_range_trainingmethod_quarter_range_numneurons_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_RNN_a2c_result_4100003_2024718_entropycoef_0.001_valuepredcoef_0.001_learningrate_0.0001_numtrainepisodes_1000000_selectionmethod_range_trainingmethod_quarter_range_numneurons_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_RNN_a2c_result_4100004_2024718_entropycoef_0.001_valuepredcoef_0.001_learningrate_0.0001_numtrainepisodes_1000000_selectionmethod_range_trainingmethod_quarter_range_numneurons_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_RNN_a2c_result_4100005_2024718_entropycoef_0.001_valuepredcoef_0.001_learningrate_0.0001_numtrainepisodes_1000000_selectionmethod_range_trainingmethod_quarter_range_numneurons_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_RNN_a2c_result_4100006_2024718_entropycoef_0.001_valuepredcoef_0.001_learningrate_0.0001_numtrainepisodes_1000000_selectionmethod_range_trainingmethod_quarter_range_numneurons_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_RNN_a2c_result_4100007_2024718_entropycoef_0.001_valuepredcoef_0.001_learningrate_0.0001_numtrainepisodes_1000000_selectionmethod_range_trainingmethod_quarter_range_numneurons_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_RNN_a2c_result_4100008_2024718_entropycoef_0.001_valuepredcoef_0.001_learningrate_0.0001_numtrainepisodes_1000000_selectionmethod_range_trainingmethod_quarter_range_numneurons_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
+policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4200000_2024718_learningrate_0.0001_selectiomethod_range_trainingmethod_quarter_range_numneurons_96_mode_pure/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
+policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4200001_2024718_learningrate_0.0001_selectiomethod_range_trainingmethod_quarter_range_numneurons_96_mode_pure/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
+policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4200002_2024718_learningrate_0.0001_selectiomethod_range_trainingmethod_quarter_range_numneurons_96_mode_pure/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
+policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4200003_2024718_learningrate_0.0001_selectiomethod_range_trainingmethod_quarter_range_numneurons_96_mode_pure/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
+policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4200004_2024718_learningrate_0.0001_selectiomethod_range_trainingmethod_quarter_range_numneurons_96_mode_pure/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
+policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4200005_2024718_learningrate_0.0001_selectiomethod_range_trainingmethod_quarter_range_numneurons_96_mode_pure/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
+policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4200006_2024718_learningrate_0.0001_selectiomethod_range_trainingmethod_quarter_range_numneurons_96_mode_pure/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
+policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4200007_2024718_learningrate_0.0001_selectiomethod_range_trainingmethod_quarter_range_numneurons_96_mode_pure/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
+policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4200008_2024718_learningrate_0.0001_selectiomethod_range_trainingmethod_quarter_range_numneurons_96_mode_pure/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))                              
 # policy_weights = [policy_weights_0, policy_weights_1, policy_weights_2, policy_weights_3, policy_weights_4, policy_weights_5, policy_weights_6, policy_weights_7, policy_weights_8, policy_weights_9]
 # policy_weights = [policy_weights_0]
 policy_weights = [policy_weights_1, policy_weights_2, policy_weights_3, policy_weights_4, policy_weights_5, policy_weights_6, policy_weights_7, policy_weights_8, policy_weights_9]
@@ -263,7 +263,7 @@ with torch.no_grad():
 
     
 
-    with open(f"Master_Thesis_Code/{top_dir}/{batch_dir}/remaining_BP/train_val_test.txt", "w") as f:
+    with open(f"Master_Thesis_Code/{top_dir}/{batch_dir}/remaining_CfC/train_val_test.txt", "w") as f:
         f.write(f"All training rewards: {training_rewards}\n")
         print(f"All training rewards: {training_rewards}")
     # print(f"Alll training rewards: {all_rewards_train}")

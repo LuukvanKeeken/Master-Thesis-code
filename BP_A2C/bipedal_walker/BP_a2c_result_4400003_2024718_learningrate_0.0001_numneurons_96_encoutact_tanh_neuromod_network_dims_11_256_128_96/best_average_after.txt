@@ -1,0 +1,3 @@
+0: 298.51497530217705 after 462250 (total trained: 470000)
+Average training episodes: 462250.0, std dev: 0.0
+Mean average performance: 298.51497530217705, std dev: 0.0

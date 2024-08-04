@@ -7,7 +7,7 @@ wd_terms = [0.0, 0.0001, 0.005, 0.01]
 
 
 
-neuron_type = "BP"
+neuron_type = "CfC"
 if neuron_type == "CfC":
     top_dir = "LTC_A2C"
 else:
@@ -15,7 +15,7 @@ else:
 
 num_models = 1
 all_results = []
-results_id = 5000000
+results_id = 5100000
 date = 2024721
 failed_idx = []
 

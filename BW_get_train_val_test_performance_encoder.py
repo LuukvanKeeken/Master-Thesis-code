@@ -86,7 +86,7 @@ env_params = ['left_leg_w_unscaled', 'left_leg_h_unscaled', 'right_leg_w_unscale
 
 
 device = "cpu"
-neuron_type = "BP"
+neuron_type = "CfC"
 if neuron_type == "BP":
     top_dir = "BP_A2C"
     model_signifier = "BP"
@@ -141,15 +141,15 @@ evaluation_seeds = np.concatenate(arrays)
 # policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/14_NMBP_reluandtanh_32and64/{result_dir}/checkpoint_{neuron_type}_A2C_9.pt', map_location=torch.device(device))
 # policy_weights = [policy_weights_0, policy_weights_1, policy_weights_2, policy_weights_3, policy_weights_4, policy_weights_5, policy_weights_6, policy_weights_7, policy_weights_8, policy_weights_9]
 # policy_weights = [policy_weights_0]
-policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_a2c_result_4400000_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_a2c_result_4400001_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_a2c_result_4400002_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_a2c_result_4400003_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_a2c_result_4400004_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_a2c_result_4400005_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_a2c_result_4400006_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_a2c_result_4400007_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/BP_a2c_result_4400008_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96/checkpoint_BP_A2C_0.pt', map_location=torch.device(device))
+policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4300000_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96/checkpoint_CfC_A2C_0.pt', map_location=torch.device(device))
+policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4300001_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96/checkpoint_CfC_A2C_0.pt', map_location=torch.device(device))
+policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4300002_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96/checkpoint_CfC_A2C_0.pt', map_location=torch.device(device))
+policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4300003_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96/checkpoint_CfC_A2C_0.pt', map_location=torch.device(device))
+policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4300004_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96/checkpoint_CfC_A2C_0.pt', map_location=torch.device(device))
+policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4300005_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96/checkpoint_CfC_A2C_0.pt', map_location=torch.device(device))
+policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4300006_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96/checkpoint_CfC_A2C_0.pt', map_location=torch.device(device))
+policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4300007_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96/checkpoint_CfC_A2C_0.pt', map_location=torch.device(device))
+policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/CfC_a2c_result_4300008_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96/checkpoint_CfC_A2C_0.pt', map_location=torch.device(device))
 policy_weights = [policy_weights_1, policy_weights_2, policy_weights_3, policy_weights_4, policy_weights_5, policy_weights_6, policy_weights_7, policy_weights_8, policy_weights_9]
 eraser = '\b \b'
 
@@ -261,7 +261,7 @@ with torch.no_grad():
 
 
 
-    with open(f"Master_Thesis_Code/{top_dir}/{batch_dir}/remaining_NMBP/train_val_test.txt", "w") as f:
+    with open(f"Master_Thesis_Code/{top_dir}/{batch_dir}/remaining_ONMCfC/train_val_test.txt", "w") as f:
         f.write(f"All training rewards: {training_rewards}\n")
         print(f"All training rewards: {training_rewards}")
     # print(f"Alll training rewards: {all_rewards_train}")

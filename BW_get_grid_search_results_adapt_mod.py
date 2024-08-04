@@ -2,12 +2,12 @@ import os
 import numpy as np
 
 nums_neurons = [96]
-learning_rates = [0.001, 0.0005, 0.0001, 0.00005, 0.00001]
-wd_terms = [0.0, 0.0001, 0.01]
+learning_rates = [0.01, 0.001, 0.0005, 0.0001, 0.00005, 0.00001, 0.000001]
+wd_terms = [0.0, 0.0001, 0.005, 0.01]
 
 
 
-neuron_type = "CfC"
+neuron_type = "BP"
 if neuron_type == "CfC":
     top_dir = "LTC_A2C"
 else:
@@ -15,8 +15,8 @@ else:
 
 num_models = 10
 all_results = []
-results_id = 4000000
-date = 2024630
+results_id = 5000000
+date = 2024721
 failed_idx = []
 
 for num_neurons in nums_neurons:

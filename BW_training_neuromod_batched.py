@@ -503,8 +503,7 @@ for i_run in range(num_models):
         policy_net = BP_RNetwork(input_dims, num_neurons, output_dims, seed, external_neuromodulation = True, continuous_actions=continuous_actions).to(device)
 
         agent_net = NeuromodulatedAgent(policy_net, encoder, policy_has_hidden_state=True).to(device)
-        weights = torch.load('Master_Thesis_Code/BP_A2C/bipedal_walker/BP_a2c_result_600000_202464_learningrate_0.001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96/checkpoint_BP_A2C_0.pt')
-        agent_net.load_state_dict(weights)
+        
 
 
     optimizer = torch.optim.Adam(agent_net.parameters(), lr=learning_rate)

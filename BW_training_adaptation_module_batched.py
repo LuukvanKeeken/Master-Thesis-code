@@ -349,7 +349,7 @@ parser.add_argument('--device', type=str, default='cpu', help='Device to train o
 parser.add_argument('--state_dims', type=int, default=24, help='Number of state dimensions')
 parser.add_argument('--action_dims', type=int, default=4, help='Number of action dimensions')
 parser.add_argument('--num_neurons_policy', type=int, default=96, help='Number of neurons in the policy network')
-parser.add_argument('--num_neurons_adaptation', type=int, default=64, help='Number of neurons in the adaptation module')
+parser.add_argument('--num_neurons_adaptation', type=int, default=96, help='Number of neurons in the adaptation module')
 parser.add_argument('--output_dims', type=int, default=4, help='Number of output dimensions to the network')
 parser.add_argument('--seed', type=int, default=5)
 parser.add_argument('--mode', type=str, default='neuromodulated', help='Mode of the CfC network')
@@ -357,19 +357,20 @@ parser.add_argument('--wiring', type=str, default='None', help='Wiring of the Cf
 parser.add_argument('--neuromod_network_dims', type=int, nargs='+', default = [11, 256, 128], help='Dimensions of the neuromodulation network, without output layer')
 parser.add_argument('--num_training_eps', type=int, default=1000000, help="Number of episodes to train the adaptation module")
 parser.add_argument('--env_name', type=str, default="AdjustableBipedalWalker-v3", help="Gym RL environment name")
-parser.add_argument('--lr_adapt_mod', type=float, default=0.0005, help="Learning rate of the adaptation module")
+parser.add_argument('--lr_adapt_mod', type=float, default=0.01, help="Learning rate of the adaptation module")
 parser.add_argument('--wd_adapt_mod', type=float, default=0.0, help="Weight decay of the adaptation module")
 parser.add_argument('--training_range', type=str, default='quarter_range', help='Range from which training data is sampled')
 parser.add_argument('--randomize_every', type=int, default=1, help='Number of episodes between randomization of environment parameters')
 parser.add_argument('--validate_every', type=int, default=10, help='Number of training episodes between validations')
 parser.add_argument('--num_validation_eps', type=int, default=50, help='Number of episodes to validate the adaptation module')
 parser.add_argument('--adapt_mod_type', type=str, default='StandardRNN', help='Type of adaptation module to use')
-parser.add_argument('--result_id', type=int, default=-1, help='ID of the result')
+parser.add_argument('--result_id', type=int, default=6000000, help='ID of the result')
 parser.add_argument('--batch_size', type=int, default=10, help='Batch size for training the adaptation module')
 parser.add_argument('--num_parallel_envs', type=int, default=10, help='Number of parallel environments to train the adaptation module')
-parser.add_argument('--encoder_hidden_activation', type=str, default='relu', help='Activation function for the encoder hidden layers')
-parser.add_argument('--encoder_output_activation', type=str, default='relu', help='Activation function for the encoder output layer')
+parser.add_argument('--encoder_hidden_activation', type=str, default='tanh', help='Activation function for the encoder hidden layers')
+parser.add_argument('--encoder_output_activation', type=str, default='tanh', help='Activation function for the encoder output layer')
 parser.add_argument('--training_episodes_per_section', type=int, default=100, help='Number of training episodes to run per section')
+parser.add_argument('--max_episode_steps', type=int, default=1600, help='Maximum number of steps per episode')
 
 
 gym.envs.registration.register(
@@ -408,6 +409,7 @@ batch_size = args.batch_size
 num_parallel_envs = args.num_parallel_envs
 output_dims = args.output_dims
 training_eps_per_section = args.training_episodes_per_section
+max_episode_steps = args.max_episode_steps
 if neuron_type == "BP":
     top_dir = "BP_A2C"
 else:
@@ -444,7 +446,7 @@ else:
     raise NotImplementedError
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-phase_1_dir = "CfC_a2c_result_3400006_2024628_learningrate_0.0001_numneurons_96_encoutact_relu_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96"
+phase_1_dir = "BP_a2c_result_4400000_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96"
 
 if result_id == -1:
     dirs = os.listdir(f'Master_Thesis_Code/{top_dir}/bipedal_walker/adaptation_module/training_results/')
@@ -541,7 +543,7 @@ for i_run, w in enumerate(weights):
         print(f"Section {section+1} out of {int(num_training_eps/training_eps_per_section)} sections")
 
         if section == 0:
-            training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, num_parallel_envs, batch_size, section, training_eps_per_section, 200, policy_net, output_dims, evaluation_seeds, i_run, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps)
+            training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, num_parallel_envs, batch_size, section, training_eps_per_section, max_episode_steps, policy_net, output_dims, evaluation_seeds, i_run, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps)
             all_training_losses.append(training_losses)
             all_training_total_rewards.append(training_total_rewards)
             all_validation_losses.append(validation_losses)
@@ -549,11 +551,11 @@ for i_run, w in enumerate(weights):
             best_validation_rewards.append((best_validation_reward, best_validation_reward_after))
             best_validation_losses.append((best_validation_loss, best_validation_loss_after))
         else:
-            training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, num_parallel_envs, batch_size, section, training_eps_per_section, 200, policy_net, output_dims, evaluation_seeds, i_run, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps, best_validation_rewards=best_validation_rewards[i_run], best_validation_losses=best_validation_losses[i_run])
-            all_training_losses.append(training_losses)
-            all_training_total_rewards.append(training_total_rewards)
-            all_validation_losses.append(validation_losses)
-            all_validation_total_rewards.append(validation_total_rewards)
+            training_losses, training_total_rewards, validation_losses, validation_total_rewards, best_validation_reward, best_validation_reward_after, best_validation_loss, best_validation_loss_after = train_adaptation_module(env, num_parallel_envs, batch_size, section, training_eps_per_section, max_episode_steps, policy_net, output_dims, evaluation_seeds, i_run, neuron_type, encoder, adaptation_module, optimizer, randomization_params=randomization_params, randomize_every=randomize_every, validate_every=validate_every, num_validation_eps=num_validation_eps, best_validation_rewards=best_validation_rewards[i_run], best_validation_losses=best_validation_losses[i_run])
+            all_training_losses[i_run].extend(training_losses)
+            all_training_total_rewards[i_run].extend(training_total_rewards)
+            all_validation_losses[i_run].extend(validation_losses)
+            all_validation_total_rewards[i_run].extend(validation_total_rewards)
             if best_validation_reward > best_validation_rewards[-1][0]:
                 best_validation_rewards[-1] = (best_validation_reward, best_validation_reward_after)
             if best_validation_loss < best_validation_losses[-1][0]:

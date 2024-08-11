@@ -1,0 +1,3 @@
+6.313469666565652e-06 after 27530 (total trained: 28000)
+Average training episodes: 27530.0
+Mean average loss: 6.313469666565652e-06 +/- 0.0

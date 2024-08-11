@@ -1,0 +1,3 @@
+277.2938112260746 after 290 (total trained: 26100)
+Average training episodes: 290.0
+Mean average reward: 277.2938112260746 +/- 0.0

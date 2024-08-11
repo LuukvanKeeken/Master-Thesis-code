@@ -344,7 +344,7 @@ def train_adaptation_module(env, num_parallel_envs, batch_size, section, trainin
 
 
 parser = argparse.ArgumentParser(description='Train adaptation module for neuromodulated CfC')
-parser.add_argument('--neuron_type', type=str, default='CfC', help='Type of neuron to train')
+parser.add_argument('--neuron_type', type=str, default='BP', help='Type of neuron to train')
 parser.add_argument('--device', type=str, default='cpu', help='Device to train on')
 parser.add_argument('--state_dims', type=int, default=24, help='Number of state dimensions')
 parser.add_argument('--action_dims', type=int, default=4, help='Number of action dimensions')
@@ -364,7 +364,7 @@ parser.add_argument('--randomize_every', type=int, default=1, help='Number of ep
 parser.add_argument('--validate_every', type=int, default=10, help='Number of training episodes between validations')
 parser.add_argument('--num_validation_eps', type=int, default=50, help='Number of episodes to validate the adaptation module')
 parser.add_argument('--adapt_mod_type', type=str, default='StandardRNN', help='Type of adaptation module to use')
-parser.add_argument('--result_id', type=int, default=7000000, help='ID of the result')
+parser.add_argument('--result_id', type=int, default=8000000, help='ID of the result')
 parser.add_argument('--batch_size', type=int, default=10, help='Batch size for training the adaptation module')
 parser.add_argument('--num_parallel_envs', type=int, default=10, help='Number of parallel environments to train the adaptation module')
 parser.add_argument('--encoder_hidden_activation', type=str, default='tanh', help='Activation function for the encoder hidden layers')
@@ -446,7 +446,7 @@ else:
     raise NotImplementedError
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
 
-phase_1_dir = "CfC_a2c_result_4300000_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_mode_only_neuromodulated_neuromod_network_dims_11_256_128_96"
+phase_1_dir = "Continued_BP_a2c_result_4400002_2024718_learningrate_0.0001_numneurons_96_encoutact_tanh_neuromod_network_dims_11_256_128_96"
 
 if result_id == -1:
     dirs = os.listdir(f'Master_Thesis_Code/{top_dir}/bipedal_walker/adaptation_module/training_results/')

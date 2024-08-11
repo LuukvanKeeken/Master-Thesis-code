@@ -1,0 +1,3 @@
+302.6678175783383 after 19300 (total trained: 29200)
+Average training episodes: 19300.0
+Mean average reward: 302.6678175783383 +/- 0.0

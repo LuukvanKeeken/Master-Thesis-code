@@ -19,7 +19,7 @@ parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the
 parser.add_argument('--entropy_coef', type=float, default=1.0, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.01, help='Value prediction coefficient for the agent')
 parser.add_argument('--num_training_episodes', type=int, default=50000, help='Number of training episodes to run')
-parser.add_argument('--num_evaluation_episodes', type=int, default=20, help='Number of evaluation episodes to run')
+parser.add_argument('--num_evaluation_episodes', type=int, default=50, help='Number of evaluation episodes to run')
 parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
 parser.add_argument('--evaluate_every', type=int, default=20, help='How often to evaluate the agent')
 parser.add_argument('--pole_length_mod', type=float, default=1.0, help='Factor to multiply the pole length by')

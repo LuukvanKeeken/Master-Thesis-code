@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(description='Train an A2C agent on the CartPole
 parser.add_argument('--num_neurons', type=int, default=32, help='Number of neurons in the hidden layer')
 parser.add_argument('--network_type', type=str, default='Standard_RNN', help='Type of network to use')
 parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate for the agent')
-parser.add_argument('--num_models', type=int, default=20, help='Number of models to train')
+parser.add_argument('--num_models', type=int, default=10, help='Number of models to train')
 parser.add_argument('--selection_method', type=str, default='evaluation_diff_pole_length', help='Method to use for selecting the best model')
 parser.add_argument('--training_method', type=str, default = "original", help='Method to train the agent')
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')

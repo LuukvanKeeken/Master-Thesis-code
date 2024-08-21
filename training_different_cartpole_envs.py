@@ -18,13 +18,13 @@ parser.add_argument('--training_method', type=str, default = "original", help='M
 parser.add_argument('--result_id', type=int, default=-1, help='ID to use for the results directory')
 parser.add_argument('--entropy_coef', type=float, default=1.0, help='Entropy coefficient for the agent')
 parser.add_argument('--value_pred_coef', type=float, default=0.01, help='Value prediction coefficient for the agent')
-parser.add_argument('--num_training_episodes', type=int, default=50000, help='Number of training episodes to run')
+parser.add_argument('--num_training_episodes', type=int, default=10000, help='Number of training episodes to run')
 parser.add_argument('--num_evaluation_episodes', type=int, default=20, help='Number of evaluation episodes to run')
 parser.add_argument('--training_episodes_per_section', type=int, default=1000, help='Number of training episodes to run per section')
 parser.add_argument('--evaluate_every', type=int, default=20, help='How often to evaluate the agent')
-parser.add_argument('--pole_length_mod', type=float, default=1.0, help='Factor to multiply the pole length by')
-parser.add_argument('--pole_mass_mod', type=float, default=1.0, help='Factor to multiply the pole mass by')
-parser.add_argument('--force_mag_mod', type=float, default=1.0, help='Factor to multiply the force magnitude by')
+parser.add_argument('--pole_length_mod', type=float, default=0.33, help='Factor to multiply the pole length by')
+parser.add_argument('--pole_mass_mod', type=float, default=9.0, help='Factor to multiply the pole mass by')
+parser.add_argument('--force_mag_mod', type=float, default=4.75, help='Factor to multiply the force magnitude by')
 
 args = parser.parse_args()
 learning_rate = args.learning_rate

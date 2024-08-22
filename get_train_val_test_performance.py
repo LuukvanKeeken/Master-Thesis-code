@@ -63,7 +63,7 @@ testing_ranges = [[(0.1, 0.55), (10.5, 20.0)], [(5.0, 13.0)], [(0.2, 0.6), (3.5,
 
 
 device = "cpu"
-neuron_type = "StandardMLP"
+neuron_type = "BP"
 if neuron_type == "BP" or neuron_type == "StandardRNN" or neuron_type == "StandardMLP":
     top_dir = "BP_A2C"
     if neuron_type == "StandardRNN":
@@ -79,8 +79,8 @@ else:
     elif neuron_type == "LTC":
         model_signifier = "LTC"
 mode = "pure"
-num_neurons_policy = 64
-batch_dir = "18_MLP_original_32and64"
+num_neurons_policy = 48
+batch_dir = "2_BP_and_RNN_original_48"
 
 num_models = 10
 seed = 5
@@ -105,7 +105,7 @@ for i in range(1, 10):
 evaluation_seeds = np.concatenate(arrays)
 
 
-result_dir = "Standard_MLP_a2c_result_57054_202458_entropycoef_0.0001_valuepredcoef_0.5_learningrate_5e-05_numtrainepisodes_25000_selectionmethod_true_range_eval_all_params_trainingmethod_original_numneurons_64"
+result_dir = "BP_RNN_a2c_result_41061_202452_entropycoef_1.0_valuepredcoef_0.01_learningrate_0.001_numtrainepisodes_25000_selectionmethod_true_range_eval_all_params_trainingmethod_original_numneurons_48"
 
 
 
@@ -147,17 +147,17 @@ with torch.no_grad():
         
         # Training rewards ---------------------------
         rewards_sum = 0
-        for i in range(n_evaluations):
-            np.random.seed(evaluation_seeds[i])
+        for j in range(n_evaluations):
+            np.random.seed(evaluation_seeds[j])
             
             pole_length_mod = np.random.uniform(training_ranges[0][0], training_ranges[0][1])
             pole_mass_mod = np.random.uniform(training_ranges[1][0], training_ranges[1][1])
             force_mag_mod = np.random.uniform(training_ranges[2][0], training_ranges[2][1])
 
             if neuron_type == "BP" or neuron_type == "StandardRNN" or neuron_type == "StandardMLP":
-                rewards_sum += np.mean(evaluate_BP_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
+                rewards_sum += np.mean(evaluate_BP_agent_all_params(agent_net, env_name, 1, evaluation_seeds[j:], pole_length_mod, pole_mass_mod, force_mag_mod))
             else:
-                rewards_sum += np.mean(evaluate_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
+                rewards_sum += np.mean(evaluate_agent_all_params(agent_net, env_name, 1, evaluation_seeds[j:], pole_length_mod, pole_mass_mod, force_mag_mod))
         
         rewards_sum /= n_evaluations
         training_rewards.append(rewards_sum)
@@ -166,9 +166,9 @@ with torch.no_grad():
 
         # Validation rewards ---------------------------
         rewards_sum = 0
-        for i in range(n_evaluations):
-            np.random.seed(evaluation_seeds[i])
-            random.seed(evaluation_seeds[i])
+        for j in range(n_evaluations):
+            np.random.seed(evaluation_seeds[j])
+            random.seed(evaluation_seeds[j])
             
             pole_length_range = random.choice(validation_ranges[0])
             pole_length_mod = np.random.uniform(pole_length_range[0], pole_length_range[1])
@@ -177,9 +177,9 @@ with torch.no_grad():
             force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
             
             if neuron_type == "BP" or neuron_type == "StandardRNN" or neuron_type == "StandardMLP":
-                rewards_sum += np.mean(evaluate_BP_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
+                rewards_sum += np.mean(evaluate_BP_agent_all_params(agent_net, env_name, 1, evaluation_seeds[j:], pole_length_mod, pole_mass_mod, force_mag_mod))
             else:
-                rewards_sum += np.mean(evaluate_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
+                rewards_sum += np.mean(evaluate_agent_all_params(agent_net, env_name, 1, evaluation_seeds[j:], pole_length_mod, pole_mass_mod, force_mag_mod))
 
         rewards_sum /= n_evaluations
         validation_rewards.append(rewards_sum)
@@ -188,9 +188,9 @@ with torch.no_grad():
 
         # Testing rewards ---------------------------
         rewards_sum = 0
-        for i in range(n_evaluations):
-            np.random.seed(evaluation_seeds[i])
-            random.seed(evaluation_seeds[i])
+        for j in range(n_evaluations):
+            np.random.seed(evaluation_seeds[j])
+            random.seed(evaluation_seeds[j])
             
             pole_length_range = random.choice(testing_ranges[0])
             pole_length_mod = np.random.uniform(pole_length_range[0], pole_length_range[1])
@@ -199,9 +199,9 @@ with torch.no_grad():
             force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
 
             if neuron_type == "BP" or neuron_type == "StandardRNN" or neuron_type == "StandardMLP":
-                rewards_sum += np.mean(evaluate_BP_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
+                rewards_sum += np.mean(evaluate_BP_agent_all_params(agent_net, env_name, 1, evaluation_seeds[j:], pole_length_mod, pole_mass_mod, force_mag_mod))
             else:
-                rewards_sum += np.mean(evaluate_agent_all_params(agent_net, env_name, 1, evaluation_seeds[i:], pole_length_mod, pole_mass_mod, force_mag_mod))
+                rewards_sum += np.mean(evaluate_agent_all_params(agent_net, env_name, 1, evaluation_seeds[j:], pole_length_mod, pole_mass_mod, force_mag_mod))
 
         rewards_sum /= n_evaluations
         testing_rewards.append(rewards_sum)

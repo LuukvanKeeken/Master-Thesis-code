@@ -13,7 +13,7 @@ result_id = 100
 
 directory = "difficult_cartpole_envs"
 training_method = "original"
-selection_method = "evaluation"
+selection_method = "evaluation_diff_pole_length"
 num_models = 10
 all_results = []
 results_id = 100

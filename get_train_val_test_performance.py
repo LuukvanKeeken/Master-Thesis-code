@@ -63,19 +63,29 @@ testing_ranges = [[(0.1, 0.55), (10.5, 20.0)], [(5.0, 13.0)], [(0.2, 0.6), (3.5,
 
 
 device = "cpu"
-neuron_type = "StandardMLP"
+neuron_type = "StandardRNN"
 if neuron_type == "BP" or neuron_type == "StandardRNN" or neuron_type == "StandardMLP":
     top_dir = "BP_A2C"
+    if neuron_type == "StandardRNN":
+        model_signifier = "Standard_RNN"
+    elif neuron_type == "BP":
+        model_signifier = "BP_RNN"
+    elif neuron_type == "StandardMLP":
+        model_signifier = "Standard_MLP"
 else:
     top_dir = "LTC_A2C"
+    if neuron_type == "CfC":
+        model_signifier = "CfC"
+    elif neuron_type == "LTC":
+        model_signifier = "LTC"
 mode = "pure"
-num_neurons_policy = 32
-
+num_neurons_policy = 48
+batch_dir = "2_BP_and_RNN_original_48"
 
 num_models = 10
 seed = 5
 env_name = "CartPole-v0"
-n_evaluations = 100
+n_evaluations = 1000
 
 wiring = None
 
@@ -84,21 +94,31 @@ wiring = None
 
 
 evaluation_seeds = np.load('Master_Thesis_Code/rstdp_cartpole_stuff/seeds/evaluation_seeds.npy')
+arrays = [evaluation_seeds]
 
-result_dir = "Standard_MLP_a2c_result_64_202434_entropycoef_0.01_valuepredcoef_0.1_batchsize_1_maxsteps_200_maxgradnorm_4.0_gammaR_0.99_learningrate_5e-05_numtrainepisodes_20000_selectionmethod_range_evaluation_all_params_trainingmethod_original"
+# Generate the new arrays and add them to the list
+for i in range(1, 10):
+    new_array = evaluation_seeds + i
+    arrays.append(new_array)
+
+# Concatenate all arrays together
+evaluation_seeds = np.concatenate(arrays)
+
+
+result_dir = "Standard_RNN_a2c_result_41003_202452_entropycoef_0.0_valuepredcoef_1.0_learningrate_0.001_numtrainepisodes_25000_selectionmethod_true_range_eval_all_params_trainingmethod_original_numneurons_48"
 
 
 
-policy_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_0.pt', map_location=torch.device(device))
-policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_1.pt', map_location=torch.device(device))
-policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_2.pt', map_location=torch.device(device))
-policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_3.pt', map_location=torch.device(device))
-policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_4.pt', map_location=torch.device(device))
-policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_5.pt', map_location=torch.device(device))
-policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_6.pt', map_location=torch.device(device))
-policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_7.pt', map_location=torch.device(device))
-policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_8.pt', map_location=torch.device(device))
-policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/training_results/{result_dir}/checkpoint_Standard_MLP_A2C_9.pt', map_location=torch.device(device))
+policy_weights_0 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_0.pt', map_location=torch.device(device))
+policy_weights_1 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_1.pt', map_location=torch.device(device))
+policy_weights_2 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_2.pt', map_location=torch.device(device))
+policy_weights_3 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_3.pt', map_location=torch.device(device))
+policy_weights_4 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_4.pt', map_location=torch.device(device))
+policy_weights_5 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_5.pt', map_location=torch.device(device))
+policy_weights_6 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_6.pt', map_location=torch.device(device))
+policy_weights_7 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_7.pt', map_location=torch.device(device))
+policy_weights_8 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_8.pt', map_location=torch.device(device))
+policy_weights_9 = torch.load(f'Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/checkpoint_{model_signifier}_A2C_9.pt', map_location=torch.device(device))
 policy_weights = [policy_weights_0, policy_weights_1, policy_weights_2, policy_weights_3, policy_weights_4, policy_weights_5, policy_weights_6, policy_weights_7, policy_weights_8, policy_weights_9]
 
 eraser = '\b \b'
@@ -187,11 +207,21 @@ with torch.no_grad():
         testing_rewards.append(rewards_sum)
         print(eraser*3 + '-> Avg testing reward: {:7.2f}'.format(rewards_sum))
 
+    
 
-    with open(f"Master_Thesis_Code/{top_dir}/training_results/{result_dir}/train_val_test.txt", "w") as f:
+    with open(f"Master_Thesis_Code/{top_dir}/{batch_dir}/{result_dir}/train_val_test.txt", "w") as f:
+        f.write(f"All training rewards: {training_rewards}\n")
+        print(f"All training rewards: {training_rewards}")
         f.write(f"Mean avg training reward: {np.mean(training_rewards)} +/- {np.std(training_rewards)}\n")
+        print(f"Mean avg training reward: {np.mean(training_rewards)} +/- {np.std(training_rewards)}")
+        f.write(f"All validation rewards: {validation_rewards}\n")
+        print(f"All validation rewards: {validation_rewards}")
         f.write(f"Mean avg validation reward: {np.mean(validation_rewards)} +/- {np.std(validation_rewards)}\n")
+        print(f"Mean avg validation reward: {np.mean(validation_rewards)} +/- {np.std(validation_rewards)}")
+        f.write(f"All testing rewards: {testing_rewards}\n")
+        print(f"All testing rewards: {testing_rewards}")
         f.write(f"Mean avg testing reward: {np.mean(testing_rewards)} +/- {np.std(testing_rewards)}\n")
+        print(f"Mean avg testing reward: {np.mean(testing_rewards)} +/- {np.std(testing_rewards)}")
 
 
 

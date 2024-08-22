@@ -1,23 +1,24 @@
 import os
 import numpy as np
 
-nums_neurons = [32, 48, 64]
-types = ["CfC"]
-learning_rates = [0.001, 0.0001, 0.00001,  0.000001]
-entropy_coefs = [0.0, 0.001, 1.0, 10, 100]
-value_coefs = [0.0001, 0.01, 0.5, 1.0]
+types = ["Standard_RNN"]
+nums_neurons = [32]
+learning_rates = [0.001, 0.0001, 0.00001, 0.000001]
+entropy_coefs = [0.0, 0.0001, 0.01, 1.0, 10.0]
+value_coefs = [0.0001, 0.01, 0.5, 1.0, 10.0]
+result_id = 100
 
 
 
 
-directory = "34_CfC_range_32and48and64_correctEntropies"
-training_method = "quarter_range"
-selection_method = "true_range_eval_all_params"
+directory = "difficult_cartpole_envs"
+training_method = "original"
+selection_method = "evaluation"
 num_models = 10
 all_results = []
-results_id = 73000
-date = 2024518
-num_train_eps = 40000
+results_id = 100
+date = 2024821
+num_train_eps = 10000
 missing_ids = []
 fine_ids = []
 for neuron_type in types:

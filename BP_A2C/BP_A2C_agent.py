@@ -537,6 +537,244 @@ class A2C_Agent:
         return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
 
 
+
+    def train_agent_discrete_testing_ranges(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf):
+        # best_average = -np.inf
+        # best_average_after = np.inf
+        scores = []
+        smoothed_scores = []
+        scores_window = deque(maxlen = 100)
+
+        training_total_rewards = []
+        training_losses = []
+        validation_total_rewards = []
+        validation_losses = []
+
+        # for episode in range(1, self.num_training_episodes + 1):
+        for episode in range(1 + section*training_eps_per_section, (section+1)*training_eps_per_section + 1):
+            
+            if randomization_params and episode % randomize_every == 0:
+                self.env = gym.make(self.env_name)
+                self.env = randomize_env_params(self.env, randomization_params)
+            
+            hidden_state = self.agent_net.initialZeroState(self.batch_size)
+            hebb_traces = self.agent_net.initialZeroHebb(self.batch_size)
+            
+            score = 0
+            
+            log_probs = []
+            values = []
+            rewards = []
+            entropies = []
+
+            state = self.env.reset()
+            for steps in range(self.max_steps):
+                state = torch.FloatTensor(state).unsqueeze(0)
+                policy_logits, value, (hidden_state, hebb_traces) = self.agent_net(state, [hidden_state, hebb_traces])
+                dist = Categorical(logits=policy_logits)
+                action = dist.sample()
+                log_prob = dist.log_prob(action)
+                entropy = dist.entropy()  # Calculate entropy
+                next_state, reward, done, _ = self.env.step(action.item())
+
+                log_probs.append(log_prob)
+                values.append(value)
+                rewards.append(reward)
+                entropies.append(entropy)
+                score += reward
+                state = next_state
+                
+                if done or steps == self.max_steps-1:
+                    training_total_rewards.append(score)
+                    # new_state = torch.from_numpy(new_state)
+                    # new_state = new_state.unsqueeze(0)#.to(device) #This as well?
+                    # _, Qval, (hidden_state, hebb_traces) = self.agent_net.forward(new_state.float(), [hidden_state, hebb_traces])
+                    # Qval = Qval.detach().numpy()[0,0]
+
+                    if ((self.selection_method == "evaluation") and (episode % self.evaluate_every == 0)):
+                        evaluation_performance = np.mean(evaluate_BP_agent_pole_length(self.agent_net, self.env_name, self.num_evaluation_episodes, self.evaluation_seeds, 1.0))
+                        print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+                        validation_total_rewards.append(evaluation_performance)
+
+                        if evaluation_performance > best_average:
+                            best_average = evaluation_performance
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                       self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                            
+                        if best_average == self.max_reward:
+                            print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                            best_average_after, '. Model saved in folder best.')
+                            return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+                            
+                    elif ((self.selection_method == "range_evaluation") and (episode % self.evaluate_every == 0)):
+                        # pole_length_mods = [0.1, 0.5, 1.0, 3.0, 6.0, 9.0, 12.0, 15.0, 17.0, 20.0]
+                        pole_length_mods = [0.55, 10.5]
+                        eps_per_setting = 5
+                        evaluation_performance = 0
+                        for i, mod in enumerate(pole_length_mods):
+                            # Get performance over one episode with this pole length modifier, 
+                            # skip over the first i evaluation seeds so not all episodes have
+                            # the same seed.
+                            evaluation_performance += np.mean(evaluate_BP_agent_pole_length(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], mod))
+
+                        evaluation_performance /= len(pole_length_mods)
+                        print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                        if evaluation_performance >= best_average:
+                            best_average = evaluation_performance
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                        self.result_dir + f'/checkpoint_{self.network_type}_A2C_{self.i_run}.pt')
+                        
+                        if best_average == self.max_reward:
+                            print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                            best_average_after, f'. Model saved in folder {self.result_dir}')
+                            return smoothed_scores, scores, best_average, best_average_after
+
+
+                    elif ((self.selection_method == "range_evaluation_all_params") and (episode % self.evaluate_every == 0)):
+                        pole_length_mods = [0.55, 10.5]
+                        pole_mass_mods = [3.0]
+                        force_mag_mods = [0.6, 3.5]
+
+                        eps_per_setting = 1
+                        evaluation_performance = 0
+                        total_eval_eps = 10
+                        for i in range(total_eval_eps):
+                            np.random.seed(self.evaluation_seeds[i+eps_per_setting-1])
+                            pole_length_mod = np.random.choice(pole_length_mods)
+                            pole_mass_mod = np.random.choice(pole_mass_mods)
+                            force_mag_mod = np.random.choice(force_mag_mods)
+                            evaluation_performance += np.mean(evaluate_BP_agent_all_params(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                        evaluation_performance /= total_eval_eps
+                        print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+
+                        if evaluation_performance >= best_average:
+                            best_average = evaluation_performance
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                        self.result_dir + f'/checkpoint_{self.network_type}_A2C_{self.i_run}.pt')
+                            
+                        if best_average == self.max_reward:
+                            print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                            best_average_after, f'. Model saved in folder {self.result_dir}')
+                            return smoothed_scores, scores, best_average, best_average_after
+    
+                    elif ((self.selection_method == "true_range_eval_all_params") and (episode % self.evaluate_every == 0)):
+                        validation_ranges = [(0.1, 20.0), (1.0, 13.0), (0.2, 6.0)]
+
+                        eps_per_setting = 1
+                        evaluation_performance = 0
+                        current_np_seed = np.random.get_state()
+                        current_r_seed = random.getstate()
+                        for i in range(self.num_evaluation_episodes):
+                            np.random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
+                            random.seed((self.evaluation_seeds[i+eps_per_setting-1] + self.seed)%(2**32))
+                            # pole_length_range = random.choice(validation_ranges[0])
+                            pole_length_range = validation_ranges[0]
+                            pole_length_mod = np.random.uniform(pole_length_range[0], pole_length_range[1])
+                            pole_mass_range = validation_ranges[1]
+                            pole_mass_mod = np.random.uniform(pole_mass_range[0], pole_mass_range[1])
+                            # force_mag_range = random.choice(validation_ranges[2])
+                            force_mag_range = validation_ranges[2]
+                            force_mag_mod = np.random.uniform(force_mag_range[0], force_mag_range[1])
+                            evaluation_performance += np.mean(evaluate_BP_agent_all_params(self.agent_net, self.env_name, eps_per_setting, self.evaluation_seeds[i+eps_per_setting:], pole_length_mod, pole_mass_mod, force_mag_mod))
+
+                        evaluation_performance /= self.num_evaluation_episodes
+                        print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+                        validation_total_rewards.append(evaluation_performance)
+                        if evaluation_performance >= best_average:
+                            best_average = evaluation_performance
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                        self.result_dir + f'/checkpoint_{self.network_type}_A2C_{self.i_run}.pt')
+                            
+                        if best_average == self.max_reward:
+                            print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                            best_average_after, f'. Model saved in folder {self.result_dir}')
+                            return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+                        np.random.set_state(current_np_seed)
+                        random.setstate(current_r_seed)
+                    elif (self.selection_method == "exp_BW_validation" and (episode % self.evaluate_every == 0)):
+                        evaluation_performance = np.mean(evaluate_BW(self.agent_net, self.env_name, 10, self.evaluation_seeds))
+                        print(f"Episode {episode}\tAverage evaluation: {evaluation_performance}")
+                        validation_total_rewards.append(evaluation_performance)
+                        if evaluation_performance > best_average:
+                            best_average = evaluation_performance
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                       self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+                            
+                        if best_average == self.max_reward:
+                            print(f'Best {self.selection_method}: ', best_average, ' reached at episode ',
+                            best_average_after, '. Model saved in folder best.')
+                            return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+                    elif (self.selection_method == "100 episode average"):
+                        scores_window.append(score)
+                        scores.append(score)
+                        smoothed_scores.append(np.mean(scores_window))
+
+                        if smoothed_scores[-1] > best_average:
+                            best_average = smoothed_scores[-1]
+                            best_average_after = episode
+                            torch.save(self.agent_net.state_dict(),
+                                    self.result_dir + '/checkpoint_BP_A2C_{}.pt'.format(self.i_run))
+
+                        print("Episode {}\tAverage Score: {:.2f}".format(episode, np.mean(scores_window)), end='\r')
+
+                        if episode % 100 == 0:
+                            print("\rEpisode {}\tAverage Score: {:.2f}".
+                                format(episode, np.mean(scores_window)))
+                        
+                    break
+
+                    # all_rewards.append(np.sum(rewards))
+                    # all_lengths.append(steps)
+                    # average_lengths.append(np.mean(all_lengths[-10:]))
+                    # if episode % 10 == 0:                    
+                    #     sys.stdout.write("episode: {}, reward: {}, total length: {}, average length: {} \n".format(episode, np.sum(rewards), steps, average_lengths[-1]))
+                    # break
+            
+
+            returns = []
+            R = 0
+            for r in rewards[::-1]:
+                R = r + self.gammaR * R
+                returns.insert(0, R)
+            
+            log_probs = torch.cat(log_probs)
+            values = torch.cat(values).squeeze()
+            returns = torch.FloatTensor(returns)
+            entropies = torch.FloatTensor(entropies)
+            
+            advantage = returns - values
+            actor_loss = -(log_probs * advantage.detach()).mean()
+            critic_loss = advantage.pow(2).mean()
+            entropy_loss = entropies.mean()  # Entropy loss
+            total_loss = actor_loss + self.value_pred_coef * critic_loss - self.entropy_coef * entropy_loss
+
+            self.optimizer.zero_grad()
+            total_loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.agent_net.parameters(), self.max_grad_norm)
+            # for name, param in self.agent_net.named_parameters():
+            #     if param.grad is None:
+            #         print(f"None gradient for {name}")
+            #     else:
+            #         print(f"Gradient for {name}")
+            self.optimizer.step()
+            training_losses.append(total_loss.detach())
+
+        print(f'Current best {self.selection_method}: ', best_average, ' reached at episode ',
+              best_average_after, '.')
+        
+        return smoothed_scores, scores, best_average, best_average_after, training_total_rewards, training_losses, validation_total_rewards, validation_losses
+
+
+
     def train_agent_discrete_different_pole_length(self, training_eps_per_section, section, randomization_params = None, randomize_every = 5, best_average = -np.inf, best_average_after = np.inf, pole_length_mod = 1.0):
         # best_average = -np.inf
         # best_average_after = np.inf

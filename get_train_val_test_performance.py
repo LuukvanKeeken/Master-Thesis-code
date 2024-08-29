@@ -63,7 +63,7 @@ testing_ranges = [[(0.1, 0.55), (10.5, 20.0)], [(5.0, 13.0)], [(0.2, 0.6), (3.5,
 
 
 device = "cpu"
-neuron_type = "CfC"
+neuron_type = "BP"
 if neuron_type == "BP" or neuron_type == "StandardRNN" or neuron_type == "StandardMLP":
     top_dir = "BP_A2C"
     if neuron_type == "StandardRNN":
@@ -105,7 +105,7 @@ for i in range(1, 10):
 evaluation_seeds = np.concatenate(arrays)
 
 
-result_dir = "CfC_a2c_result_1_2024828_learningrate_1e-05_selectiomethod_true_range_eval_all_params_trainingmethod_quarter_range_numneurons_32_mode_pure"
+result_dir = "BP_RNN_a2c_result_128_2024828_plm_0.33_pmm_9.0_fmm_4.75_entropycoef_0.0001_valuepredcoef_0.01_learningrate_0.001_numtrainepisodes_20000_selectionmethod_true_range_eval_all_params_trainingmethod_quarter_range_numneurons_32"
 
 
 

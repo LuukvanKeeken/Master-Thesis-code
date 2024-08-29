@@ -79,8 +79,8 @@ else:
     elif neuron_type == "LTC":
         model_signifier = "LTC"
 mode = "pure"
-num_neurons_policy = 64
-batch_dir = "training_results"
+num_neurons_policy = 32
+batch_dir = "difficult_cartpole_envs"
 
 num_models = 10
 seed = 5
@@ -105,7 +105,7 @@ for i in range(1, 10):
 evaluation_seeds = np.concatenate(arrays)
 
 
-result_dir = "CfC_a2c_result_20109_2024425_learningrate_1e-05_selectiomethod_true_range_eval_all_params_trainingmethod_original_numneurons_64_mode_pure"
+result_dir = "CfC_a2c_result_1_2024828_learningrate_1e-05_selectiomethod_true_range_eval_all_params_trainingmethod_quarter_range_numneurons_32_mode_pure"
 
 
 
